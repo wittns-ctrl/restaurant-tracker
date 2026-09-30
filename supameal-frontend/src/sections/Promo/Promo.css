@@ -1,0 +1,147 @@
+.promo-section {
+  padding: 4rem 0;
+}
+
+.promo-card {
+  position: relative;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  padding: 4rem;
+  display: flex;
+  align-items: center;
+  min-height: 400px;
+}
+
+.promo-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.promo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.promo-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(7, 7, 7, 0.95) 0%, rgba(7, 7, 7, 0.8) 50%, rgba(7, 7, 7, 0.2) 100%);
+}
+
+.promo-content {
+  position: relative;
+  z-index: 2;
+  max-width: 500px;
+}
+
+.promo-badge-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--primary);
+  margin-bottom: 1.5rem;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.promo-title {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.promo-description {
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+.promo-btn {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.promo-discount-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120px;
+  height: 120px;
+  background-color: rgba(10, 10, 10, 0.8);
+  border: 2px dashed var(--primary);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  box-shadow: 0 0 30px rgba(245, 166, 35, 0.2);
+  backdrop-filter: blur(4px);
+}
+
+.discount-up-to {
+  font-size: 0.7rem;
+  color: var(--primary);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.discount-amount {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--primary);
+  line-height: 1;
+  margin: 0.2rem 0;
+}
+
+.discount-off {
+  font-size: 0.8rem;
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+@media (max-width: 1024px) {
+  .promo-overlay {
+    background: linear-gradient(0deg, rgba(7, 7, 7, 0.95) 0%, rgba(7, 7, 7, 0.7) 100%);
+  }
+  
+  .promo-discount-badge {
+    top: 2rem;
+    left: auto;
+    right: 2rem;
+    transform: none;
+    width: 100px;
+    height: 100px;
+  }
+  
+  .discount-amount {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .promo-card {
+    padding: 2.5rem 1.5rem;
+  }
+  
+  .promo-title {
+    font-size: 2.2rem;
+  }
+  
+  .promo-discount-badge {
+    display: none;
+  }
+}
