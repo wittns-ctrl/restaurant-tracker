@@ -8,12 +8,14 @@ import {
 } from '@stripe/react-stripe-js';
 import { Loader2, CreditCard } from 'lucide-react';
 
-let stripePromiseCache = null;
+// Cache one Stripe instance per publishable key (test vs live, key rotation),
+// instead of a single global that ignored which key it was created with.
+const stripePromiseCache = new Map();
 function getStripePromise(publishableKey) {
-  if (!stripePromiseCache) {
-    stripePromiseCache = loadStripe(publishableKey);
+  if (!stripePromiseCache.has(publishableKey)) {
+    stripePromiseCache.set(publishableKey, loadStripe(publishableKey));
   }
-  return stripePromiseCache;
+  return stripePromiseCache.get(publishableKey);
 }
 
 function PaymentForm({ onSuccess, onError }) {

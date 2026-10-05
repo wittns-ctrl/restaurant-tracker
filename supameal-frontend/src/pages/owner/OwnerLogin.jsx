@@ -12,7 +12,7 @@ const OwnerLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { loginWithCredentials } = useAuth();
+  const { loginWithCredentials, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -25,7 +25,10 @@ const OwnerLogin = () => {
     setIsLoading(true);
     try {
       const user = await loginWithCredentials(email.trim(), password);
-      if (user?.role !== 'owner' && user?.role !== 'admin') {
+      // This portal is owner-only — an admin/customer who logs in here must
+      // not keep an authenticated session pointed at the owner dashboard.
+      if (user?.role !== 'owner') {
+        await logout();
         setError('This account is not a restaurant owner account.');
         setIsLoading(false);
         return;

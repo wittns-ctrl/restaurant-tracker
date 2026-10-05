@@ -79,7 +79,21 @@ export async function apiRequest(path, options = {}) {
       const newToken = localStorage.getItem('accessToken');
       if (newToken) {
         headers.Authorization = `Bearer ${newToken}`;
-        res = await fetch(`${API_URL}${path}`, { ...rest, headers, signal: controller.signal });
+        // Fresh AbortController + timer: the original controller was already
+        // cleared in the finally above, so reusing its signal would leave a
+        // hung retry request spinning forever with no timeout.
+        const retryController = new AbortController();
+        const retryTimeout = setTimeout(() => retryController.abort(), timeoutMs || DEFAULT_TIMEOUT_MS);
+        try {
+          res = await fetch(`${API_URL}${path}`, { ...rest, headers, signal: retryController.signal });
+        } catch (err) {
+          if (err.name === 'AbortError') {
+            throw new ApiError('Request timed out', 0);
+          }
+          throw new ApiError(err.message || 'Network error', 0);
+        } finally {
+          clearTimeout(retryTimeout);
+        }
       }
     }
   }

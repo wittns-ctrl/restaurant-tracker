@@ -928,16 +928,34 @@ const OwnerDashboard = () => {
 
   const handleMarkReady = async (id) => {
     const order = orders.find(o => o.id === id);
-    if (order?.orderDbId) await ordersApi.updateStatus(order.orderDbId, 'ready');
-    if (restaurantId) loadOwnerData(user?.id, restaurantId);
-    showToast('Order marked as ready!');
+    if (!order?.orderDbId) {
+      showToast('Could not find that order — please refresh the page.', 'error');
+      return;
+    }
+    try {
+      await ordersApi.updateStatus(order.orderDbId, 'ready');
+      if (restaurantId) loadOwnerData(user?.id, restaurantId);
+      showToast('Order marked as ready!');
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'Could not mark order as ready', 'error');
+    }
   };
 
   const handleMarkDelivered = async (id) => {
     const order = orders.find(o => o.id === id);
-    if (order?.orderDbId) await ordersApi.updateStatus(order.orderDbId, 'delivered');
-    if (restaurantId) loadOwnerData(user?.id, restaurantId);
-    showToast('Order marked as delivered!');
+    if (!order?.orderDbId) {
+      showToast('Could not find that order — please refresh the page.', 'error');
+      return;
+    }
+    try {
+      await ordersApi.updateStatus(order.orderDbId, 'delivered');
+      if (restaurantId) loadOwnerData(user?.id, restaurantId);
+      showToast('Order marked as delivered!');
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'Could not mark order as delivered', 'error');
+    }
   };
 
   const renderContent = () => {

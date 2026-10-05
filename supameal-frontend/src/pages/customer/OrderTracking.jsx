@@ -1,17 +1,79 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { CheckCircle, MapPin, Truck, Radio } from 'lucide-react';
+import { CheckCircle, MapPin, Truck, Radio, Package } from 'lucide-react';
 import { useLiveOrderTracking } from '../../hooks/useLiveOrderTracking';
+import { ordersApi } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+import { useEffect, useState } from 'react';
 import './dashboard.css';
 import './OrderTracking.css';
 
 const OrderTracking = ({ orderId: orderIdProp, setActiveTab }) => {
   const params = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   // Route mode (App.jsx passes no props) or embedded mode (prop)
   const orderId = orderIdProp || params.orderId;
-  const go = (tab, path) => (setActiveTab ? setActiveTab(tab) : navigate(path));
+  const go = (tab, path, ...rest) => (setActiveTab ? setActiveTab(tab, ...rest) : navigate(path));
+
+  // Dashboard mode with no order chosen yet: offer the user's recent orders
+  const [recentOrders, setRecentOrders] = useState([]);
+  useEffect(() => {
+    if (orderId) return;
+    let alive = true;
+    // Scope to the signed-in customer — a bare list() leaks every order on the platform
+    ordersApi.list(user?.id ? { customerId: user.id } : {})
+      .then((data) => {
+        if (alive) setRecentOrders(Array.isArray(data) ? data : data?.data || []);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [orderId, user?.id]);
 
   const { order, loading, loadFailed, live } = useLiveOrderTracking(orderId);
+
+  // Embedded mode without a selected order — show a picker instead of an API
+  // call against an undefined id (C4: previously a hardcoded mock '2452').
+  if (!orderId) {
+    return (
+      <>
+        <div className="page-header">
+          <h1>Order Tracking</h1>
+          <p>Select one of your recent orders to track it live.</p>
+        </div>
+        <div className="dash-panel">
+          {recentOrders.length === 0 ? (
+            <div className="empty-state">
+              <Package size={48} />
+              <p>No orders to track yet — place an order first.</p>
+              <button className="dash-btn-primary" style={{ marginTop: '1.25rem' }} onClick={() => go('orders', '/customer/dashboard')}>
+                View My Orders
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {recentOrders.slice(0, 8).map((o) => (
+                <button
+                  key={o.id}
+                  onClick={() => go('order-tracking', `/order-tracking/${o.id}`, o.id)}
+                  style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '0.9rem 1.1rem', background: 'var(--dash-bg, #141414)', borderRadius: 10,
+                    border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', color: 'inherit',
+                  }}
+                >
+                  <span style={{ fontWeight: 600 }}>#{o.orderId || o.id?.slice(-4)} · {o.restaurant}</span>
+                  <span style={{ color: 'var(--dash-accent, #C6F135)', fontWeight: 700 }}>{o.statusLabel || o.status}</span>
+                </button>
+              ))
+              }
+            </div>
+          )}
+        </div>
+      </>
+    );
+  }
 
   if (loading) return <div className="page-header"><p>Loading order tracking...</p></div>;
   if (!order) {
@@ -111,7 +173,7 @@ const OrderTracking = ({ orderId: orderIdProp, setActiveTab }) => {
             <h3 style={{ marginBottom: '1rem' }}>Order Details</h3>
             <p style={{ color: 'var(--dash-muted)', fontSize: '0.88rem', marginBottom: '0.5rem' }}><strong>Restaurant:</strong> {order.restaurant}</p>
             <p style={{ color: 'var(--dash-muted)', fontSize: '0.88rem', marginBottom: '0.5rem' }}><strong>Items:</strong> {order.itemsSummary}</p>
-            <p style={{ color: 'var(--dash-muted)', fontSize: '0.88rem', marginBottom: '0.5rem' }}><strong>Rider:</strong> {order.rider}</p>
+            <p style={{ color: 'var(--dash-muted)', fontSize: '0.88rem', marginBottom: '0.5rem' }}><strong>Rider:</strong> {order.rider || 'To be assigned'}</p>
             {order.deliveryAddress && (
               <p style={{ color: 'var(--dash-muted)', fontSize: '0.88rem', display: 'flex', gap: '0.35rem' }}>
                 <MapPin size={14} /> {order.deliveryAddress.street}, {order.deliveryAddress.city}

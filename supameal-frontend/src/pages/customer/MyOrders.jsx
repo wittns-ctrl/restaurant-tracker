@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Package, Clock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { ordersApi } from '../../services/api';
 import './dashboard.css';
 
@@ -8,6 +9,7 @@ const MyOrders = ({ setActiveTab }) => {
   const [tab, setTab] = useState('current');
   const [orders, setOrders] = useState({ current: [], history: [] });
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   useEffect(() => {
     const load = async () => {
@@ -25,8 +27,14 @@ const MyOrders = ({ setActiveTab }) => {
   }, [user?.id]);
 
   const handleReorder = async (id) => {
-    await ordersApi.reorder(id);
-    setActiveTab('orders');
+    try {
+      await ordersApi.reorder(id);
+      showToast('Order placed again — you can track it below.');
+      setActiveTab('orders');
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'Could not reorder — please try again.', 'error');
+    }
   };
 
   return (

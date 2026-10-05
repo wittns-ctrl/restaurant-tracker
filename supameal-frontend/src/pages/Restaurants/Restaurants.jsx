@@ -97,7 +97,14 @@ const Restaurants = () => {
             <div className="restaurants-grid">
               {restaurants.map((restaurant) => (
                 <Link to={`/restaurants/${restaurant.id}`} key={restaurant.id} style={{ textDecoration: 'none' }}>
-                  <RestaurantCard restaurant={restaurant} />
+                  <RestaurantCard
+                    image={restaurant.image}
+                    name={restaurant.name}
+                    location={typeof restaurant.location === 'string' ? restaurant.location : restaurant.location?.address || ''}
+                    rating={restaurant.rating ?? 'New'}
+                    reviews={restaurant.reviews ?? 0}
+                    priceLevel={restaurant.priceLevel ?? '$$'}
+                  />
                 </Link>
               ))}
               {restaurants.length === 0 && (

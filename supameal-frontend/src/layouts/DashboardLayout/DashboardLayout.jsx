@@ -108,11 +108,6 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
   const [notifications, setNotifications] = useState([]);
   const [activities, setActivities] = useState([]);
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    localStorage.setItem('theme', 'dark');
-  }, []);
-
   // Load user notifications and activities
   useEffect(() => {
     let isMounted = true;

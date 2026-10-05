@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Users, MapPin, XCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { bookingsApi } from '../../services/api';
 import './dashboard.css';
 
@@ -33,6 +34,7 @@ const MyBookings = () => {
   const [tab, setTab] = useState('confirmed');
   const [bookings, setBookings] = useState({ confirmed: [], pending: [], rejected: [] });
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   const loadBookings = async () => {
     if (!user?.id) return;
@@ -52,8 +54,14 @@ const MyBookings = () => {
   useEffect(() => { loadBookings(); }, [user?.id]);
 
   const handleCancel = async (id) => {
-    await bookingsApi.cancel(id);
-    loadBookings();
+    try {
+      await bookingsApi.cancel(id);
+      showToast('Booking cancelled.');
+      await loadBookings();
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'Could not cancel booking — please try again.', 'error');
+    }
   };
 
   const counts = {

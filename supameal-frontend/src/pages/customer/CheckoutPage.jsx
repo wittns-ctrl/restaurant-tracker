@@ -18,7 +18,8 @@ const CheckoutPage = ({ setActiveTab }) => {
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [timeSlot, setTimeSlot] = useState(TIME_SLOTS[0]);
   const [placed, setPlaced] = useState(false);
-  const [placedOrderId, setPlacedOrderId] = useState('');
+  const [placedOrderId, setPlacedOrderId] = useState(''); // display code (last 4)
+  const [placedOrderDbId, setPlacedOrderDbId] = useState(''); // real _id for tracking
   const [address, setAddress] = useState({ street: '', apartment: '', city: '', postalCode: '', instructions: '' });
   const [paymentState, setPaymentState] = useState('idle');
   const [paymentWarning, setPaymentWarning] = useState('');
@@ -28,8 +29,9 @@ const CheckoutPage = ({ setActiveTab }) => {
   const { user } = useAuth();
   const { showToast } = useToast();
 
-  // navigate() fallback when rendered from the router without a tab setter
-  const go = (tab, path) => (setActiveTab ? setActiveTab(tab) : navigate(path));
+  // navigate() fallback when rendered from the router without a tab setter.
+  // Extra args are forwarded so dashboard mode can pass the tracking order id.
+  const go = (tab, path, ...rest) => (setActiveTab ? setActiveTab(tab, ...rest) : navigate(path));
 
   const delivery = cartItems.length > 0 ? 3.99 : 0;
   // Discount comes from the backend's validation response — never invented locally
@@ -75,7 +77,9 @@ const CheckoutPage = ({ setActiveTab }) => {
       });
 
       setPaymentState('intent');
-      const payment = await paymentsApi.createIntent(order.orderId || order.id, {
+      // C2: must be the real ObjectId (order.id) — order.orderId is a cosmetic
+      // last-4 display code the payment API would reject with 400.
+      const payment = await paymentsApi.createIntent(order.id, {
         customerName: user.name || '',
       });
 
@@ -85,7 +89,8 @@ const CheckoutPage = ({ setActiveTab }) => {
         setPaymentState('confirming');
         const confirm = await paymentsApi.confirm(payment.paymentIntentId);
         if (confirm.success) {
-          setPlacedOrderId((order.orderId || order.id || '').slice(-4));
+          setPlacedOrderDbId(order.id || '');
+          setPlacedOrderId(String(order.orderId || order.id || '').slice(-4));
           setPlaced(true);
           setPaymentState('paid');
           clearCart();
@@ -110,6 +115,7 @@ const CheckoutPage = ({ setActiveTab }) => {
         paymentIntentId: payment.paymentIntentId,
         clientSecret: payment.clientSecret,
         publishableKey: stripeKey,
+        orderId: order.id,
       });
       setPaymentState('awaiting_confirm');
     } catch (err) {
@@ -130,6 +136,7 @@ const CheckoutPage = ({ setActiveTab }) => {
       setPaymentState('confirming');
       const confirm = await paymentsApi.confirm(intentId);
       if (!confirm.success) throw new Error('Payment not completed');
+      setPlacedOrderDbId(pendingPayment?.orderId || '');
       setPlacedOrderId(String(intentId).slice(-4));
       setPlaced(true);
       setPaymentState('paid');
@@ -170,7 +177,7 @@ const CheckoutPage = ({ setActiveTab }) => {
             </p>
           )}
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-            <button className="dash-btn-primary" onClick={() => go('order-tracking', `/order-tracking/${placedOrderId}`)}>Track Order</button>
+            <button className="dash-btn-primary" onClick={() => go('order-tracking', `/order-tracking/${placedOrderDbId}`, placedOrderDbId)}>Track Order</button>
             <button className="dash-btn-outline" onClick={() => go('overview', '/customer/dashboard')}>Back to Dashboard</button>
           </div>
         </div>

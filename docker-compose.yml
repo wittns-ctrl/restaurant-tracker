@@ -17,6 +17,12 @@ services:
     # To inspect from your machine, uncomment:
     # ports:
     #   - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   api:
     build:
@@ -34,7 +40,8 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://localhost:5173}
       # ── Optional integrations ──
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      # Stripe is required in production: the API refuses to boot without it
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:?Set STRIPE_SECRET_KEY in .env (test or live key)}
       STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       STRIPE_CURRENCY: ${STRIPE_CURRENCY:-usd}
@@ -49,12 +56,14 @@ services:
       THROTTLE_TTL_MS: ${THROTTLE_TTL_MS:-60000}
       THROTTLE_LIMIT: ${THROTTLE_LIMIT:-100}
       SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
+      TRUST_PROXY: ${TRUST_PROXY:-1}
       UPLOAD_DIR: /app/uploads
     volumes:
       # Uploaded restaurant/menu images must survive container rebuilds
       - uploads_data:/app/uploads
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
 
   web:
     build:

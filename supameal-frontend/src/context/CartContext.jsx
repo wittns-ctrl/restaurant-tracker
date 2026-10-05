@@ -94,7 +94,8 @@ export const CartProvider = ({ children }) => {
   const clearCart = () => setCart({});
 
   const cartItems = Object.entries(cart).map(([id, qty]) => {
-    const item = menuItems.find(m => m.id === id || m.id === String(id));
+    // Compare as strings both ways — menu ids may be numbers or strings depending on source
+    const item = menuItems.find(m => String(m.id) === String(id));
     return item ? { ...item, qty } : null;
   }).filter(Boolean);
 

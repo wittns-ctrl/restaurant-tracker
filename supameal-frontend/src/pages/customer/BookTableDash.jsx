@@ -4,10 +4,18 @@ import { useAuth } from '../../context/AuthContext';
 import { restaurantsApi, bookingsApi } from '../../services/api';
 import './dashboard.css';
 
-const BookTableDash = ({ setActiveTab }) => {
+const BookTableDash = ({ setActiveTab, initialRestaurantId }) => {
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [restaurants, setRestaurants] = useState([]);
-  const [form, setForm] = useState({ restaurantId: '', date: '', time: '', guests: 2, specialRequest: '' });
+  const [form, setForm] = useState({
+    restaurantId: initialRestaurantId || '',
+    date: '',
+    time: '',
+    guests: 2,
+    specialRequest: '',
+  });
   const { user } = useAuth();
 
   useEffect(() => {
@@ -16,16 +24,24 @@ const BookTableDash = ({ setActiveTab }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!user?.id || !form.restaurantId) return;
-    await bookingsApi.create({
-      customerId: user.id,
-      restaurantId: form.restaurantId,
-      bookingDate: form.date,
-      bookingTime: form.time,
-      guests: Number(form.guests),
-      specialRequest: form.specialRequest || '',
-    });
-    setSubmitted(true);
+    if (!user?.id || !form.restaurantId || submitting) return;
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      await bookingsApi.create({
+        customerId: user.id,
+        restaurantId: form.restaurantId,
+        bookingDate: form.date,
+        bookingTime: form.time,
+        guests: Number(form.guests),
+        specialRequest: form.specialRequest || '',
+      });
+      setSubmitted(true);
+    } catch (err) {
+      setSubmitError(err.message || 'Booking failed — please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -96,8 +112,11 @@ const BookTableDash = ({ setActiveTab }) => {
                 />
               </div>
 
-              <button className="dash-btn-primary" type="submit" style={{ width: '100%' }}>
-                Confirm Reservation
+              {submitError && (
+                <p style={{ color: '#e05555', marginBottom: '1rem', textAlign: 'center' }}>{submitError}</p>
+              )}
+              <button className="dash-btn-primary" type="submit" disabled={submitting} style={{ width: '100%', opacity: submitting ? 0.7 : 1 }}>
+                {submitting ? 'Sending…' : 'Confirm Reservation'}
               </button>
             </form>
           </div>

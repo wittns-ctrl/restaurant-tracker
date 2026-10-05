@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, ShoppingCart, Star, Filter, Package } from 'lucide-react';
+import { Search, ShoppingCart, Filter, Package } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { resolveImageUrl } from '../../services/api';
 import './dashboard.css';
@@ -63,9 +63,6 @@ const MenuPage = ({ setActiveTab }) => {
               <span style={{ color: 'var(--dash-accent, #C6F135)', fontWeight: 700, fontSize: '0.95rem', flexShrink: 0 }}>${item.price}</span>
             </div>
             <p style={{ color: 'var(--dash-muted, #8a8a8a)', fontSize: '0.8rem', marginBottom: '0.5rem', lineHeight: 1.5, flex: 1 }}>{item.desc}</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#ffc107', fontSize: '0.8rem', marginBottom: '1rem' }}>
-              <Star size={13} fill="currentColor" /> {item.rating}
-            </div>
 
             {cart[item.id] ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'center' }}>

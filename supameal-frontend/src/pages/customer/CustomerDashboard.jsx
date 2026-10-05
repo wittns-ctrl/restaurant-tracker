@@ -44,7 +44,9 @@ const customerSidebarConfig = [
 
 const CustomerDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [trackingOrderId, setTrackingOrderId] = useState('2452');
+  // C4: no hardcoded mock order id — empty until a real order is selected
+  // from My Orders or Checkout. The tracking tab shows a picker until then.
+  const [trackingOrderId, setTrackingOrderId] = useState('');
   const { isAuthenticated } = useAuth();
   const { cartCount } = useCart();
 
@@ -67,17 +69,19 @@ const CustomerDashboard = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'overview': return <DashboardHome setActiveTab={setActiveTab} />;
-      case 'menu': return <MenuPage setActiveTab={setActiveTab} />;
-      case 'cart': return <CartPage setActiveTab={setActiveTab} />;
-      case 'checkout': return <CheckoutPage setActiveTab={setActiveTab} />;
-      case 'book-table': return <BookTableDash setActiveTab={setActiveTab} />;
-      case 'bookings': return <MyBookings setActiveTab={setActiveTab} />;
+      // handleSetActiveTab everywhere: pages that navigate to tracking pass
+      // the real order id as a second argument (plain setActiveTab drops it).
+      case 'overview': return <DashboardHome setActiveTab={handleSetActiveTab} />;
+      case 'menu': return <MenuPage setActiveTab={handleSetActiveTab} />;
+      case 'cart': return <CartPage setActiveTab={handleSetActiveTab} />;
+      case 'checkout': return <CheckoutPage setActiveTab={handleSetActiveTab} />;
+      case 'book-table': return <BookTableDash setActiveTab={handleSetActiveTab} />;
+      case 'bookings': return <MyBookings setActiveTab={handleSetActiveTab} />;
       case 'orders': return <MyOrders setActiveTab={handleSetActiveTab} />;
-      case 'order-tracking': return <OrderTracking orderId={trackingOrderId} setActiveTab={setActiveTab} />;
-      case 'favorites': return <FavoritesPage setActiveTab={setActiveTab} />;
-      case 'profile': return <ProfilePage setActiveTab={setActiveTab} />;
-      default: return <DashboardHome setActiveTab={setActiveTab} />;
+      case 'order-tracking': return <OrderTracking orderId={trackingOrderId} setActiveTab={handleSetActiveTab} />;
+      case 'favorites': return <FavoritesPage setActiveTab={handleSetActiveTab} />;
+      case 'profile': return <ProfilePage setActiveTab={handleSetActiveTab} />;
+      default: return <DashboardHome setActiveTab={handleSetActiveTab} />;
     }
   };
 

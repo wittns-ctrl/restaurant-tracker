@@ -1,28 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarCheck, Plus, Calendar, Clock, MapPin, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
-
-const SAMPLE_RESERVATIONS = [
-  { id: 1, restaurant: 'Sakura Garden', date: '2026-10-02', time: '19:00', guests: 4, status: 'confirmed', address: '123 Food St' },
-  { id: 2, restaurant: 'Bella Italia', date: '2026-10-08', time: '20:30', guests: 2, status: 'pending', address: '45 Pasta Ave' },
-  { id: 3, restaurant: 'Burger House', date: '2026-10-12', time: '13:15', guests: 6, status: 'confirmed', address: '9 Grill Blvd' },
-];
+import { bookingsApi } from '../../services/api';
 
 const STATUS_STYLE = {
   confirmed: { bg: '#dcfce7', color: '#166534' },
   pending: { bg: '#fef3c7', color: '#92400e' },
   cancelled: { bg: '#fee2e2', color: '#991b1b' },
+  rejected: { bg: '#fee2e2', color: '#991b1b' },
 };
 
 export default function ReservationsPage() {
   const { user } = useAuth();
   const { showToast } = useToast();
-  const [reservations] = useState(SAMPLE_RESERVATIONS);
+  const [reservations, setReservations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
-  const onCancel = (id) => {
-    showToast(`Reservation #${id} cancellation requested`, 'info');
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError('');
+    try {
+      // The backend scopes customers to their own bookings automatically
+      const data = await bookingsApi.list();
+      setReservations(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setLoadError(err.message || 'Failed to load reservations');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const onCancel = async (id) => {
+    try {
+      await bookingsApi.cancel(id);
+      setReservations((prev) => prev.filter((r) => r.id !== id));
+      showToast('Reservation cancelled', 'success');
+    } catch (err) {
+      showToast(err.message || 'Cancellation failed', 'error');
+    }
   };
 
   return (
@@ -89,7 +109,22 @@ export default function ReservationsPage() {
               Dashboard <ChevronRight size={14} />
             </Link>
           </div>
-          {reservations.length === 0 ? (
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '48px 16px', color: '#6b7280' }}>
+              <p style={{ margin: 0 }}>Loading your reservations…</p>
+            </div>
+          ) : loadError ? (
+            <div style={{ textAlign: 'center', padding: '48px 16px', color: '#b91c1c' }}>
+              <p style={{ margin: '0 0 12px' }}>{loadError}</p>
+              <button
+                onClick={load}
+                style={{
+                  padding: '8px 16px', fontSize: 13, fontWeight: 600, color: '#fff',
+                  background: '#f97316', border: 'none', borderRadius: 8, cursor: 'pointer',
+                }}
+              >Try again</button>
+            </div>
+          ) : reservations.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '48px 16px', color: '#6b7280' }}>
               <CalendarCheck size={40} style={{ opacity: 0.4, margin: '0 auto 8px' }} />
               <p style={{ margin: 0 }}>No reservations yet. Book a table to get started.</p>

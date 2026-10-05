@@ -6,6 +6,16 @@ const AuthContext = createContext(null);
 
 const REFRESH_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes — refresh halfway through a 15-min token
 
+// The backend's sanitizeUser renames the 'owner' role to 'restaurant_owner',
+// but the router/ProtectedRoute only know 'owner'. Normalize ONCE here so
+// every consumer (routes, sidebars, OAuth callback) sees the canonical role.
+// Without this, owners hit an infinite login↔dashboard redirect loop (C1).
+const normalizeRole = (u) => {
+  if (!u) return u;
+  const role = u.role === 'restaurant_owner' ? 'owner' : u.role;
+  return role === u.role ? u : { ...u, role };
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -19,8 +29,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const persistAuth = useCallback((authUser, accessToken, refreshToken) => {
-    setUser(authUser);
-    localStorage.setItem('user', JSON.stringify(authUser));
+    const normalized = normalizeRole(authUser);
+    setUser(normalized);
+    localStorage.setItem('user', JSON.stringify(normalized));
     if (accessToken) localStorage.setItem('accessToken', accessToken);
     if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
   }, []);
@@ -50,8 +61,9 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     setTokenRefreshListener((data) => {
       if (data.user) {
-        setUser(data.user);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        const normalized = normalizeRole(data.user);
+        setUser(normalized);
+        localStorage.setItem('user', JSON.stringify(normalized));
       }
     });
     return () => setTokenRefreshListener(null);
@@ -65,7 +77,8 @@ export const AuthProvider = ({ children }) => {
     const init = async () => {
       if (stored && access) {
         try {
-          setUser(JSON.parse(stored));
+          // Re-normalize stored users written before the role fix (C1)
+          setUser(normalizeRole(JSON.parse(stored)));
         } catch {
           forceLogout();
         }
@@ -146,7 +159,7 @@ export const AuthProvider = ({ children }) => {
 
   const updateUser = useCallback((updatedUserData) => {
     setUser((prev) => {
-      const newUser = { ...prev, ...updatedUserData };
+      const newUser = normalizeRole({ ...prev, ...updatedUserData });
       localStorage.setItem('user', JSON.stringify(newUser));
       return newUser;
     });

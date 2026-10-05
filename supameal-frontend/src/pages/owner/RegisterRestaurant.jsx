@@ -12,9 +12,9 @@ const RegisterRestaurant = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState({
-    restaurantName: '', ownerName: '', businessEmail: '', contactNumber: '', fullAddress: '', password: 'Password123!',
+    restaurantName: '', ownerName: '', businessEmail: '', contactNumber: '', fullAddress: '', password: '',
   });
-  const { loginWithCredentials } = useAuth();
+  const { loginWithCredentials, persistAuth } = useAuth();
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
@@ -29,10 +29,17 @@ const RegisterRestaurant = () => {
         phone: form.contactNumber.trim(),
         role: 'owner',
       });
-      if (!signupRes.user || !signupRes.accessToken) {
-        await loginWithCredentials(form.businessEmail, form.password);
+
+      let user;
+      if (signupRes.user && signupRes.accessToken) {
+        // Owners are auto-verified by the backend — tokens come back with the
+        // signup response itself, so there is no localStorage to read yet.
+        user = signupRes.user;
+        persistAuth(signupRes.user, signupRes.accessToken, signupRes.refreshToken);
+      } else {
+        user = await loginWithCredentials(form.businessEmail, form.password);
       }
-      const user = JSON.parse(localStorage.getItem('user'));
+
       await restaurantsApi.register({
         name: form.restaurantName,
         description: `${form.restaurantName} - registered via SupaMeal`,
@@ -101,6 +108,13 @@ const RegisterRestaurant = () => {
           <div className="auth-input-wrapper">
             <MapPin size={18} className="auth-input-icon" />
             <input type="text" placeholder="Full Address" className="auth-input" required value={form.fullAddress} onChange={e => setForm(p => ({ ...p, fullAddress: e.target.value }))} />
+          </div>
+        </div>
+
+        <div className="auth-input-group">
+          <div className="auth-input-wrapper">
+            <User size={18} className="auth-input-icon" />
+            <input type="password" placeholder="Account Password (min 8 characters)" className="auth-input" required minLength={8} value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} />
           </div>
         </div>
 

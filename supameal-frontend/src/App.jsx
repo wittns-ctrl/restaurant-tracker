@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { ToastProvider } from './context/ToastContext';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -25,10 +25,13 @@ const MenuPage = lazy(() => import('./pages/customer/MenuPage'));
 const CheckoutPage = lazy(() => import('./pages/customer/CheckoutPage'));
 const OrderTrackingPage = lazy(() => import('./pages/customer/OrderTracking'));
 const OwnerDashboard = lazy(() => import('./pages/owner/OwnerDashboard'));
+const RegisterRestaurant = lazy(() => import('./pages/owner/RegisterRestaurant'));
+const OwnerLogin = lazy(() => import('./pages/owner/OwnerLogin'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const ProfilePage = lazy(() => import('./pages/customer/ProfilePage'));
 const ReservationsPage = lazy(() => import('./pages/customer/ReservationsPage'));
+const BookTablePage = lazy(() => import('./pages/customer/BookTableDash'));
 
 const ROLE_HOME = {
   customer: '/customer/dashboard',
@@ -58,6 +61,18 @@ const HomeRedirect = () => {
   return <LandingPage />;
 };
 
+// H4: /book-table was reachable only from the dashboard tab system; the
+// "Book a Table" button on RestaurantDetails navigated to a dead route.
+// This wrapper maps BookTableDash's setActiveTab tab names onto real routes
+// and preselects the restaurant passed via navigate(..., { state }).
+const BookTableRoute = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const setActiveTab = (tab) => navigate(tab === 'bookings' ? '/reservations' : '/customer/dashboard');
+  const initialRestaurantId = location.state?.restaurantId || '';
+  return <BookTablePage setActiveTab={setActiveTab} initialRestaurantId={initialRestaurantId} />;
+};
+
 function AppRoutes() {
   const { user, isAuthenticated } = useAuth();
   const loginRedirect = isAuthenticated ? (
@@ -84,6 +99,8 @@ function AppRoutes() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/auth/callback" element={<OAuthCallback />} />
+        <Route path="/register-restaurant" element={<RegisterRestaurant />} />
+        <Route path="/owner-login" element={<OwnerLogin />} />
         <Route path="*" element={<NotFound />} />
 
         <Route
@@ -131,6 +148,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute roles={['customer']}>
               <ReservationsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/book-table"
+          element={
+            <ProtectedRoute roles={['customer']}>
+              <BookTableRoute />
             </ProtectedRoute>
           }
         />
