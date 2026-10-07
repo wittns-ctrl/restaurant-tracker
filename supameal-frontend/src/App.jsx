@@ -16,6 +16,7 @@ const SignUp = lazy(() => import('./pages/auth/SignUp'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
+const VerifyOtp = lazy(() => import('./pages/auth/VerifyOtp'));
 const OAuthCallback = lazy(() => import('./pages/auth/OAuthCallback'));
 const RestaurantsPage = lazy(() => import('./pages/Restaurants/Restaurants'));
 const RestaurantDetail = lazy(() => import('./pages/Restaurants/RestaurantDetails'));
@@ -98,6 +99,7 @@ function AppRoutes() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/verify-otp" element={<VerifyOtp />} />
         <Route path="/auth/callback" element={<OAuthCallback />} />
         <Route path="/register-restaurant" element={<RegisterRestaurant />} />
         <Route path="/owner-login" element={<OwnerLogin />} />
