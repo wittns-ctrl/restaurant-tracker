@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, MapPin, Clock, Users, Phone, Navigation } from 'lucide-react';
+import { ArrowLeft, Star, MapPin, Clock, Users, Phone, Navigation, Heart } from 'lucide-react';
 import Navbar from '../../sections/Navbar/Navbar';
 import Footer from '../../sections/Footer/Footer';
 import Button from '../../components/Button/Button';
-import { restaurantsApi, reviewsApi, resolveImageUrl } from '../../services/api';
+import { restaurantsApi, reviewsApi, usersApi, resolveImageUrl } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import img1 from '../../assets/images/restaurant_interior.png';
 import './RestaurantDetails.css';
@@ -15,8 +16,13 @@ const RestaurantDetails = () => {
   const [activeTab, setActiveTab] = useState('menu');
   const [restaurant, setRestaurant] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState('');
+  const [reviewStatus, setReviewStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const { selectRestaurant } = useCart();
+  const { user } = useAuth();
 
   useEffect(() => {
     const load = async () => {
@@ -36,6 +42,53 @@ const RestaurantDetails = () => {
     };
     load();
   }, [id]);
+
+  useEffect(() => {
+    if (!user?.id || !id) return;
+    usersApi.favorites(user.id)
+      .then(favs => setIsFavorite(favs.some(r => r.id === id)))
+      .catch(() => {});
+  }, [user?.id, id]);
+
+  const toggleFavorite = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    try {
+      if (isFavorite) {
+        await usersApi.removeFavorite(user.id, id);
+        setIsFavorite(false);
+      } else {
+        await usersApi.addFavorite(user.id, id);
+        setIsFavorite(true);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const submitReview = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    if (!reviewText.trim()) {
+      setReviewStatus({ type: 'error', message: 'Please write a comment' });
+      return;
+    }
+    setReviewStatus(null);
+    try {
+      const created = await reviewsApi.create({ restaurantId: id, rating: reviewRating, comment: reviewText.trim() });
+      setReviews(prev => [created, ...prev]);
+      setReviewText('');
+      setReviewRating(5);
+      setReviewStatus({ type: 'success', message: 'Thanks! Your review was posted.' });
+    } catch (err) {
+      setReviewStatus({ type: 'error', message: err.message || 'Could not submit review' });
+    }
+  };
 
   const menuByCategory = (restaurant?.menu || []).reduce((acc, item) => {
     const cat = item.category || 'Other';
@@ -79,6 +132,16 @@ const RestaurantDetails = () => {
               <div className="restaurant-badges">
                 <span className="badge cuisine-badge">{restaurant.cuisine}</span>
                 <span className="badge rating-badge"><Star size={14} fill="currentColor" /> {restaurant.rating} ({restaurant.reviews} Reviews)</span>
+                <button
+                  className="badge"
+                  onClick={toggleFavorite}
+                  aria-pressed={isFavorite}
+                  title={isFavorite ? 'Remove from favorites' : 'Save to favorites'}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', color: isFavorite ? '#ff4d6d' : undefined }}
+                >
+                  <Heart size={14} fill={isFavorite ? '#ff4d6d' : 'none'} />
+                  {isFavorite ? 'Saved' : 'Save'}
+                </button>
               </div>
               <h1>{restaurant.name}</h1>
               <p className="restaurant-address"><MapPin size={18} /> {restaurant.address}</p>
@@ -114,7 +177,7 @@ const RestaurantDetails = () => {
                 >
                   Book a Table
                 </Button>
-                <Button variant="outline" className="full-width-btn" onClick={() => { selectRestaurant(id); navigate('/customer/dashboard'); }}>
+                <Button variant="outline" className="full-width-btn" onClick={() => { selectRestaurant(id); navigate('/customer/dashboard?tab=menu'); }}>
                   Order Food Delivery
                 </Button>
               </div>
@@ -149,6 +212,40 @@ const RestaurantDetails = () => {
                 
                 {activeTab === 'reviews' && (
                   <div className="reviews-list">
+                    {user && (
+                      <form onSubmit={submitReview} style={{ marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                        <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '0.5rem' }}>
+                          {[1, 2, 3, 4, 5].map(n => (
+                            <button
+                              key={n}
+                              type="button"
+                              onClick={() => setReviewRating(n)}
+                              aria-label={`${n} star${n > 1 ? 's' : ''}`}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: '#ffc107' }}
+                            >
+                              <Star size={18} fill={n <= reviewRating ? '#ffc107' : 'none'} />
+                            </button>
+                          ))}
+                        </div>
+                        <textarea
+                          value={reviewText}
+                          onChange={e => setReviewText(e.target.value)}
+                          placeholder="Share your experience..."
+                          rows={3}
+                          style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: 'var(--text-main, #fff)', padding: '0.6rem', fontSize: '0.9rem', resize: 'vertical', boxSizing: 'border-box' }}
+                        />
+                        {reviewStatus && (
+                          <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', color: reviewStatus.type === 'error' ? '#ff6b6b' : '#7ddf64' }}>{reviewStatus.message}</p>
+                        )}
+                        <button
+                          type="submit"
+                          className="full-width-btn"
+                          style={{ marginTop: '0.6rem', width: '100%', background: 'var(--primary, #C6F135)', color: '#111', border: 'none', borderRadius: 8, padding: '0.6rem', fontWeight: 700, cursor: 'pointer' }}
+                        >
+                          Submit Review
+                        </button>
+                      </form>
+                    )}
                     {reviews.length === 0 ? (
                       <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem 0' }}>No reviews yet</p>
                     ) : (

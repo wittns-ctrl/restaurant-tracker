@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, LogIn } from 'lucide-react';
+import { Menu, X, LogIn, LayoutDashboard, LogOut } from 'lucide-react';
 import Button from '../../components/Button/Button';
 import Logo from '../../components/Logo/Logo';
+import { useAuth } from '../../context/AuthContext';
 import './Navbar.css';
 
 const Navbar = () => {
@@ -10,6 +11,13 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuth();
+
+  const dashboardUrl = user?.role === 'owner'
+    ? '/owner/dashboard'
+    : user?.role === 'admin'
+    ? '/admin/dashboard'
+    : '/customer/dashboard';
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -79,25 +87,68 @@ const Navbar = () => {
               )}
             </div>
           ))}
-          <div className="navbar-actions-mobile">
-            <Link to="/login" style={{ width: '100%' }} onClick={() => setIsMobileMenuOpen(false)}>
-              <Button variant="outline" style={{ width: '100%' }}>
-                <LogIn size={16} /> Sign In
+          {isAuthenticated ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
+              <Link to={dashboardUrl} style={{ width: '100%' }} onClick={() => setIsMobileMenuOpen(false)}>
+                <Button variant="primary" style={{ width: '100%' }}>
+                  <LayoutDashboard size={16} /> Dashboard ({user?.name?.split(' ')[0] || 'Account'})
+                </Button>
+              </Link>
+              <Button
+                variant="outline"
+                style={{ width: '100%' }}
+                onClick={() => {
+                  logout();
+                  setIsMobileMenuOpen(false);
+                  navigate('/');
+                }}
+              >
+                <LogOut size={16} /> Log Out
               </Button>
-            </Link>
-            <Link to="/signup" style={{ width: '100%' }} onClick={() => setIsMobileMenuOpen(false)}>
-              <Button variant="primary" style={{ width: '100%' }}>Sign Up</Button>
-            </Link>
-          </div>
+            </div>
+          ) : (
+            <>
+              <Link to="/login" style={{ width: '100%' }} onClick={() => setIsMobileMenuOpen(false)}>
+                <Button variant="outline" style={{ width: '100%' }}>
+                  <LogIn size={16} /> Sign In
+                </Button>
+              </Link>
+              <Link to="/signup" style={{ width: '100%' }} onClick={() => setIsMobileMenuOpen(false)}>
+                <Button variant="primary" style={{ width: '100%' }}>Sign Up</Button>
+              </Link>
+            </>
+          )}
         </div>
 
         <div className="navbar-actions-desktop">
-          <Link to="/login">
-            <Button variant="outline"><LogIn size={16} /> Sign In</Button>
-          </Link>
-          <Link to="/signup">
-            <Button variant="primary">Sign Up</Button>
-          </Link>
+          {isAuthenticated ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <Link to={dashboardUrl} style={{ textDecoration: 'none' }}>
+                <Button variant="primary">
+                  <LayoutDashboard size={16} /> {user?.name?.split(' ')[0] || 'Dashboard'}
+                </Button>
+              </Link>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  logout();
+                  navigate('/');
+                }}
+                title="Log Out"
+              >
+                <LogOut size={16} />
+              </Button>
+            </div>
+          ) : (
+            <>
+              <Link to="/login">
+                <Button variant="outline"><LogIn size={16} /> Sign In</Button>
+              </Link>
+              <Link to="/signup">
+                <Button variant="primary">Sign Up</Button>
+              </Link>
+            </>
+          )}
         </div>
 
         <button

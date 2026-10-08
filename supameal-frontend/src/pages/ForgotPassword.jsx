@@ -39,15 +39,16 @@ export default function ForgotPassword() {
           <p className="auth-subtitle">Enter your email and we'll send you a reset link</p>
         </div>
 
-        <AnimatePresence mode="wait">
-          {sent ? (
-            <motion.div
-              key="success"
-              className="auth-success-card"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-            >
+        {/* Plain conditional render — the old AnimatePresence mode="wait" swap
+            could stick on the exiting form (framer-motion 12), leaving the
+            button frozen on "Sending Reset Link..." forever. */}
+        {sent ? (
+          <motion.div
+            key="success"
+            className="auth-success-card"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
               <div className="success-icon-ring">
                 <CheckCircle size={40} />
               </div>
@@ -71,7 +72,6 @@ export default function ForgotPassword() {
               key="form"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
             >
               <AnimatePresence>
                 {error && (
@@ -126,7 +126,6 @@ export default function ForgotPassword() {
               </form>
             </motion.div>
           )}
-        </AnimatePresence>
       </div>
     </AuthLayout>
   );

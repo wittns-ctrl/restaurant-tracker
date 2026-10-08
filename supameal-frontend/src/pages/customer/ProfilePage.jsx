@@ -68,8 +68,10 @@ const ProfilePage = () => {
     setError('');
     try {
       const newName = `${profile.firstName} ${profile.lastName}`.trim();
+      // Only whitelisted profile fields — user.profile is a mongoose subdoc
+      // whose _id would trip forbidNonWhitelisted and 400 the whole PATCH.
       const nextProfile = {
-        ...(user?.profile || {}),
+        bio: user?.profile?.bio || '',
         imageurl: avatarPreview || '',
       };
       const updated = await usersApi.update(user.id, {

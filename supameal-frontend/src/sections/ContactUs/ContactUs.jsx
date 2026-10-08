@@ -7,12 +7,18 @@ import './ContactUs.css';
 const ContactUs = () => {
   const [form, setForm] = useState({ fullName: '', email: '', message: '' });
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await mailApi.contact(form);
-    setSent(true);
-    setForm({ fullName: '', email: '', message: '' });
+    setError('');
+    try {
+      await mailApi.contact(form);
+      setSent(true);
+      setForm({ fullName: '', email: '', message: '' });
+    } catch (err) {
+      setError(err?.message || 'Could not send your message. Please try again.');
+    }
   };
 
   return (
@@ -63,6 +69,7 @@ const ContactUs = () => {
             <form className="contact-form" onSubmit={handleSubmit}>
               <h3>Send us a message</h3>
               {sent && <p style={{ color: '#4caf80', marginBottom: '1rem' }}>Message sent successfully!</p>}
+              {error && <p style={{ color: '#f44336', marginBottom: '1rem' }}>{error}</p>}
               
               <div className="form-group">
                 <label>Full Name</label>

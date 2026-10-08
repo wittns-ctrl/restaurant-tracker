@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { restaurantsApi, bookingsApi, ordersApi, menusApi, uploadsApi, resolveImageUrl } from '../../services/api';
+import { restaurantsApi, bookingsApi, ordersApi, menusApi, uploadsApi, usersApi, resolveImageUrl } from '../../services/api';
 import DashboardLayout from '../../layouts/DashboardLayout/DashboardLayout';
 import {
   BarChart2, ShoppingBag, BookOpen, Camera, Plus, Trash2,
@@ -39,7 +39,7 @@ const ownerSidebarConfig = [
 
 // ── SVG Charts (shared) ────────────────────────────────────────────────────
 const BarChartSVG = ({ data, color = '#d78a26' }) => {
-  const max = Math.max(...data.map(d => d.value));
+  const max = Math.max(...data.map(d => d.value), 1);
   const w = 420, h = 150, padL = 40, padB = 28, barW = 34, gap = 8;
   return (
     <svg viewBox={`0 0 ${w} ${h + padB}`} style={{ width: '100%', height: 'auto' }}>
@@ -257,9 +257,14 @@ const DeleteDialog = ({ item, onConfirm, onClose }) => (
 );
 
 // ── Dashboard Overview ─────────────────────────────────────────────────────
-const DashboardOverview = ({ setActiveTab, orders, bookings }) => {
+const DashboardOverview = ({ setActiveTab, orders, bookings, restaurant }) => {
   const pendingBookings = bookings.filter(b => b.status === 'pending').length;
-  const activeOrders = orders.filter(o => o.status === 'preparing').length;
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const todaysOrders = orders.filter(o => o.createdAt && new Date(o.createdAt) >= startOfToday);
+  const deliveredToday = todaysOrders.filter(o => o.status === 'delivered');
+  const todaysRevenue = deliveredToday.reduce((s, o) => s + Number(o.total || 0), 0);
+  const activeOrders = orders.filter(o => ['preparing', 'ready', 'on-way'].includes(o.status)).length;
 
   return (
     <>
@@ -270,10 +275,10 @@ const DashboardOverview = ({ setActiveTab, orders, bookings }) => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', marginBottom: '2rem' }}>
         {[
-          { label: "Today's Revenue", value: '$1,245.50', sub: '+12% from yesterday', color: '#d78a26', icon: DollarSign },
-          { label: 'New Orders', value: activeOrders || 3, sub: `${activeOrders} active now`, color: '#C6F135', icon: ShoppingBag },
-          { label: 'Table Bookings', value: pendingBookings || 12, sub: `${pendingBookings} pending`, color: '#4caf80', icon: BookOpen },
-          { label: 'Avg. Rating', value: '4.8', sub: 'Based on 342 reviews', color: '#ffc107', icon: Star },
+          { label: "Today's Revenue", value: `$${todaysRevenue.toFixed(2)}`, sub: `${deliveredToday.length} delivered today`, color: '#d78a26', icon: DollarSign },
+          { label: "Today's Orders", value: todaysOrders.length, sub: `${activeOrders} active now`, color: '#C6F135', icon: ShoppingBag },
+          { label: 'Table Bookings', value: bookings.length, sub: `${pendingBookings} pending`, color: '#4caf80', icon: BookOpen },
+          { label: 'Avg. Rating', value: (restaurant?.rating || 0).toFixed(1), sub: `Based on ${restaurant?.reviews || 0} reviews`, color: '#ffc107', icon: Star },
         ].map((stat, i) => (
           <div key={i} className="dash-panel" style={{ padding: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
@@ -295,6 +300,9 @@ const DashboardOverview = ({ setActiveTab, orders, bookings }) => {
             <button className="dash-btn-outline" style={{ padding: '0.35rem 0.9rem', fontSize: '0.8rem' }} onClick={() => setActiveTab('orders')}>View All</button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {orders.length === 0 && (
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', padding: '0.5rem 0' }}>No orders yet — new orders will appear here.</div>
+            )}
             {orders.slice(0, 3).map(order => (
               <div key={order.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.85rem 1rem', background: 'var(--dash-bg)', borderRadius: '10px' }}>
                 <div>
@@ -319,6 +327,9 @@ const DashboardOverview = ({ setActiveTab, orders, bookings }) => {
             <button className="dash-btn-outline" style={{ padding: '0.35rem 0.9rem', fontSize: '0.8rem' }} onClick={() => setActiveTab('bookings')}>View</button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {bookings.filter(b => b.status === 'confirmed' || b.status === 'pending').length === 0 && (
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', padding: '0.5rem 0' }}>No upcoming bookings.</div>
+            )}
             {bookings.filter(b => b.status === 'confirmed' || b.status === 'pending').slice(0, 3).map(booking => (
               <div key={booking.id} style={{ padding: '0.85rem 1rem', background: 'var(--dash-bg)', borderRadius: '10px' }}>
                 <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.2rem' }}>
@@ -337,60 +348,130 @@ const DashboardOverview = ({ setActiveTab, orders, bookings }) => {
 };
 
 // ── Restaurant Profile ─────────────────────────────────────────────────────
-const RestaurantProfile = ({ showToast }) => (
-  <>
-    <div className="page-header">
-      <h1>Restaurant Profile</h1>
-      <p>Manage your public restaurant details and settings.</p>
-    </div>
-    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
-      <div className="dash-panel">
-        <h3 style={{ marginBottom: '1.5rem' }}>General Information</h3>
-        <div className="dash-form-group"><label>Restaurant Name</label><input className="dash-input" defaultValue="The Golden Plate" /></div>
-        <div className="dash-form-group"><label>Cuisine Type</label>
-          <select className="dash-input" defaultValue="Continental" style={{ cursor: 'pointer' }}>
-            {['Continental', 'Italian', 'Japanese', 'Indian', 'American', 'Chinese'].map(c => <option key={c}>{c}</option>)}
-          </select>
-        </div>
-        <div className="dash-form-group"><label>Description</label><textarea className="dash-input" rows={3} defaultValue="Fine dining experience offering the best culinary delights." /></div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-          <div className="dash-form-group"><label>Location</label><input className="dash-input" defaultValue="123 Culinary Ave" /></div>
-          <div className="dash-form-group"><label>Phone</label><input className="dash-input" defaultValue="+1 (555) 123-4567" /></div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-          <div className="dash-form-group"><label>Opening Hours</label><input className="dash-input" type="time" defaultValue="10:00" /></div>
-          <div className="dash-form-group"><label>Closing Hours</label><input className="dash-input" type="time" defaultValue="22:00" /></div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-          <div className="dash-form-group"><label>Seating Capacity</label><input className="dash-input" type="number" defaultValue={50} /></div>
-          <div className="dash-form-group"><label>Average Price (per person)</label><input className="dash-input" type="number" defaultValue={35} /></div>
-        </div>
-        <button className="dash-btn-primary" onClick={() => showToast('Restaurant profile saved!')}>Save Changes</button>
+const AMENITY_OPTIONS = ['Free WiFi', 'Parking Available', 'Outdoor Seating', 'Wheelchair Access', 'Live Music', 'Takeaway'];
+const CUISINE_OPTIONS = ['Continental', 'Italian', 'Japanese', 'Indian', 'American', 'Chinese', 'International'];
+
+const RestaurantProfile = ({ showToast, restaurantId, setActiveTab }) => {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [cover, setCover] = useState(img1);
+  const [form, setForm] = useState({
+    name: '', cuisine: 'International', description: '',
+    address: '', city: '', phone: '', opening: '', capacity: '',
+    amenities: [],
+  });
+
+  useEffect(() => {
+    if (!restaurantId) { setLoading(false); return; }
+    setLoading(true);
+    restaurantsApi.get(restaurantId)
+      .then(r => {
+        setForm({
+          name: r.name || '',
+          cuisine: r.cuisine || 'International',
+          description: r.description || '',
+          address: r.location?.address || '',
+          city: r.location?.city || '',
+          phone: r.phone || '',
+          opening: r.opening || '',
+          capacity: r.capacity ?? '',
+          amenities: r.amenities || [],
+        });
+        setCover(resolveImageUrl(r.images?.[0]) || img1);
+      })
+      .catch(err => showToast(err.message || 'Could not load restaurant profile', 'error'))
+      .finally(() => setLoading(false));
+  }, [restaurantId]);
+
+  const setField = (key) => (e) => setForm(p => ({ ...p, [key]: e.target.value }));
+
+  const toggleAmenity = (a) => setForm(p => ({
+    ...p,
+    amenities: p.amenities.includes(a) ? p.amenities.filter(x => x !== a) : [...p.amenities, a],
+  }));
+
+  const handleSave = async () => {
+    if (saving) return;
+    if (!form.name.trim() || form.description.trim().length < 10) {
+      showToast('Name is required and description must be at least 10 characters.', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = {
+        name: form.name.trim(),
+        cuisine: form.cuisine,
+        description: form.description.trim(),
+        location: { address: form.address, city: form.city },
+        phone: form.phone,
+        opening: form.opening,
+        amenities: form.amenities,
+      };
+      if (form.capacity !== '' && form.capacity !== null) payload.capacity = Number(form.capacity);
+      await restaurantsApi.update(restaurantId, payload);
+      showToast('Restaurant profile saved!');
+    } catch (err) {
+      showToast(err.message || 'Could not save profile', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <div style={{ color: 'var(--text-muted)', padding: '2rem' }}>Loading restaurant profile…</div>;
+
+  return (
+    <>
+      <div className="page-header">
+        <h1>Restaurant Profile</h1>
+        <p>Manage your public restaurant details and settings.</p>
       </div>
-      <div>
-        <div className="dash-panel" style={{ marginBottom: '1.25rem' }}>
-          <h3 style={{ marginBottom: '1rem' }}>Cover Photo</h3>
-          <div style={{ position: 'relative', width: '100%', height: 160, borderRadius: '12px', overflow: 'hidden', marginBottom: '0.75rem' }}>
-            <img src={img1} alt="Restaurant" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            <button onClick={() => showToast('Photo upload would open here.', 'info')} style={{ position: 'absolute', bottom: '0.75rem', right: '0.75rem', background: 'var(--dash-accent)', border: 'none', padding: '0.5rem', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Camera size={16} color="#000" />
-            </button>
-          </div>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center' }}>Recommended: 1200×800px</p>
-        </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
         <div className="dash-panel">
-          <h3 style={{ marginBottom: '1rem' }}>Amenities</h3>
-          {['Free WiFi', 'Parking Available', 'Outdoor Seating', 'Wheelchair Access', 'Live Music', 'Takeaway'].map(a => (
-            <label key={a} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.6rem', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--text-muted)' }}>
-              <input type="checkbox" defaultChecked={['Free WiFi', 'Parking Available', 'Takeaway'].includes(a)} style={{ accentColor: 'var(--dash-accent)', width: 15, height: 15 }} />
-              {a}
-            </label>
-          ))}
+          <h3 style={{ marginBottom: '1.5rem' }}>General Information</h3>
+          <div className="dash-form-group"><label>Restaurant Name</label><input className="dash-input" value={form.name} onChange={setField('name')} /></div>
+          <div className="dash-form-group"><label>Cuisine Type</label>
+            <select className="dash-input" value={form.cuisine} onChange={setField('cuisine')} style={{ cursor: 'pointer' }}>
+              {!CUISINE_OPTIONS.includes(form.cuisine) && <option value={form.cuisine}>{form.cuisine}</option>}
+              {CUISINE_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div className="dash-form-group"><label>Description</label><textarea className="dash-input" rows={3} value={form.description} onChange={setField('description')} /></div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="dash-form-group"><label>Street Address</label><input className="dash-input" value={form.address} onChange={setField('address')} /></div>
+            <div className="dash-form-group"><label>City</label><input className="dash-input" value={form.city} onChange={setField('city')} /></div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="dash-form-group"><label>Phone</label><input className="dash-input" value={form.phone} onChange={setField('phone')} /></div>
+            <div className="dash-form-group"><label>Opening Hours</label><input className="dash-input" value={form.opening} onChange={setField('opening')} placeholder="e.g. 10:00 AM - 10:00 PM" /></div>
+          </div>
+          <div className="dash-form-group"><label>Seating Capacity</label><input className="dash-input" type="number" min="1" max="10000" value={form.capacity} onChange={setField('capacity')} /></div>
+          <button className="dash-btn-primary" disabled={saving} onClick={handleSave}>{saving ? 'Saving…' : 'Save Changes'}</button>
+        </div>
+        <div>
+          <div className="dash-panel" style={{ marginBottom: '1.25rem' }}>
+            <h3 style={{ marginBottom: '1rem' }}>Cover Photo</h3>
+            <div style={{ position: 'relative', width: '100%', height: 160, borderRadius: '12px', overflow: 'hidden', marginBottom: '0.75rem' }}>
+              <img src={cover} alt="Restaurant" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <button onClick={() => setActiveTab('gallery')} title="Manage photos in Gallery" style={{ position: 'absolute', bottom: '0.75rem', right: '0.75rem', background: 'var(--dash-accent)', border: 'none', padding: '0.5rem', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Camera size={16} color="#000" />
+              </button>
+            </div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center' }}>Upload photos in the Gallery tab</p>
+          </div>
+          <div className="dash-panel">
+            <h3 style={{ marginBottom: '1rem' }}>Amenities</h3>
+            {AMENITY_OPTIONS.map(a => (
+              <label key={a} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.6rem', cursor: 'pointer', fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+                <input type="checkbox" checked={form.amenities.includes(a)} onChange={() => toggleAmenity(a)} style={{ accentColor: 'var(--dash-accent)', width: 15, height: 15 }} />
+                {a}
+              </label>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
-  </>
-);
+    </>
+  );
+};
 
 // ── Gallery ────────────────────────────────────────────────────────────────
 const Gallery = ({ showToast, restaurantId }) => {
@@ -748,24 +829,39 @@ const OrderManagement = ({ orders, onMarkReady, onMarkDelivered }) => (
 );
 
 // ── Analytics ──────────────────────────────────────────────────────────────
-const OwnerAnalytics = () => {
-  const revenueData = [
-    { label: 'Mon', value: 820 }, { label: 'Tue', value: 1140 },
-    { label: 'Wed', value: 970 }, { label: 'Thu', value: 1350 },
-    { label: 'Fri', value: 1820 }, { label: 'Sat', value: 2100 },
-    { label: 'Sun', value: 1640 },
-  ];
-  const ordersData = [
-    { label: 'Mon', value: 28 }, { label: 'Tue', value: 42 },
-    { label: 'Wed', value: 35 }, { label: 'Thu', value: 50 },
-    { label: 'Fri', value: 68 }, { label: 'Sat', value: 80 },
-    { label: 'Sun', value: 61 },
-  ];
-  const peakHours = [
-    { label: '10', value: 5 }, { label: '11', value: 12 }, { label: '12', value: 45 },
-    { label: '13', value: 62 }, { label: '14', value: 38 }, { label: '15', value: 20 },
-    { label: '16', value: 18 }, { label: '17', value: 28 }, { label: '18', value: 55 },
-    { label: '19', value: 80 }, { label: '20', value: 100 }, { label: '21', value: 72 },
+const OwnerAnalytics = ({ restaurantId }) => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [overview, setOverview] = useState(null);
+  const [revenueData, setRevenueData] = useState([]);
+  const [peakData, setPeakData] = useState([]);
+
+  useEffect(() => {
+    if (!restaurantId) return;
+    setLoading(true);
+    setError(null);
+    Promise.all([
+      restaurantsApi.analyticsOverview(restaurantId),
+      restaurantsApi.analyticsRevenue(restaurantId, 'week'),
+      restaurantsApi.analyticsPeakHours(restaurantId),
+    ])
+      .then(([ov, revenue, peak]) => {
+        setOverview(ov);
+        setRevenueData((revenue || []).map(d => ({ label: d.label, value: Number(d.value) || 0 })));
+        setPeakData((peak || []).map(p => ({ label: String(p.hour || '').replace(' ', ''), value: p.count })));
+      })
+      .catch(err => setError(err.message || 'Could not load analytics'))
+      .finally(() => setLoading(false));
+  }, [restaurantId]);
+
+  if (loading) return <div style={{ color: 'var(--text-muted)', padding: '2rem' }}>Loading analytics…</div>;
+  if (error) return <div style={{ color: '#e05555', padding: '2rem' }}>{error}</div>;
+
+  const kpis = [
+    { label: 'Total Revenue', value: `$${Number(overview?.revenue || 0).toFixed(2)}`, sub: 'Delivered orders' },
+    { label: 'Total Orders', value: overview?.totalOrders ?? 0, sub: 'All time' },
+    { label: 'Table Bookings', value: overview?.totalBookings ?? 0, sub: 'All time' },
+    { label: 'Customer Rating', value: `${Number(overview?.rating || 0).toFixed(1)} ⭐`, sub: `${overview?.pendingOrders ?? 0} pending orders` },
   ];
 
   return (
@@ -776,80 +872,146 @@ const OwnerAnalytics = () => {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-        {[
-          { label: 'This Week Revenue', value: '$9,840', change: '+18%', up: true },
-          { label: 'Total Orders', value: '364', change: '+22%', up: true },
-          { label: 'Avg. Order Value', value: '$27.03', change: '+5%', up: true },
-          { label: 'Customer Rating', value: '4.8 ⭐', change: '+0.2', up: true },
-        ].map((kpi, i) => (
+        {kpis.map((kpi, i) => (
           <div key={i} className="dash-panel" style={{ padding: '1.25rem' }}>
             <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: '0.4rem' }}>{kpi.label}</div>
             <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--dash-accent)' }}>{kpi.value}</div>
-            <div style={{ fontSize: '0.78rem', color: kpi.up ? '#4caf80' : '#e05555', marginTop: '0.3rem' }}>{kpi.change} vs last week</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>{kpi.sub}</div>
           </div>
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
-        <div className="dash-panel">
-          <h3 style={{ marginBottom: '1.25rem' }}>Daily Revenue This Week</h3>
-          <BarChartSVG data={revenueData} color="#d78a26" />
-        </div>
-        <div className="dash-panel">
-          <h3 style={{ marginBottom: '1.25rem' }}>Daily Orders This Week</h3>
-          <BarChartSVG data={ordersData} color="#4caf80" />
-        </div>
+      <div className="dash-panel" style={{ marginBottom: '1.5rem' }}>
+        <h3 style={{ marginBottom: '1.25rem' }}>Daily Revenue This Week</h3>
+        <BarChartSVG data={revenueData} color="#d78a26" />
+        {revenueData.every(d => d.value === 0) && (
+          <div style={{ marginTop: '0.75rem', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+            No delivered revenue yet this week — revenue appears once orders are marked as delivered.
+          </div>
+        )}
       </div>
 
       <div className="dash-panel">
-        <h3 style={{ marginBottom: '1.25rem' }}>Peak Hours (Today)</h3>
-        <BarChartSVG data={peakHours} color="#C6F135" />
-        <div style={{ marginTop: '0.75rem', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-          🔥 Peak hours: 19:00–21:00 — consider adding more staff during these times.
-        </div>
+        <h3 style={{ marginBottom: '1.25rem' }}>Peak Hours (Last 30 Days)</h3>
+        <BarChartSVG data={peakData} color="#C6F135" />
+        {peakData.some(d => d.value > 0) ? (
+          <div style={{ marginTop: '0.75rem', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+            🔥 Busiest hour: {peakData[0].label} — consider adding more staff then.
+          </div>
+        ) : (
+          <div style={{ marginTop: '0.75rem', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+            No orders in the last 30 days yet — peak hours appear once orders come in.
+          </div>
+        )}
       </div>
     </>
   );
 };
 
 // ── Owner Settings ─────────────────────────────────────────────────────────
-const OwnerSettings = ({ showToast }) => (
-  <>
-    <div className="page-header">
-      <h1>Settings</h1>
-      <p>Manage account and notification preferences.</p>
-    </div>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-      <div className="dash-panel">
-        <h3 style={{ marginBottom: '1.5rem' }}>Account Settings</h3>
-        <div className="dash-form-group"><label>Display Name</label><input className="dash-input" defaultValue="Maria Santos" /></div>
-        <div className="dash-form-group"><label>Email Address</label><input className="dash-input" type="email" defaultValue="maria@goldenplate.com" /></div>
-        <div className="dash-form-group"><label>Phone Number</label><input className="dash-input" defaultValue="+1 (555) 987-6543" /></div>
-        <div className="dash-form-group"><label>New Password</label><input className="dash-input" type="password" placeholder="Leave blank to keep current" /></div>
-        <button className="dash-btn-primary" onClick={() => showToast('Account settings saved!')}>Save Changes</button>
+const NOTIFICATION_PREFS = [
+  { key: 'newOrders', label: 'New Order Notifications', desc: 'Get alerted for new orders', def: true },
+  { key: 'bookingRequests', label: 'Booking Requests', desc: 'Notified when a table is booked', def: true },
+  { key: 'reviewAlerts', label: 'Review Alerts', desc: 'Get notified for new reviews', def: true },
+  { key: 'promotionalEmails', label: 'Promotional Emails', desc: 'Receive marketing emails', def: false },
+  { key: 'weeklyReports', label: 'Weekly Reports', desc: 'Weekly performance summary', def: true },
+];
+
+const OwnerSettings = ({ showToast, user }) => {
+  const [loading, setLoading] = useState(true);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [profile, setProfile] = useState({ name: '', email: '', phone: '' });
+  const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '' });
+  const [prefs, setPrefs] = useState(() =>
+    Object.fromEntries(NOTIFICATION_PREFS.map(p => [p.key, p.def])));
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('ownerNotificationPrefs') || 'null');
+      if (saved) setPrefs(p => ({ ...p, ...saved }));
+    } catch { /* ignore malformed stored prefs */ }
+    if (!user?.id) { setLoading(false); return; }
+    usersApi.get(user.id)
+      .then(u => setProfile({ name: u.name || '', email: u.email || '', phone: u.phone || '' }))
+      .catch(err => showToast(err.message || 'Could not load account details', 'error'))
+      .finally(() => setLoading(false));
+  }, [user?.id]);
+
+  const handleSaveProfile = async () => {
+    if (savingProfile) return;
+    setSavingProfile(true);
+    try {
+      await usersApi.update(user.id, { name: profile.name, email: profile.email, phone: profile.phone });
+      showToast('Account settings saved!');
+    } catch (err) {
+      showToast(err.message || 'Could not save account settings', 'error');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (savingPassword) return;
+    if (!passwords.currentPassword || !/(?=.*[A-Z])(?=.*\d).{8,}/.test(passwords.newPassword)) {
+      showToast('New password needs 8+ characters, one uppercase letter and one digit.', 'error');
+      return;
+    }
+    setSavingPassword(true);
+    try {
+      await usersApi.changePassword(user.id, passwords);
+      showToast('Password updated!');
+      setPasswords({ currentPassword: '', newPassword: '' });
+    } catch (err) {
+      showToast(err.message || 'Could not change password', 'error');
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
+  const handleSavePrefs = () => {
+    localStorage.setItem('ownerNotificationPrefs', JSON.stringify(prefs));
+    showToast('Notification preferences saved!');
+  };
+
+  if (loading) return <div style={{ color: 'var(--text-muted)', padding: '2rem' }}>Loading settings…</div>;
+
+  return (
+    <>
+      <div className="page-header">
+        <h1>Settings</h1>
+        <p>Manage account and notification preferences.</p>
       </div>
-      <div className="dash-panel">
-        <h3 style={{ marginBottom: '1.5rem' }}>Notification Preferences</h3>
-        {[
-          { label: 'New Order Notifications', desc: 'Get alerted for new orders', default: true },
-          { label: 'Booking Requests', desc: 'Notified when a table is booked', default: true },
-          { label: 'Review Alerts', desc: 'Get notified for new reviews', default: true },
-          { label: 'Promotional Emails', desc: 'Receive marketing emails', default: false },
-          { label: 'Weekly Reports', desc: 'Weekly performance summary', default: true },
-        ].map((pref, i) => (
-          <label key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', cursor: 'pointer' }}>
-            <div>
-              <div style={{ fontSize: '0.88rem', fontWeight: 600 }}>{pref.label}</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{pref.desc}</div>
-            </div>
-            <input type="checkbox" defaultChecked={pref.default} style={{ accentColor: 'var(--dash-accent)', width: 16, height: 16 }} />
-          </label>
-        ))}
-        <button className="dash-btn-outline" style={{ width: '100%', marginTop: '0.5rem' }} onClick={() => showToast('Notification preferences saved!')}>Save Preferences</button>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+        <div className="dash-panel">
+          <h3 style={{ marginBottom: '1.5rem' }}>Account Settings</h3>
+          <div className="dash-form-group"><label>Display Name</label><input className="dash-input" value={profile.name} onChange={e => setProfile(p => ({ ...p, name: e.target.value }))} /></div>
+          <div className="dash-form-group"><label>Email Address</label><input className="dash-input" type="email" value={profile.email} onChange={e => setProfile(p => ({ ...p, email: e.target.value }))} /></div>
+          <div className="dash-form-group"><label>Phone Number</label><input className="dash-input" value={profile.phone} onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))} /></div>
+          <button className="dash-btn-primary" disabled={savingProfile} onClick={handleSaveProfile}>{savingProfile ? 'Saving…' : 'Save Changes'}</button>
+
+          <h3 style={{ margin: '2rem 0 1rem' }}>Change Password</h3>
+          <div className="dash-form-group"><label>Current Password</label><input className="dash-input" type="password" value={passwords.currentPassword} onChange={e => setPasswords(p => ({ ...p, currentPassword: e.target.value }))} /></div>
+          <div className="dash-form-group"><label>New Password</label><input className="dash-input" type="password" placeholder="8+ chars, one uppercase and one digit" value={passwords.newPassword} onChange={e => setPasswords(p => ({ ...p, newPassword: e.target.value }))} /></div>
+          <button className="dash-btn-outline" disabled={savingPassword} onClick={handleChangePassword}>{savingPassword ? 'Updating…' : 'Update Password'}</button>
+        </div>
+        <div className="dash-panel">
+          <h3 style={{ marginBottom: '1.5rem' }}>Notification Preferences</h3>
+          {NOTIFICATION_PREFS.map(pref => (
+            <label key={pref.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', cursor: 'pointer' }}>
+              <div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 600 }}>{pref.label}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{pref.desc}</div>
+              </div>
+              <input type="checkbox" checked={!!prefs[pref.key]} onChange={() => setPrefs(p => ({ ...p, [pref.key]: !p[pref.key] }))} style={{ accentColor: 'var(--dash-accent)', width: 16, height: 16 }} />
+            </label>
+          ))}
+          <button className="dash-btn-outline" style={{ width: '100%', marginTop: '0.5rem' }} onClick={handleSavePrefs}>Save Preferences</button>
+        </div>
       </div>
-    </div>
-  </>
-);
+    </>
+  );
+};
 
 // ── Main Owner Dashboard ───────────────────────────────────────────────────
 const OwnerDashboard = () => {
@@ -857,6 +1019,7 @@ const OwnerDashboard = () => {
   const [toast, setToast] = useState(null);
 
   const [restaurantId, setRestaurantId] = useState(null);
+  const [restaurant, setRestaurant] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [orders, setOrders] = useState([]);
 
@@ -876,6 +1039,7 @@ const OwnerDashboard = () => {
       setOrders(orderData.map(o => ({
         id: o.orderId || o.id?.slice(-4), orderDbId: o.id,
         customer: o.customer, items: o.itemsSummary, total: Number(o.total).toFixed(2), status: o.status,
+        createdAt: o.createdAt,
       })));
     } catch (err) {
       console.error(err);
@@ -889,6 +1053,7 @@ const OwnerDashboard = () => {
       try {
         const rests = await restaurantsApi.byOwner(ownerId);
         if (rests?.length) {
+          setRestaurant(rests[0]);
           setRestaurantId(rests[0].id);
           loadOwnerData(ownerId, rests[0].id);
         }
@@ -960,15 +1125,15 @@ const OwnerDashboard = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'overview': return <DashboardOverview setActiveTab={setActiveTab} orders={orders} bookings={bookings} />;
-      case 'profile': return <RestaurantProfile showToast={showToast} />;
+      case 'overview': return <DashboardOverview setActiveTab={setActiveTab} orders={orders} bookings={bookings} restaurant={restaurant} />;
+      case 'profile': return <RestaurantProfile showToast={showToast} restaurantId={restaurantId} setActiveTab={setActiveTab} />;
       case 'gallery': return <Gallery showToast={showToast} restaurantId={restaurantId} />;
       case 'menu': return <MenuManagement showToast={showToast} restaurantId={restaurantId} />;
       case 'bookings': return <BookingManagement bookings={bookings} onAccept={handleAcceptBooking} onReject={handleRejectBooking} />;
       case 'orders': return <OrderManagement orders={orders} onMarkReady={handleMarkReady} onMarkDelivered={handleMarkDelivered} />;
-      case 'analytics': return <OwnerAnalytics />;
-      case 'settings': return <OwnerSettings showToast={showToast} />;
-      default: return <DashboardOverview setActiveTab={setActiveTab} orders={orders} bookings={bookings} />;
+      case 'analytics': return <OwnerAnalytics restaurantId={restaurantId} />;
+      case 'settings': return <OwnerSettings showToast={showToast} user={user} />;
+      default: return <DashboardOverview setActiveTab={setActiveTab} orders={orders} bookings={bookings} restaurant={restaurant} />;
     }
   };
 

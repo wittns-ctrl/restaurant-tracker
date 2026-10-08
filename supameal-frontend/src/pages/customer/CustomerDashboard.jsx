@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { LayoutDashboard, CalendarCheck, UtensilsCrossed, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
@@ -42,8 +43,17 @@ const customerSidebarConfig = [
   { id: 'profile', label: 'Profile', icon: User },
 ];
 
+const VALID_TABS = new Set([
+  'overview', 'menu', 'cart', 'checkout', 'book-table',
+  'bookings', 'orders', 'order-tracking', 'favorites', 'profile',
+]);
+
 const CustomerDashboard = () => {
-  const [activeTab, setActiveTab] = useState('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(
+    VALID_TABS.has(requestedTab) ? requestedTab : 'overview',
+  );
   // C4: no hardcoded mock order id — empty until a real order is selected
   // from My Orders or Checkout. The tracking tab shows a picker until then.
   const [trackingOrderId, setTrackingOrderId] = useState('');
@@ -62,9 +72,13 @@ const CustomerDashboard = () => {
     return item;
   });
 
+  // Deep links like /customer/dashboard?tab=menu (used by "Order Food Delivery")
+  // land on the right tab, and the URL stays in sync so a refresh doesn't reset.
   const handleSetActiveTab = (tab, orderId) => {
     if (orderId) setTrackingOrderId(orderId);
+    if (!VALID_TABS.has(tab)) return;
     setActiveTab(tab);
+    setSearchParams(tab === 'overview' ? {} : { tab }, { replace: true });
   };
 
   const renderContent = () => {
@@ -88,7 +102,7 @@ const CustomerDashboard = () => {
   return (
     <DashboardLayout
       activeTab={activeTab}
-      setActiveTab={setActiveTab}
+      setActiveTab={handleSetActiveTab}
       sidebarConfig={sidebarWithBadges}
       roleName="Customer"
     >

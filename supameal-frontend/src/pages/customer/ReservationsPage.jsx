@@ -72,7 +72,7 @@ export default function ReservationsPage() {
             </p>
           </div>
           <Link
-            to="/customer/dashboard"
+            to="/customer/dashboard?tab=book-table"
             style={{
               display: 'inline-flex',
               alignItems: 'center',

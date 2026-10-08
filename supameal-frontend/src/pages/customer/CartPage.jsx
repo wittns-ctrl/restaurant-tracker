@@ -1,10 +1,13 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Trash2, ShoppingCart, ArrowRight, Package } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import './dashboard.css';
 
 const CartPage = ({ setActiveTab }) => {
+  const navigate = useNavigate();
   const { cartItems, updateQty, clearCart } = useCart();
+  const go = (tab, path) => (setActiveTab ? setActiveTab(tab) : navigate(path));
 
   const subtotal = cartItems.reduce((sum, i) => sum + i.price * i.qty, 0);
   const delivery = cartItems.length > 0 ? 3.99 : 0;
@@ -21,7 +24,7 @@ const CartPage = ({ setActiveTab }) => {
         <div className="dash-panel empty-state">
           <ShoppingCart size={56} />
           <p style={{ marginTop: '1rem', fontSize: '1.05rem' }}>Your cart is empty.</p>
-          <button className="dash-btn-primary" style={{ marginTop: '1.5rem' }} onClick={() => setActiveTab('menu')}>Browse Menu</button>
+          <button className="dash-btn-primary" style={{ marginTop: '1.5rem' }} onClick={() => go('menu', '/customer/dashboard?tab=menu')}>Browse Menu</button>
         </div>
       ) : (
         <div className="dash-grid-sidebar">
@@ -70,10 +73,10 @@ const CartPage = ({ setActiveTab }) => {
                   <span>Total</span><span>${total.toFixed(2)}</span>
                 </div>
               </div>
-              <button className="dash-btn-primary" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} onClick={() => setActiveTab('checkout')}>
+              <button className="dash-btn-primary" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} onClick={() => go('checkout', '/checkout')}>
                 Proceed to Checkout <ArrowRight size={18} />
               </button>
-              <button className="dash-btn-outline" style={{ width: '100%', marginTop: '0.75rem' }} onClick={() => setActiveTab('menu')}>
+              <button className="dash-btn-outline" style={{ width: '100%', marginTop: '0.75rem' }} onClick={() => go('menu', '/customer/dashboard?tab=menu')}>
                 Continue Shopping
               </button>
             </div>

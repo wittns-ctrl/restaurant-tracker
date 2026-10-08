@@ -18,11 +18,21 @@ export const authApi = {
 };
 
 
+// URLSearchParams serializes undefined as the literal string "undefined",
+// which backend filters then match against and return zero rows — drop
+// empty params before building the query string.
+const buildQuery = (params = {}) => {
+  const clean = Object.fromEntries(
+    Object.entries(params).filter(([, v]) => v !== undefined && v !== null && v !== ''),
+  );
+  const q = new URLSearchParams(clean).toString();
+  return q ? `?${q}` : '';
+};
+
 // Restaurants
 export const restaurantsApi = {
   list: async (params = {}) => {
-    const q = new URLSearchParams(params).toString();
-    const res = await apiRequest(`/restaurants${q ? `?${q}` : ''}`);
+    const res = await apiRequest(`/restaurants${buildQuery(params)}`);
     return Array.isArray(res) ? res : res?.data || [];
   },
   get: (id) => apiRequest(`/restaurants/${id}`),
@@ -77,8 +87,7 @@ export function resolveImageUrl(url) {
 export const ordersApi = {
   create: (data) => apiRequest('/orders', { method: 'POST', body: JSON.stringify(data) }),
   list: async (params = {}) => {
-    const q = new URLSearchParams(params).toString();
-    const res = await apiRequest(`/orders${q ? `?${q}` : ''}`);
+    const res = await apiRequest(`/orders${buildQuery(params)}`);
     return Array.isArray(res) ? res : res?.data || [];
   },
   get: (id) => apiRequest(`/orders/${id}`),
@@ -94,8 +103,7 @@ export const ordersApi = {
 export const bookingsApi = {
   create: (data) => apiRequest('/bookings', { method: 'POST', body: JSON.stringify(data) }),
   list: async (params = {}) => {
-    const q = new URLSearchParams(params).toString();
-    const res = await apiRequest(`/bookings${q ? `?${q}` : ''}`);
+    const res = await apiRequest(`/bookings${buildQuery(params)}`);
     return Array.isArray(res) ? res : res?.data || [];
   },
   update: (id, data) => apiRequest(`/bookings/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
@@ -109,8 +117,7 @@ export const usersApi = {
   update: (id, data) => apiRequest(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   changePassword: (id, data) => apiRequest(`/users/${id}/password`, { method: 'PATCH', body: JSON.stringify(data) }),
   list: async (params = {}) => {
-    const q = new URLSearchParams(params).toString();
-    const res = await apiRequest(`/users${q ? `?${q}` : ''}`);
+    const res = await apiRequest(`/users${buildQuery(params)}`);
     return Array.isArray(res) ? res : res?.data || [];
   },
   setStatus: (id, status) => apiRequest(`/users/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),

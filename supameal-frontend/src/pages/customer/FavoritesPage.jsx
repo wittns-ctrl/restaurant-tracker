@@ -5,7 +5,7 @@ import { usersApi } from '../../services/api';
 import img1 from '../../assets/images/restaurant_interior.png';
 import './dashboard.css';
 
-const FavoritesPage = ({ setActiveTab }) => {
+const FavoritesPage = () => {
   const [favorites, setFavorites] = useState([]);
   const { user } = useAuth();
 
@@ -37,7 +37,7 @@ const FavoritesPage = ({ setActiveTab }) => {
         <div className="dash-panel empty-state">
           <Heart size={56} />
           <p>You haven't saved any restaurants yet.</p>
-          <button className="dash-btn-primary" style={{ marginTop: '1.5rem' }} onClick={() => setActiveTab('overview')}>Browse Restaurants</button>
+          <button className="dash-btn-primary" style={{ marginTop: '1.5rem' }} onClick={() => { window.location.href = '/restaurants'; }}>Browse Restaurants</button>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
@@ -64,7 +64,7 @@ const FavoritesPage = ({ setActiveTab }) => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#ffc107', fontSize: '0.85rem' }}>
                   <Star size={14} fill="currentColor" /> {r.rating} ({r.reviews} reviews)
                 </div>
-                <button className="dash-btn-outline" style={{ width: '100%', marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+                <button className="dash-btn-outline" style={{ width: '100%', marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }} onClick={() => { window.location.href = `/restaurants/${r.id}`; }}>
                   Order Now <ArrowRight size={14} />
                 </button>
               </div>
