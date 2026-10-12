@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronRight, ShieldCheck, UtensilsCrossed, Store, LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { FaGoogle } from 'react-icons/fa';
 import AuthLayout from '../../layouts/AuthLayout';
@@ -32,6 +32,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const { loginWithCredentials, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
@@ -71,6 +72,10 @@ const Login = () => {
     try {
       const user = await loginWithCredentials(email.trim(), password);
       const loggedInRole = user?.role === 'owner' ? 'restaurant_owner' : user?.role || role;
+      if (location.state?.from === '/book-table' && loggedInRole === 'customer') {
+        navigate('/book-table', { replace: true, state: location.state.fromState || null });
+        return;
+      }
       navigate(DASHBOARD_ROUTES[loggedInRole] || DASHBOARD_ROUTES[role], { replace: true });
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');
@@ -92,16 +97,17 @@ const Login = () => {
         <p>{isForgotPassword ? "Enter your email to receive a reset link" : "Select your account type to continue"}</p>
       </div>
 
-      {error && <p className="auth-form-error">{error}</p>}
-      {forgotMessage && <p className="auth-form-success" style={{ color: 'green', fontSize: '0.9rem', marginBottom: '1rem', textAlign: 'center' }}>{forgotMessage}</p>}
+      {error && <p role="alert" className="auth-form-error">{error}</p>}
+      {forgotMessage && <p role="status" aria-live="polite" className="auth-form-success" style={{ fontSize: '0.9rem', marginBottom: '1rem', textAlign: 'center' }}>{forgotMessage}</p>}
 
       {isForgotPassword ? (
         <form onSubmit={handleForgotPassword}>
           <div className="auth-input-group">
-            <label>Email Address</label>
+            <label htmlFor="login-reset-email">Email Address</label>
             <div className="auth-input-wrapper">
               <Mail size={18} className="auth-input-icon" />
               <input
+                id="login-reset-email"
                 type="email"
                 placeholder="you@example.com"
                 className="auth-input"
@@ -123,10 +129,11 @@ const Login = () => {
       ) : (
         <form onSubmit={handleSignIn}>
           <div className="auth-input-group">
-            <label>Email</label>
+            <label htmlFor="login-email">Email</label>
             <div className="auth-input-wrapper">
               <Mail size={18} className="auth-input-icon" />
               <input
+                id="login-email"
                 type="email"
                 placeholder="you@example.com"
                 className="auth-input"
@@ -138,13 +145,14 @@ const Login = () => {
           </div>
 
           <div className="auth-input-group">
-            <label>Password</label>
+            <label htmlFor="login-password">Password</label>
             <button type="button" onClick={() => { setIsForgotPassword(true); setError(''); }} className="auth-forgot-link" style={{ background: 'none', border: 'none', cursor: 'pointer', float: 'right' }}>
               Forgot password?
             </button>
             <div className="auth-input-wrapper">
               <Lock size={18} className="auth-input-icon" />
               <input
+                id="login-password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Enter your password"
                 className="auth-input"
@@ -157,7 +165,6 @@ const Login = () => {
                 className="auth-input-action"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
-                tabIndex={-1}
               >
                 {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
               </button>

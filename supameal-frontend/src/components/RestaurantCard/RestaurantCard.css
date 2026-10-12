@@ -5,7 +5,7 @@
   transition: transform var(--transition-normal), box-shadow var(--transition-normal);
   cursor: pointer;
   border: 1px solid var(--border-color);
-  min-width: 280px;
+  min-width: min(100%, 17.5rem);
 }
 
 .restaurant-card:hover {

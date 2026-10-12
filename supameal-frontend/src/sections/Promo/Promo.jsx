@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Button from '../../components/Button/Button';
 import promoImg from '../../assets/images/promo_pasta.png';
 import './Promo.css';
@@ -29,9 +30,11 @@ const Promo = () => {
               Great food for less, for a limited time only.
             </p>
             
-            <Button variant="outline" className="promo-btn">
-              Explore Offers <ArrowRight size={18} />
-            </Button>
+            <Link to="/offers" className="promo-link">
+              <Button variant="outline" className="promo-btn">
+                Explore Offers <ArrowRight size={18} />
+              </Button>
+            </Link>
           </div>
           
           <div className="promo-discount-badge">

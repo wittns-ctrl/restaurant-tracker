@@ -42,7 +42,7 @@ export const adminSidebarConfig = [
 ];
 
 // ── Reusable SVG Bar Chart ─────────────────────────────────────────────────
-const BarChartSVG = ({ data, color = '#d78a26', label }) => {
+const BarChartSVG = ({ data, color = 'var(--primary)', label }) => {
   const max = Math.max(...data.map(d => d.value));
   const w = 420, h = 160, padL = 40, padB = 30, barW = 32, gap = 10;
   return (
@@ -102,7 +102,7 @@ const DonutChart = ({ segments }) => {
 };
 
 // ── Line Sparkline ─────────────────────────────────────────────────────────
-const SparkLine = ({ data, color = '#4caf80' }) => {
+const SparkLine = ({ data, color = 'var(--success)' }) => {
   const max = Math.max(...data);
   const min = Math.min(...data);
   const w = 200, h = 60;
@@ -126,7 +126,7 @@ const SparkLine = ({ data, color = '#4caf80' }) => {
 const Toast = ({ message, type = 'success', onClose }) => (
   <div style={{
     position: 'fixed', bottom: '1.5rem', right: '1.5rem', zIndex: 9999,
-    background: type === 'success' ? '#4caf80' : '#e05555',
+    background: type === 'success' ? 'var(--success)' : 'var(--error)',
     color: '#fff', padding: '0.85rem 1.25rem', borderRadius: '12px',
     fontWeight: 600, fontSize: '0.9rem', boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
     display: 'flex', alignItems: 'center', gap: '0.75rem',
@@ -153,10 +153,10 @@ const AdminOverview = ({ setActiveTab, restaurants, users }) => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', marginBottom: '2rem' }}>
         {[
-          { label: 'Total Restaurants', value: restaurants.length, sub: `${activeRestaurants} active`, color: '#d78a26' },
-          { label: 'Total Users', value: users.length.toLocaleString(), sub: `${blockedUsers} blocked`, color: '#4caf80' },
-          { label: 'Total Orders', value: '128K', sub: '+8% vs last month', color: '#C6F135' },
-          { label: 'Pending Approvals', value: pendingCount, sub: 'Needs review', color: '#ffa500' },
+          { label: 'Total Restaurants', value: restaurants.length, sub: `${activeRestaurants} active`, color: 'var(--primary)' },
+          { label: 'Total Users', value: users.length.toLocaleString(), sub: `${blockedUsers} blocked`, color: 'var(--success)' },
+          { label: 'Total Orders', value: '128K', sub: '+8% vs last month', color: 'var(--fresh-accent)' },
+          { label: 'Pending Approvals', value: pendingCount, sub: 'Needs review', color: 'var(--warning)' },
         ].map((stat, i) => (
           <div key={i} className="dash-panel" style={{ padding: '1.5rem' }}>
             <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{stat.label}</div>
@@ -170,7 +170,7 @@ const AdminOverview = ({ setActiveTab, restaurants, users }) => {
         <div className="dash-panel">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
             <h3 style={{ margin: 0 }}>Revenue Growth (Monthly)</h3>
-            <span style={{ fontSize: '0.8rem', color: '#4caf80', background: '#4caf8020', padding: '0.25rem 0.6rem', borderRadius: '20px' }}>+14.2% YoY</span>
+            <span style={{ fontSize: '0.8rem', color: 'var(--success)', background: 'var(--success-soft)', padding: '0.25rem 0.6rem', borderRadius: '20px' }}>+14.2% YoY</span>
           </div>
           <BarChartSVG
             data={[
@@ -179,14 +179,14 @@ const AdminOverview = ({ setActiveTab, restaurants, users }) => {
               { label: 'Apr', value: 62000 }, { label: 'May', value: 85000 },
               { label: 'Jun', value: 98000 },
             ]}
-            color="#d78a26"
+            color="var(--primary)"
           />
         </div>
         <div className="dash-panel">
           <h3 style={{ marginBottom: '1.25rem' }}>Pending Approvals</h3>
           {restaurants.filter(r => r.status === 'pending').length === 0 ? (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-              <CheckCircle size={32} style={{ color: '#4caf80', marginBottom: '0.5rem' }} />
+              <CheckCircle size={32} style={{ color: 'var(--success)', marginBottom: '0.5rem' }} />
               <p>All caught up!</p>
             </div>
           ) : (
@@ -206,7 +206,7 @@ const AdminOverview = ({ setActiveTab, restaurants, users }) => {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
         <div className="dash-panel">
           <h3 style={{ marginBottom: '1.25rem' }}>Active Users (Weekly)</h3>
-          <SparkLine data={[820, 932, 901, 934, 1290, 1330, 1520]} color="#4caf80" />
+          <SparkLine data={[820, 932, 901, 934, 1290, 1330, 1520]} color="var(--success)" />
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.75rem', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
             <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
           </div>
@@ -214,9 +214,9 @@ const AdminOverview = ({ setActiveTab, restaurants, users }) => {
         <div className="dash-panel">
           <h3 style={{ marginBottom: '1.25rem' }}>System Alerts</h3>
           {[
-            { type: 'warning', color: '#e05555', bg: 'rgba(224,85,85,0.1)', icon: AlertCircle, text: 'High server traffic detected.' },
-            { type: 'ok', color: '#4caf80', bg: '#4caf8010', icon: CheckCircle, text: 'Daily backup completed successfully.' },
-            { type: 'info', color: '#ffa500', bg: '#ffa50010', icon: Bell, text: '2 new restaurant applications pending.' },
+            { type: 'warning', color: 'var(--error)', bg: 'rgba(224,85,85,0.1)', icon: AlertCircle, text: 'High server traffic detected.' },
+            { type: 'ok', color: 'var(--success)', bg: 'var(--success-soft)', icon: CheckCircle, text: 'Daily backup completed successfully.' },
+            { type: 'info', color: 'var(--warning)', bg: 'var(--warning-soft)', icon: Bell, text: '2 new restaurant applications pending.' },
           ].map((a, i) => (
             <div key={i} style={{ padding: '0.75rem 1rem', background: a.bg, borderRadius: '10px', border: `1px solid ${a.color}30`, marginBottom: '0.75rem', display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
               <a.icon size={16} color={a.color} style={{ flexShrink: 0, marginTop: 2 }} />
@@ -241,8 +241,8 @@ const RestaurantApprovals = ({ restaurants, onApprove, onReject }) => {
       <div className="dash-panel">
         {pending.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-            <CheckCircle size={48} style={{ color: '#4caf80', marginBottom: '1rem' }} />
-            <h3 style={{ color: '#4caf80' }}>All applications reviewed!</h3>
+            <CheckCircle size={48} style={{ color: 'var(--success)', marginBottom: '1rem' }} />
+            <h3 style={{ color: 'var(--success)' }}>All applications reviewed!</h3>
             <p>No pending restaurant approvals at this time.</p>
           </div>
         ) : (
@@ -255,26 +255,26 @@ const RestaurantApprovals = ({ restaurants, onApprove, onReject }) => {
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem' }}>
                     <div style={{ fontWeight: 700, fontSize: '1rem' }}>{req.name}</div>
-                    <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: '#ffa50020', color: '#ffa500', fontWeight: 600 }}>PENDING</span>
+                    <span style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: 'var(--warning-soft)', color: 'var(--warning)', fontWeight: 600 }}>PENDING</span>
                   </div>
                   <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
                     <span>📍 {req.location}</span>
                     <span>🍽 {req.type}</span>
-                    <span>📄 Docs: <strong style={{ color: req.docs === 'Verified' ? '#4caf80' : '#ffa500' }}>{req.docs}</strong></span>
+                    <span>📄 Docs: <strong style={{ color: req.docs === 'Verified' ? 'var(--success)' : 'var(--warning)' }}>{req.docs}</strong></span>
                     <span>🕐 {req.submitted}</span>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button
                     className="dash-btn-primary"
-                    style={{ padding: '0.5rem 1.1rem', background: '#4caf80', color: '#fff', borderColor: '#4caf80', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                    style={{ padding: '0.5rem 1.1rem', background: 'var(--success)', color: '#fff', borderColor: 'var(--success)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                     onClick={() => onApprove(req.id)}
                   >
                     <CheckCircle size={16} /> Approve
                   </button>
                   <button
                     className="dash-btn-outline"
-                    style={{ padding: '0.5rem 1rem', color: '#e05555', borderColor: '#e05555', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                    style={{ padding: '0.5rem 1rem', color: 'var(--error)', borderColor: 'var(--error)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                     onClick={() => onReject(req.id)}
                   >
                     <XCircle size={16} /> Reject
@@ -314,8 +314,8 @@ const AllRestaurants = ({ restaurants, onToggleStatus }) => (
               <td style={{ padding: '1rem 0.75rem' }}>
                 <span style={{
                   fontSize: '0.75rem', padding: '0.25rem 0.6rem', borderRadius: '4px', fontWeight: 600,
-                  background: r.status === 'active' ? '#4caf8020' : r.status === 'rejected' ? '#e0555520' : '#ffa50020',
-                  color: r.status === 'active' ? '#4caf80' : r.status === 'rejected' ? '#e05555' : '#ffa500',
+                  background: r.status === 'active' ? 'var(--success-soft)' : r.status === 'rejected' ? 'var(--error-soft)' : 'var(--warning-soft)',
+                  color: r.status === 'active' ? 'var(--success)' : r.status === 'rejected' ? 'var(--error)' : 'var(--warning)',
                 }}>
                   {r.status.toUpperCase()}
                 </span>
@@ -323,7 +323,7 @@ const AllRestaurants = ({ restaurants, onToggleStatus }) => (
               <td style={{ padding: '1rem 0.75rem' }}>
                 <button
                   className="dash-btn-outline"
-                  style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: r.status === 'active' ? '#e05555' : '#4caf80', borderColor: r.status === 'active' ? '#e05555' : '#4caf80' }}
+                  style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: r.status === 'active' ? 'var(--error)' : 'var(--success)', borderColor: r.status === 'active' ? 'var(--error)' : 'var(--success)' }}
                   onClick={() => onToggleStatus(r.id)}
                 >
                   {r.status === 'active' ? <><Ban size={14} /> Suspend</> : <><CheckCircle size={14} /> Activate</>}
@@ -360,7 +360,7 @@ const UserTable = ({ users, type, onToggleBlock }) => {
               <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                 <td style={{ padding: '1rem 0.75rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg, #d78a26, #ffa500)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#000', fontSize: '0.85rem', flexShrink: 0 }}>
+                    <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), var(--warning))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#000', fontSize: '0.85rem', flexShrink: 0 }}>
                       {u.name.charAt(0)}
                     </div>
                     <span style={{ fontWeight: 600 }}>{u.name}</span>
@@ -369,14 +369,14 @@ const UserTable = ({ users, type, onToggleBlock }) => {
                 <td style={{ padding: '1rem 0.75rem', color: 'var(--text-muted)' }}>{u.email}</td>
                 <td style={{ padding: '1rem 0.75rem', color: 'var(--text-muted)' }}>{u.joined}</td>
                 <td style={{ padding: '1rem 0.75rem' }}>
-                  <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', borderRadius: '4px', fontWeight: 600, background: u.status === 'active' ? '#4caf8020' : '#e0555520', color: u.status === 'active' ? '#4caf80' : '#e05555' }}>
+                  <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.6rem', borderRadius: '4px', fontWeight: 600, background: u.status === 'active' ? 'var(--success-soft)' : 'var(--error-soft)', color: u.status === 'active' ? 'var(--success)' : 'var(--error)' }}>
                     {u.status.toUpperCase()}
                   </span>
                 </td>
                 <td style={{ padding: '1rem 0.75rem' }}>
                   <button
                     className="dash-btn-outline"
-                    style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: u.status === 'active' ? '#e05555' : '#4caf80', borderColor: u.status === 'active' ? '#e05555' : '#4caf80' }}
+                    style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: u.status === 'active' ? 'var(--error)' : 'var(--success)', borderColor: u.status === 'active' ? 'var(--error)' : 'var(--success)' }}
                     onClick={() => onToggleBlock(u.id)}
                   >
                     {u.status === 'active' ? <><UserX size={14} /> Block</> : <><UserCheck size={14} /> Unblock</>}
@@ -406,9 +406,9 @@ const PlatformAnalytics = () => {
     { label: 'Sun', value: 4800 },
   ];
   const donutSegments = [
-    { label: 'Delivery', value: 6820, color: '#d78a26' },
-    { label: 'Dine-In', value: 3240, color: '#4caf80' },
-    { label: 'Takeaway', value: 2160, color: '#ffa500' },
+    { label: 'Delivery', value: 6820, color: 'var(--primary)' },
+    { label: 'Dine-In', value: 3240, color: 'var(--success)' },
+    { label: 'Takeaway', value: 2160, color: 'var(--warning)' },
   ];
 
   return (
@@ -428,7 +428,7 @@ const PlatformAnalytics = () => {
           <div key={i} className="dash-panel" style={{ padding: '1.25rem' }}>
             <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: '0.4rem' }}>{kpi.label}</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--dash-accent)' }}>{kpi.value}</div>
-            <div style={{ fontSize: '0.78rem', color: kpi.up ? '#4caf80' : '#e05555', marginTop: '0.3rem' }}>{kpi.change} vs last month</div>
+            <div style={{ fontSize: '0.78rem', color: kpi.up ? 'var(--success)' : 'var(--error)', marginTop: '0.3rem' }}>{kpi.change} vs last month</div>
           </div>
         ))}
       </div>
@@ -436,7 +436,7 @@ const PlatformAnalytics = () => {
       <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
         <div className="dash-panel">
           <h3 style={{ marginBottom: '1.25rem' }}>Monthly Revenue</h3>
-          <BarChartSVG data={monthlyData} color="#d78a26" />
+          <BarChartSVG data={monthlyData} color="var(--primary)" />
         </div>
         <div className="dash-panel">
           <h3 style={{ marginBottom: '1.25rem' }}>Order Type Breakdown</h3>
@@ -459,7 +459,7 @@ const PlatformAnalytics = () => {
 
       <div className="dash-panel">
         <h3 style={{ marginBottom: '1.25rem' }}>Daily Orders This Week</h3>
-        <BarChartSVG data={orderData} color="#4caf80" />
+        <BarChartSVG data={orderData} color="var(--success)" />
       </div>
     </>
   );
@@ -522,9 +522,9 @@ const AdminSettings = ({ showToast }) => (
       <div className="dash-panel">
         <h3 style={{ marginBottom: '1.5rem' }}>Maintenance</h3>
         {[
-          { label: 'Clear Cache', desc: 'Remove all cached data from servers', color: '#ffa500', icon: RefreshCw },
-          { label: 'Backup Database', desc: 'Create a full database backup now', color: '#4caf80', icon: CheckCircle },
-          { label: 'Maintenance Mode', desc: 'Take the platform offline temporarily', color: '#e05555', icon: AlertCircle },
+          { label: 'Clear Cache', desc: 'Remove all cached data from servers', color: 'var(--warning)', icon: RefreshCw },
+          { label: 'Backup Database', desc: 'Create a full database backup now', color: 'var(--success)', icon: CheckCircle },
+          { label: 'Maintenance Mode', desc: 'Take the platform offline temporarily', color: 'var(--error)', icon: AlertCircle },
         ].map((action, i) => (
           <div key={i} style={{ padding: '1rem', background: 'var(--dash-bg)', borderRadius: '12px', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <action.icon size={20} color={action.color} />
@@ -568,7 +568,7 @@ const AdminDashboard = () => {
         id: u.id, name: u.name, email: u.email, joined: u.joined, status: u.status, type: u.type,
       })));
       setNotifications(notifData.map(n => ({
-        id: n.id, type: 'System', text: n.message, time: n.time, color: '#4caf80',
+        id: n.id, type: 'System', text: n.message, time: n.time, color: 'var(--success)',
       })));
     } catch (err) {
       console.error(err);

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { restaurantsApi, bookingsApi, ordersApi, menusApi, uploadsApi, usersApi, resolveImageUrl } from '../../services/api';
 import DashboardLayout from '../../layouts/DashboardLayout/DashboardLayout';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import {
   BarChart2, ShoppingBag, BookOpen, Camera, Plus, Trash2,
   Edit3, Check, X, Clock, Settings, TrendingUp,
@@ -38,7 +39,7 @@ const ownerSidebarConfig = [
 ];
 
 // ── SVG Charts (shared) ────────────────────────────────────────────────────
-const BarChartSVG = ({ data, color = '#d78a26' }) => {
+const BarChartSVG = ({ data, color = 'var(--primary)' }) => {
   const max = Math.max(...data.map(d => d.value), 1);
   const w = 420, h = 150, padL = 40, padB = 28, barW = 34, gap = 8;
   return (
@@ -65,7 +66,7 @@ const BarChartSVG = ({ data, color = '#d78a26' }) => {
 const Toast = ({ message, type = 'success', onClose }) => (
   <div style={{
     position: 'fixed', bottom: '1.5rem', right: '1.5rem', zIndex: 9999,
-    background: type === 'success' ? '#4caf80' : type === 'error' ? '#e05555' : '#d78a26',
+    background: type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--error)' : 'var(--primary)',
     color: '#fff', padding: '0.85rem 1.25rem', borderRadius: '12px',
     fontWeight: 600, fontSize: '0.9rem', boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
     display: 'flex', alignItems: 'center', gap: '0.75rem',
@@ -161,7 +162,7 @@ const MenuDialog = ({ item, onSave, onClose }) => {
                     {uploading ? 'Uploading…' : 'Upload photo'}
                   </button>
                   {form.image && form.image.startsWith('/uploads/') && (
-                    <button type="button" style={{ background: 'none', border: 'none', color: '#e05555', cursor: 'pointer', fontSize: '0.78rem', textAlign: 'left', padding: 0 }}
+                    <button type="button" style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', fontSize: '0.78rem', textAlign: 'left', padding: 0 }}
                       onClick={() => setForm(p => ({ ...p, image: '' }))}>
                       Remove photo
                     </button>
@@ -198,9 +199,9 @@ const MenuDialog = ({ item, onSave, onClose }) => {
 
           <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
             {[
-              { key: 'available', label: '✓ Available', activeColor: '#4caf80' },
-              { key: 'spicy', label: '🌶 Spicy', activeColor: '#e05555' },
-              { key: 'veg', label: '🥦 Vegetarian', activeColor: '#4caf80' },
+              { key: 'available', label: '✓ Available', activeColor: 'var(--success)' },
+              { key: 'spicy', label: '🌶 Spicy', activeColor: 'var(--error)' },
+              { key: 'veg', label: '🥦 Vegetarian', activeColor: 'var(--success)' },
             ].map(toggle => (
               <button
                 key={toggle.key}
@@ -231,29 +232,14 @@ const MenuDialog = ({ item, onSave, onClose }) => {
 
 // ── Delete Confirm Dialog ──────────────────────────────────────────────────
 const DeleteDialog = ({ item, onConfirm, onClose }) => (
-  <div style={{
-    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000,
-    display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
-  }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-    <div style={{
-      background: '#181818', borderRadius: '20px', padding: '2rem',
-      width: '100%', maxWidth: 400, border: '1px solid rgba(224,85,85,0.2)',
-      boxShadow: '0 20px 60px rgba(0,0,0,0.6)', textAlign: 'center',
-      animation: 'fadeInUp 0.25s ease',
-    }}>
-      <div style={{ width: 56, height: 56, background: 'rgba(224,85,85,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem' }}>
-        <Trash2 size={24} color="#e05555" />
-      </div>
-      <h3 style={{ margin: '0 0 0.5rem' }}>Delete "{item.name}"?</h3>
-      <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '0.9rem' }}>This action cannot be undone.</p>
-      <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
-        <button className="dash-btn-outline" style={{ padding: '0.65rem 1.5rem' }} onClick={onClose}>Cancel</button>
-        <button className="dash-btn-primary"
-          style={{ padding: '0.65rem 1.5rem', background: '#e05555', borderColor: '#e05555' }}
-          onClick={onConfirm}>Delete</button>
-      </div>
-    </div>
-  </div>
+  <ConfirmDialog
+    title={`Delete “${item.name}”?`}
+    description="This menu item will be permanently removed from your restaurant menu."
+    confirmLabel="Delete item"
+    Icon={Trash2}
+    onConfirm={onConfirm}
+    onCancel={onClose}
+  />
 );
 
 // ── Dashboard Overview ─────────────────────────────────────────────────────
@@ -275,10 +261,10 @@ const DashboardOverview = ({ setActiveTab, orders, bookings, restaurant }) => {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', marginBottom: '2rem' }}>
         {[
-          { label: "Today's Revenue", value: `$${todaysRevenue.toFixed(2)}`, sub: `${deliveredToday.length} delivered today`, color: '#d78a26', icon: DollarSign },
-          { label: "Today's Orders", value: todaysOrders.length, sub: `${activeOrders} active now`, color: '#C6F135', icon: ShoppingBag },
-          { label: 'Table Bookings', value: bookings.length, sub: `${pendingBookings} pending`, color: '#4caf80', icon: BookOpen },
-          { label: 'Avg. Rating', value: (restaurant?.rating || 0).toFixed(1), sub: `Based on ${restaurant?.reviews || 0} reviews`, color: '#ffc107', icon: Star },
+          { label: "Today's Revenue", value: `$${todaysRevenue.toFixed(2)}`, sub: `${deliveredToday.length} delivered today`, color: 'var(--primary)', icon: DollarSign },
+          { label: "Today's Orders", value: todaysOrders.length, sub: `${activeOrders} active now`, color: 'var(--fresh-accent)', icon: ShoppingBag },
+          { label: 'Table Bookings', value: bookings.length, sub: `${pendingBookings} pending`, color: 'var(--success)', icon: BookOpen },
+          { label: 'Avg. Rating', value: (restaurant?.rating || 0).toFixed(1), sub: `Based on ${restaurant?.reviews || 0} reviews`, color: 'var(--warning)', icon: Star },
         ].map((stat, i) => (
           <div key={i} className="dash-panel" style={{ padding: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
@@ -313,8 +299,8 @@ const DashboardOverview = ({ setActiveTab, orders, bookings, restaurant }) => {
                   <div style={{ fontWeight: 700, color: 'var(--dash-accent)', marginBottom: '0.2rem' }}>${order.total}</div>
                   <span style={{
                     fontSize: '0.72rem', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 600,
-                    background: order.status === 'delivered' ? '#4caf8020' : order.status === 'ready' ? '#C6F13520' : '#ffa50020',
-                    color: order.status === 'delivered' ? '#4caf80' : order.status === 'ready' ? '#C6F135' : '#ffa500',
+                    background: order.status === 'delivered' ? 'var(--success-soft)' : order.status === 'ready' ? 'var(--fresh-accent-soft)' : 'var(--warning-soft)',
+                    color: order.status === 'delivered' ? 'var(--success)' : order.status === 'ready' ? 'var(--fresh-accent)' : 'var(--warning)',
                   }}>{order.status.toUpperCase()}</span>
                 </div>
               </div>
@@ -534,7 +520,7 @@ const Gallery = ({ showToast, restaurantId }) => {
             No photos yet — upload your first one (JPEG, PNG, or WebP, up to 5 MB).
           </p>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 14rem), 1fr))', gap: '1rem' }}>
             {photos.map((photo, i) => {
               const src = resolveImageUrl(photo);
               return (
@@ -544,10 +530,8 @@ const Gallery = ({ showToast, restaurantId }) => {
                     position: 'absolute', inset: 0, background: 'rgba(0,0,0,0)', transition: 'background 0.2s',
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
                   }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.6)'; e.currentTarget.querySelectorAll('button').forEach(b => b.style.opacity = '1'); }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0)'; e.currentTarget.querySelectorAll('button').forEach(b => b.style.opacity = '0'); }}
                   >
-                    <button onClick={() => handleRemove(photo)} style={{ opacity: 0, background: '#e05555', border: 'none', color: '#fff', padding: '0.4rem', borderRadius: '8px', cursor: 'pointer', transition: 'opacity 0.2s', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem' }}>
+                    <button aria-label={`Remove gallery photo ${i + 1}`} onClick={() => handleRemove(photo)} style={{ background: 'var(--error)', border: 'none', color: '#111', padding: '0.5rem 0.7rem', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', fontWeight: 700 }}>
                       <Trash2 size={14} /> Remove
                     </button>
                   </div>
@@ -616,10 +600,14 @@ const MenuManagement = ({ showToast, restaurantId }) => {
   };
 
   const handleDelete = async () => {
-    await menusApi.delete(deleteTarget.id);
-    setItems(prev => prev.filter(i => i.id !== deleteTarget.id));
-    showToast(`"${deleteTarget.name}" removed from menu.`, 'error');
-    setDeleteTarget(null);
+    try {
+      await menusApi.delete(deleteTarget.id);
+      setItems(prev => prev.filter(i => i.id !== deleteTarget.id));
+      showToast(`"${deleteTarget.name}" removed from menu.`);
+      setDeleteTarget(null);
+    } catch (err) {
+      showToast(err.message || 'Could not remove this menu item.', 'error');
+    }
   };
 
   const handleToggleAvailability = async (id) => {
@@ -658,7 +646,7 @@ const MenuManagement = ({ showToast, restaurantId }) => {
       </div>
 
       <div className="dash-panel">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr))', gap: '1.25rem' }}>
           {filtered.map(item => (
             <div key={item.id} style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', overflow: 'hidden', background: 'var(--dash-bg)', transition: 'border-color 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(215,138,38,0.3)'}
@@ -671,8 +659,8 @@ const MenuManagement = ({ showToast, restaurantId }) => {
                   </div>
                 )}
                 <div style={{ position: 'absolute', top: '0.5rem', left: '0.5rem', display: 'flex', gap: '0.3rem' }}>
-                  {item.spicy && <span style={{ background: '#e05555', color: '#fff', padding: '0.15rem 0.4rem', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 700 }}>🌶 SPICY</span>}
-                  {item.veg && <span style={{ background: '#4caf80', color: '#fff', padding: '0.15rem 0.4rem', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 700 }}>🥦 VEG</span>}
+                  {item.spicy && <span style={{ background: 'var(--error)', color: '#111', padding: '0.15rem 0.4rem', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 700 }}>🌶 SPICY</span>}
+                  {item.veg && <span style={{ background: 'var(--success)', color: '#111', padding: '0.15rem 0.4rem', borderRadius: '4px', fontSize: '0.68rem', fontWeight: 700 }}>🥦 VEG</span>}
                 </div>
               </div>
               <div style={{ padding: '1rem' }}>
@@ -687,9 +675,9 @@ const MenuManagement = ({ showToast, restaurantId }) => {
                 <button onClick={() => handleToggleAvailability(item.id)}
                   style={{
                     width: '100%', padding: '0.4rem', marginBottom: '0.6rem',
-                    background: item.available ? '#4caf8015' : '#e0555515',
-                    border: `1px solid ${item.available ? '#4caf8030' : '#e0555530'}`,
-                    color: item.available ? '#4caf80' : '#e05555',
+                    background: item.available ? 'var(--success-soft)' : 'var(--error-soft)',
+                    border: `1px solid ${item.available ? 'var(--success-border)' : 'var(--error-border)'}`,
+                    color: item.available ? 'var(--success)' : 'var(--error)',
                     borderRadius: '8px', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600,
                   }}>
                   {item.available ? '✓ Available — click to hide' : '✕ Unavailable — click to show'}
@@ -702,7 +690,7 @@ const MenuManagement = ({ showToast, restaurantId }) => {
                     <Edit3 size={14} /> Edit
                   </button>
                   <button className="dash-btn-outline"
-                    style={{ padding: '0.4rem 0.7rem', color: '#e05555', borderColor: '#e0555540', display: 'flex', alignItems: 'center' }}
+                    style={{ padding: '0.4rem 0.7rem', color: 'var(--error)', borderColor: 'var(--error-border)', display: 'flex', alignItems: 'center' }}
                     onClick={() => setDeleteTarget(item)}>
                     <Trash2 size={15} />
                   </button>
@@ -727,9 +715,9 @@ const BookingManagement = ({ bookings, onAccept, onReject }) => (
     <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
       {[
         { label: 'All', count: bookings.length, color: '#fff' },
-        { label: 'Pending', count: bookings.filter(b => b.status === 'pending').length, color: '#ffa500' },
-        { label: 'Confirmed', count: bookings.filter(b => b.status === 'confirmed').length, color: '#4caf80' },
-        { label: 'Rejected', count: bookings.filter(b => b.status === 'rejected').length, color: '#e05555' },
+        { label: 'Pending', count: bookings.filter(b => b.status === 'pending').length, color: 'var(--warning)' },
+        { label: 'Confirmed', count: bookings.filter(b => b.status === 'confirmed').length, color: 'var(--success)' },
+        { label: 'Rejected', count: bookings.filter(b => b.status === 'rejected').length, color: 'var(--error)' },
       ].map(s => (
         <div key={s.label} className="dash-panel" style={{ padding: '1rem 1.25rem', textAlign: 'center', flex: 1 }}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: s.color }}>{s.count}</div>
@@ -747,8 +735,8 @@ const BookingManagement = ({ bookings, onAccept, onReject }) => (
                 <div style={{ fontWeight: 700 }}>{booking.name}</div>
                 <span style={{
                   fontSize: '0.72rem', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 600,
-                  background: booking.status === 'confirmed' ? '#4caf8020' : booking.status === 'rejected' ? '#e0555520' : '#ffa50020',
-                  color: booking.status === 'confirmed' ? '#4caf80' : booking.status === 'rejected' ? '#e05555' : '#ffa500',
+                  background: booking.status === 'confirmed' ? 'var(--success-soft)' : booking.status === 'rejected' ? 'var(--error-soft)' : 'var(--warning-soft)',
+                  color: booking.status === 'confirmed' ? 'var(--success)' : booking.status === 'rejected' ? 'var(--error)' : 'var(--warning)',
                 }}>{booking.status.toUpperCase()}</span>
               </div>
               <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
@@ -760,11 +748,11 @@ const BookingManagement = ({ bookings, onAccept, onReject }) => (
             </div>
             {booking.status === 'pending' && (
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button className="dash-btn-primary" style={{ padding: '0.5rem 1rem', background: '#4caf80', borderColor: '#4caf80', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}
+                <button className="dash-btn-primary" style={{ padding: '0.5rem 1rem', background: 'var(--success)', borderColor: 'var(--success)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}
                   onClick={() => onAccept(booking.id)}>
                   <Check size={15} /> Accept
                 </button>
-                <button className="dash-btn-outline" style={{ padding: '0.5rem 0.9rem', color: '#e05555', borderColor: '#e05555', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}
+                <button className="dash-btn-outline" style={{ padding: '0.5rem 0.9rem', color: 'var(--error)', borderColor: 'var(--error)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}
                   onClick={() => onReject(booking.id)}>
                   <X size={15} /> Reject
                 </button>
@@ -788,9 +776,9 @@ const OrderManagement = ({ orders, onMarkReady, onMarkDelivered }) => (
     <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
       {[
         { label: 'All Orders', count: orders.length, color: '#fff' },
-        { label: 'Preparing', count: orders.filter(o => o.status === 'preparing').length, color: '#ffa500' },
-        { label: 'Ready', count: orders.filter(o => o.status === 'ready').length, color: '#C6F135' },
-        { label: 'Delivered', count: orders.filter(o => o.status === 'delivered').length, color: '#4caf80' },
+        { label: 'Preparing', count: orders.filter(o => o.status === 'preparing').length, color: 'var(--warning)' },
+        { label: 'Ready', count: orders.filter(o => o.status === 'ready').length, color: 'var(--fresh-accent)' },
+        { label: 'Delivered', count: orders.filter(o => o.status === 'delivered').length, color: 'var(--success)' },
       ].map(s => (
         <div key={s.label} className="dash-panel" style={{ padding: '1rem 1.25rem', textAlign: 'center', flex: 1 }}>
           <div style={{ fontSize: '1.5rem', fontWeight: 700, color: s.color }}>{s.count}</div>
@@ -810,15 +798,15 @@ const OrderManagement = ({ orders, onMarkReady, onMarkDelivered }) => (
             <span style={{ color: 'var(--dash-accent)', fontWeight: 700 }}>${order.total}</span>
             <span style={{
               fontSize: '0.75rem', padding: '0.25rem 0.6rem', borderRadius: '4px', fontWeight: 600,
-              background: order.status === 'delivered' ? '#4caf8020' : order.status === 'ready' ? '#C6F13520' : '#ffa50020',
-              color: order.status === 'delivered' ? '#4caf80' : order.status === 'ready' ? '#C6F135' : '#ffa500',
+              background: order.status === 'delivered' ? 'var(--success-soft)' : order.status === 'ready' ? 'var(--fresh-accent-soft)' : 'var(--warning-soft)',
+              color: order.status === 'delivered' ? 'var(--success)' : order.status === 'ready' ? 'var(--fresh-accent)' : 'var(--warning)',
             }}>{order.status.toUpperCase()}</span>
             {order.status === 'preparing' && (
               <button className="dash-btn-primary" style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem' }}
                 onClick={() => onMarkReady(order.id)}>Mark Ready</button>
             )}
             {order.status === 'ready' && (
-              <button className="dash-btn-primary" style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem', background: '#4caf80', borderColor: '#4caf80' }}
+              <button className="dash-btn-primary" style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem', background: 'var(--success)', borderColor: 'var(--success)' }}
                 onClick={() => onMarkDelivered(order.id)}>Mark Delivered</button>
             )}
           </div>
@@ -855,7 +843,7 @@ const OwnerAnalytics = ({ restaurantId }) => {
   }, [restaurantId]);
 
   if (loading) return <div style={{ color: 'var(--text-muted)', padding: '2rem' }}>Loading analytics…</div>;
-  if (error) return <div style={{ color: '#e05555', padding: '2rem' }}>{error}</div>;
+  if (error) return <div style={{ color: 'var(--error)', padding: '2rem' }}>{error}</div>;
 
   const kpis = [
     { label: 'Total Revenue', value: `$${Number(overview?.revenue || 0).toFixed(2)}`, sub: 'Delivered orders' },
@@ -883,7 +871,7 @@ const OwnerAnalytics = ({ restaurantId }) => {
 
       <div className="dash-panel" style={{ marginBottom: '1.5rem' }}>
         <h3 style={{ marginBottom: '1.25rem' }}>Daily Revenue This Week</h3>
-        <BarChartSVG data={revenueData} color="#d78a26" />
+        <BarChartSVG data={revenueData} color="var(--primary)" />
         {revenueData.every(d => d.value === 0) && (
           <div style={{ marginTop: '0.75rem', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
             No delivered revenue yet this week — revenue appears once orders are marked as delivered.
@@ -893,7 +881,7 @@ const OwnerAnalytics = ({ restaurantId }) => {
 
       <div className="dash-panel">
         <h3 style={{ marginBottom: '1.25rem' }}>Peak Hours (Last 30 Days)</h3>
-        <BarChartSVG data={peakData} color="#C6F135" />
+        <BarChartSVG data={peakData} color="var(--fresh-accent)" />
         {peakData.some(d => d.value > 0) ? (
           <div style={{ marginTop: '0.75rem', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
             🔥 Busiest hour: {peakData[0].label} — consider adding more staff then.

@@ -64,7 +64,7 @@ const OrderTracking = ({ orderId: orderIdProp, setActiveTab }) => {
                   }}
                 >
                   <span style={{ fontWeight: 600 }}>#{o.orderId || o.id?.slice(-4)} · {o.restaurant}</span>
-                  <span style={{ color: 'var(--dash-accent, #C6F135)', fontWeight: 700 }}>{o.statusLabel || o.status}</span>
+                  <span style={{ color: 'var(--dash-accent)', fontWeight: 700 }}>{o.statusLabel || o.status}</span>
                 </button>
               ))
               }
@@ -113,7 +113,7 @@ const OrderTracking = ({ orderId: orderIdProp, setActiveTab }) => {
             gap: '0.4rem',
             fontSize: '0.78rem',
             fontWeight: 600,
-            color: live ? '#4caf80' : 'var(--dash-muted, #8a8a8a)',
+            color: live ? 'var(--success)' : 'var(--dash-muted, #8a8a8a)',
             border: `1px solid ${live ? 'rgba(76,175,128,0.4)' : 'rgba(255,255,255,0.12)'}`,
             borderRadius: 999,
             padding: '0.15rem 0.7rem',
@@ -129,7 +129,7 @@ const OrderTracking = ({ orderId: orderIdProp, setActiveTab }) => {
         <div className="dash-panel" style={{ marginBottom: 0 }}>
           <div className="dash-panel-header">
             <h3>Status Timeline</h3>
-            <span style={{ color: 'var(--dash-accent, #C6F135)', fontWeight: 600, fontSize: '0.88rem' }}>ETA: {order.eta}</span>
+            <span style={{ color: 'var(--dash-accent)', fontWeight: 600, fontSize: '0.88rem' }}>ETA: {order.eta}</span>
           </div>
 
           <div className="tracking-timeline">

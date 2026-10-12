@@ -21,7 +21,7 @@ const ContactForm = () => {
   if (sent) {
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: 'center', padding: '2rem' }}>
-        <h3 style={{ color: '#4caf80', marginBottom: '0.5rem' }}>Message sent!</h3>
+        <h3 style={{ color: 'var(--success)', marginBottom: '0.5rem' }}>Message sent!</h3>
         <p style={{ color: 'var(--text-muted)' }}>We'll get back to you shortly.</p>
       </motion.div>
     );
@@ -53,7 +53,7 @@ const ContactForm = () => {
         required
         style={{ resize: 'vertical' }}
       />
-      {error && <p style={{ color: '#e05555', fontSize: '0.85rem' }}>{error}</p>}
+      {error && <p style={{ color: 'var(--error)', fontSize: '0.85rem' }}>{error}</p>}
       <button type="submit" className="gold-button">Send Message</button>
     </form>
   );

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Heart, Star, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { usersApi } from '../../services/api';
@@ -8,6 +9,7 @@ import './dashboard.css';
 const FavoritesPage = () => {
   const [favorites, setFavorites] = useState([]);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const loadFavorites = async () => {
     if (!user?.id) return;
@@ -37,7 +39,7 @@ const FavoritesPage = () => {
         <div className="dash-panel empty-state">
           <Heart size={56} />
           <p>You haven't saved any restaurants yet.</p>
-          <button className="dash-btn-primary" style={{ marginTop: '1.5rem' }} onClick={() => { window.location.href = '/restaurants'; }}>Browse Restaurants</button>
+          <button className="dash-btn-primary" style={{ marginTop: '1.5rem' }} onClick={() => navigate('/restaurants')}>Browse Restaurants</button>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
@@ -52,7 +54,7 @@ const FavoritesPage = () => {
                   style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', width: 36, height: 36, borderRadius: '50%', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   onClick={e => { e.stopPropagation(); handleRemove(r.id); }}
                 >
-                  <Heart size={16} fill="var(--dash-accent, #C6F135)" color="var(--dash-accent, #C6F135)" />
+                  <Heart size={16} fill="var(--dash-accent)" color="var(--dash-accent)" />
                 </button>
               </div>
               <div style={{ padding: '1.25rem' }}>
@@ -61,10 +63,10 @@ const FavoritesPage = () => {
                   <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{r.price}</span>
                 </div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>{r.cuisine}</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#ffc107', fontSize: '0.85rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--warning)', fontSize: '0.85rem' }}>
                   <Star size={14} fill="currentColor" /> {r.rating} ({r.reviews} reviews)
                 </div>
-                <button className="dash-btn-outline" style={{ width: '100%', marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }} onClick={() => { window.location.href = `/restaurants/${r.id}`; }}>
+                <button className="dash-btn-outline" style={{ width: '100%', marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }} onClick={() => navigate(`/restaurants/${r.id}`)}>
                   Order Now <ArrowRight size={14} />
                 </button>
               </div>

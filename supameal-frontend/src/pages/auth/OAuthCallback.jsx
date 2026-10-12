@@ -4,6 +4,21 @@ import { useAuth } from '../../context/AuthContext';
 import { authApi } from '../../services/api';
 import Loader from '../../components/Loader/Loader';
 
+// React StrictMode replays effects in development. Since OAuth codes are
+// one-time use, keep a single exchange promise per code so the replay shares
+// the original request instead of consuming the code twice.
+const codeExchanges = new Map();
+
+function exchangeCodeOnce(code) {
+  if (!codeExchanges.has(code)) {
+    const request = authApi.exchange(code);
+    codeExchanges.set(code, request);
+    // OAuth codes expire quickly; bound this cache if a callback is abandoned.
+    setTimeout(() => codeExchanges.delete(code), 60_000);
+  }
+  return codeExchanges.get(code);
+}
+
 const DASHBOARD_ROUTES = {
   customer: '/customer/dashboard',
   owner: '/owner/dashboard',
@@ -35,7 +50,7 @@ export default function OAuthCallback() {
     const exchange = async () => {
       try {
         // Exchange the one-time code for tokens — tokens never touch the URL
-        const res = await authApi.exchange(code);
+        const res = await exchangeCodeOnce(code);
         if (cancelled) return;
         persistAuth(res.user, res.accessToken, res.refreshToken);
         const roleKey = res.user?.role === 'owner' ? 'restaurant_owner' : res.user?.role;

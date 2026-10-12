@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, LogIn, LayoutDashboard, LogOut } from 'lucide-react';
+import { Menu, X, LogIn, LayoutDashboard, LogOut, ChevronDown } from 'lucide-react';
 import Button from '../../components/Button/Button';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import Logo from '../../components/Logo/Logo';
 import { useAuth } from '../../context/AuthContext';
 import './Navbar.css';
@@ -9,6 +10,7 @@ import './Navbar.css';
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
@@ -19,9 +21,17 @@ const Navbar = () => {
     ? '/admin/dashboard'
     : '/customer/dashboard';
 
+  const confirmLogout = () => {
+    setShowLogoutConfirm(false);
+    setIsMobileMenuOpen(false);
+    logout();
+    navigate('/home', { replace: true });
+  };
+
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handleScroll);
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -34,6 +44,7 @@ const Navbar = () => {
   }, [location]);
 
   const goToSection = (hash) => {
+    setIsMobileMenuOpen(false);
     if (location.pathname === '/') {
       const el = document.getElementById(hash);
       if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -44,7 +55,7 @@ const Navbar = () => {
   };
 
   const navLinks = [
-    { name: 'Home', action: () => navigate('/') },
+    { name: 'Home', action: () => { setIsMobileMenuOpen(false); navigate('/'); } },
     {
       name: 'Services',
       dropdown: [
@@ -60,21 +71,29 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className={`navbar ${isScrolled ? 'scrolled' : ''}`}>
+    <nav className={`navbar ${isScrolled ? 'scrolled' : ''} ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
       <div className="container navbar-container">
-        <Link to="/" className="navbar-logo-link">
+        <Link to="/" className="navbar-logo-link" onClick={() => setIsMobileMenuOpen(false)}>
           <Logo />
         </Link>
 
+        {/* Central navigation links */}
         <div className={`navbar-links ${isMobileMenuOpen ? 'open' : ''}`}>
           {navLinks.map((link, index) => (
             <div key={index} className="nav-item">
               {link.dropdown ? (
                 <>
-                  <span className="nav-link nav-link-dropdown">{link.name}</span>
+                  <span className="nav-link nav-link-dropdown" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                    {link.name} <ChevronDown size={14} style={{ opacity: 0.7 }} />
+                  </span>
                   <div className="nav-dropdown">
                     {link.dropdown.map((sublink) => (
-                      <Link key={sublink.name} to={sublink.to} className="dropdown-link">
+                      <Link
+                        key={sublink.name}
+                        to={sublink.to}
+                        className="dropdown-link"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
                         {sublink.name}
                       </Link>
                     ))}
@@ -87,39 +106,40 @@ const Navbar = () => {
               )}
             </div>
           ))}
-          {isAuthenticated ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
-              <Link to={dashboardUrl} style={{ width: '100%' }} onClick={() => setIsMobileMenuOpen(false)}>
-                <Button variant="primary" style={{ width: '100%' }}>
-                  <LayoutDashboard size={16} /> Dashboard ({user?.name?.split(' ')[0] || 'Account'})
+
+          {/* Mobile-only auth buttons (hidden on desktop via .navbar-actions-mobile) */}
+          <div className="navbar-actions-mobile">
+            {isAuthenticated ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
+                <Link to={dashboardUrl} style={{ width: '100%' }} onClick={() => setIsMobileMenuOpen(false)}>
+                  <Button variant="primary" style={{ width: '100%' }}>
+                    <LayoutDashboard size={16} /> Dashboard ({user?.name?.split(' ')[0] || 'Account'})
+                  </Button>
+                </Link>
+                <Button
+                  variant="outline"
+                  style={{ width: '100%' }}
+                  onClick={() => setShowLogoutConfirm(true)}
+                >
+                  <LogOut size={16} /> Log Out
                 </Button>
-              </Link>
-              <Button
-                variant="outline"
-                style={{ width: '100%' }}
-                onClick={() => {
-                  logout();
-                  setIsMobileMenuOpen(false);
-                  navigate('/');
-                }}
-              >
-                <LogOut size={16} /> Log Out
-              </Button>
-            </div>
-          ) : (
-            <>
-              <Link to="/login" style={{ width: '100%' }} onClick={() => setIsMobileMenuOpen(false)}>
-                <Button variant="outline" style={{ width: '100%' }}>
-                  <LogIn size={16} /> Sign In
-                </Button>
-              </Link>
-              <Link to="/signup" style={{ width: '100%' }} onClick={() => setIsMobileMenuOpen(false)}>
-                <Button variant="primary" style={{ width: '100%' }}>Sign Up</Button>
-              </Link>
-            </>
-          )}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
+                <Link to="/login" style={{ width: '100%' }} onClick={() => setIsMobileMenuOpen(false)}>
+                  <Button variant="outline" style={{ width: '100%' }}>
+                    <LogIn size={16} /> Sign In
+                  </Button>
+                </Link>
+                <Link to="/signup" style={{ width: '100%' }} onClick={() => setIsMobileMenuOpen(false)}>
+                  <Button variant="primary" style={{ width: '100%' }}>Sign Up</Button>
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
 
+        {/* Desktop-only auth actions (positioned on the right) */}
         <div className="navbar-actions-desktop">
           {isAuthenticated ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -130,10 +150,7 @@ const Navbar = () => {
               </Link>
               <Button
                 variant="outline"
-                onClick={() => {
-                  logout();
-                  navigate('/');
-                }}
+                onClick={() => setShowLogoutConfirm(true)}
                 title="Log Out"
               >
                 <LogOut size={16} />
@@ -160,6 +177,17 @@ const Navbar = () => {
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
+      {showLogoutConfirm && (
+        <ConfirmDialog
+          title="Log out of your account?"
+          description="You’ll be signed out and returned to the SupaMeal home page."
+          confirmLabel="Log out"
+          tone="primary"
+          Icon={LogOut}
+          onCancel={() => setShowLogoutConfirm(false)}
+          onConfirm={confirmLogout}
+        />
+      )}
     </nav>
   );
 };

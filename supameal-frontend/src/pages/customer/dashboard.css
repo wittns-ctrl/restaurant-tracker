@@ -47,7 +47,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--dash-accent, #C6F135);
+  color: var(--dash-accent);
 }
 
 .stat-card-label {
@@ -72,7 +72,7 @@
   gap: 0.3rem;
 }
 
-.stat-card-change.up { color: #4caf80; }
+.stat-card-change.up { color: var(--success); }
 .stat-card-change.neutral { color: var(--dash-muted, #8a8a8a); }
 
 /* Section cards (panels) */
@@ -100,7 +100,7 @@
 .dash-panel-header a,
 .dash-panel-header button {
   font-size: 0.82rem;
-  color: var(--dash-accent, #C6F135);
+  color: var(--dash-accent);
   text-decoration: none;
   background: none;
   border: none;
@@ -115,7 +115,7 @@
 
 .link-btn {
   font-size: 0.82rem;
-  color: var(--dash-accent, #C6F135);
+  color: var(--dash-accent);
   background: none;
   border: none;
   cursor: pointer;
@@ -145,8 +145,8 @@
 .tab-btn:hover { color: var(--dash-text, #fff); }
 
 .tab-btn.active {
-  color: var(--dash-accent, #C6F135);
-  border-bottom-color: var(--dash-accent, #C6F135);
+  color: var(--dash-accent);
+  border-bottom-color: var(--dash-accent);
 }
 
 /* Status badges */
@@ -157,11 +157,11 @@
   font-weight: 600;
 }
 
-.status-pending  { background: rgba(255, 193, 7, 0.15); color: #ffc107; }
-.status-confirmed { background: rgba(76, 175, 80, 0.15); color: #4caf80; }
-.status-rejected  { background: rgba(224, 85, 85, 0.15); color: #e05555; }
-.status-delivered { background: rgba(76, 175, 128, 0.15); color: #4caf80; }
-.status-on-way   { background: var(--dash-accent-dim, rgba(198, 241, 53, 0.12)); color: var(--dash-accent, #C6F135); }
+.status-pending  { background: var(--warning-soft); color: var(--warning); }
+.status-confirmed { background: var(--success-soft); color: var(--success); }
+.status-rejected  { background: var(--error-soft); color: var(--error); }
+.status-delivered { background: var(--success-soft); color: var(--success); }
+.status-on-way   { background: var(--dash-accent-dim, rgba(198, 241, 53, 0.12)); color: var(--dash-accent); }
 
 /* Generic list rows */
 .list-row {
@@ -226,7 +226,13 @@
 
 .dash-input:focus {
   outline: none;
-  border-color: var(--dash-accent, #C6F135);
+  border-color: var(--dash-accent);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.dash-input {
+  border-color: var(--border-color);
+  background: var(--bg-input);
 }
 
 .dash-input::placeholder {
@@ -241,7 +247,7 @@
 
 /* Action buttons inside dashboard */
 .dash-btn-primary {
-  background: var(--dash-accent, #C6F135);
+  background: var(--dash-accent);
   color: #000;
   border: none;
   border-radius: 10px;
@@ -262,8 +268,8 @@
 
 .dash-btn-outline {
   background: none;
-  color: var(--dash-accent, #C6F135);
-  border: 1px solid var(--dash-accent, #C6F135);
+  color: var(--dash-accent);
+  border: 1px solid var(--dash-accent);
   border-radius: 10px;
   padding: 0.85rem 2rem;
   font-size: 0.92rem;
@@ -278,8 +284,8 @@
 
 .dash-btn-danger {
   background: none;
-  color: #e05555;
-  border: 1px solid #e05555;
+  color: var(--error);
+  border: 1px solid var(--error);
   border-radius: 10px;
   padding: 0.6rem 1.25rem;
   font-size: 0.82rem;
@@ -289,7 +295,7 @@
 }
 
 .dash-btn-danger:hover {
-  background: rgba(224, 85, 85, 0.1);
+  background: var(--error-soft);
 }
 
 /* Category pills */
@@ -306,9 +312,9 @@
 }
 
 .category-pill.active {
-  border-color: var(--dash-accent, #C6F135);
+  border-color: var(--dash-accent);
   background: var(--dash-accent-dim, rgba(198, 241, 53, 0.12));
-  color: var(--dash-accent, #C6F135);
+  color: var(--dash-accent);
 }
 
 /* Qty controls */
@@ -331,7 +337,7 @@
 }
 
 .qty-btn-plus {
-  background: var(--dash-accent, #C6F135);
+  background: var(--dash-accent);
   border: none;
   color: #000;
 }
@@ -382,7 +388,7 @@
   width: 90px;
   height: 90px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--dash-accent, #C6F135), #9fd420);
+  background: linear-gradient(135deg, var(--dash-accent), var(--primary-hover));
   display: flex;
   align-items: center;
   justify-content: center;

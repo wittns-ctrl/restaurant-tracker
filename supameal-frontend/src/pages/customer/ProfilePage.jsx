@@ -130,8 +130,8 @@ const ProfilePage = () => {
         <p>Manage your personal information and security settings.</p>
       </div>
 
-      {message && <p style={{ color: '#4caf80', marginBottom: '1rem', fontWeight: 600 }}>{message}</p>}
-      {error && <p style={{ color: '#f44336', marginBottom: '1rem', fontWeight: 600 }}>{error}</p>}
+      {message && <p style={{ color: 'var(--success)', marginBottom: '1rem', fontWeight: 600 }}>{message}</p>}
+      {error && <p style={{ color: 'var(--error)', marginBottom: '1rem', fontWeight: 600 }}>{error}</p>}
 
       <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: '1.5rem' }}>
         <div>
@@ -146,7 +146,7 @@ const ProfilePage = () => {
               </div>
               <button
                 type="button"
-                style={{ position:'absolute', bottom:0, right:0, width:30, height:30, borderRadius:'50%', background:'var(--dash-accent,#C6F135)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}
+                style={{ position:'absolute', bottom:0, right:0, width:30, height:30, borderRadius:'50%', background:'var(--dash-accent)', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Camera size={14} color="#000" />
@@ -154,16 +154,16 @@ const ProfilePage = () => {
             </div>
             <div style={{ fontWeight:700, color:'var(--text-main)', fontSize:'1.1rem' }}>{displayName}</div>
             <div style={{ color:'var(--text-muted)', fontSize:'0.85rem', marginTop:'0.25rem' }}>{profile.email || user?.email}</div>
-            <div style={{ marginTop:'0.75rem', background:'var(--dash-accent-dim,rgba(198,241,53,0.12))', borderRadius:8, padding:'0.4rem 0.8rem', display:'inline-block', color:'var(--dash-accent,#C6F135)', fontSize:'0.8rem', fontWeight:600 }}>Customer</div>
+            <div style={{ marginTop:'0.75rem', background:'var(--dash-accent-dim,rgba(198,241,53,0.12))', borderRadius:8, padding:'0.4rem 0.8rem', display:'inline-block', color:'var(--dash-accent)', fontSize:'0.8rem', fontWeight:600 }}>Customer</div>
             <div style={{ marginTop:'1rem', color:'var(--text-muted)', fontSize:'0.8rem' }}>Member since {user?.joined || '2026'}</div>
           </div>
 
           <div className="dash-panel">
             <div className="tab-bar" style={{ flexDirection:'column', border:'none' }}>
-              <button className={`tab-btn ${tab==='profile'?'active':''}`} style={{ textAlign:'left', borderBottom:'none', borderLeft: tab==='profile' ? '2px solid var(--dash-accent,#C6F135)' : '2px solid transparent', borderRadius:0, paddingLeft:'1rem' }} onClick={() => setTab('profile')}>
+              <button className={`tab-btn ${tab==='profile'?'active':''}`} style={{ textAlign:'left', borderBottom:'none', borderLeft: tab==='profile' ? '2px solid var(--dash-accent)' : '2px solid transparent', borderRadius:0, paddingLeft:'1rem' }} onClick={() => setTab('profile')}>
                 <User size={16} style={{marginRight:8}} /> Edit Profile
               </button>
-              <button className={`tab-btn ${tab==='password'?'active':''}`} style={{ textAlign:'left', borderBottom:'none', borderLeft: tab==='password' ? '2px solid var(--dash-accent,#C6F135)' : '2px solid transparent', borderRadius:0, paddingLeft:'1rem' }} onClick={() => setTab('password')}>
+              <button className={`tab-btn ${tab==='password'?'active':''}`} style={{ textAlign:'left', borderBottom:'none', borderLeft: tab==='password' ? '2px solid var(--dash-accent)' : '2px solid transparent', borderRadius:0, paddingLeft:'1rem' }} onClick={() => setTab('password')}>
                 <Lock size={16} style={{marginRight:8}} /> Change Password
               </button>
             </div>

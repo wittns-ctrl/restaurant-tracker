@@ -1,76 +1,24 @@
-.custom-dropdown {
+.native-dropdown {
   position: relative;
   width: 100%;
   font-family: inherit;
   font-size: 0.95rem;
-}
-
-.dropdown-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0;
-  cursor: pointer;
-  color: var(--text-main);
-  background: transparent;
-}
-
-.dropdown-icon {
-  transition: transform var(--transition-fast);
-  color: var(--text-muted);
-}
-
-.dropdown-icon.open {
-  transform: rotate(180deg);
-}
-
-.dropdown-list {
-  position: absolute;
-  top: calc(100% + 15px);
-  left: -15px; /* Offset to align with the input wrapper visually if needed */
-  width: calc(100% + 30px);
-  background-color: #1a1a1a; /* Dark theme background */
+  min-width: 0;
+  padding: 0.65rem 2rem 0.65rem 0.75rem;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
-  z-index: 100;
-  overflow: hidden;
-  max-height: 250px;
-  overflow-y: auto;
-}
-
-/* Custom scrollbar for the dropdown */
-.dropdown-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.dropdown-list::-webkit-scrollbar-track {
-  background: #1a1a1a;
-}
-
-.dropdown-list::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: var(--radius-full);
-}
-
-.dropdown-list::-webkit-scrollbar-thumb:hover {
-  background: var(--primary);
-}
-
-.dropdown-item {
-  padding: 0.75rem 1rem;
+  appearance: none;
   color: var(--text-main);
+  background-color: var(--bg-input);
   cursor: pointer;
-  transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
-.dropdown-item:hover {
-  background-color: rgba(245, 166, 35, 0.15); /* Primary color with opacity */
-  color: var(--primary);
+.native-dropdown:focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
-.dropdown-item.selected {
-  background-color: rgba(245, 166, 35, 0.25);
-  color: var(--primary);
-  font-weight: 600;
+.native-dropdown option {
+  color: var(--text-main);
+  background-color: var(--bg-card);
 }

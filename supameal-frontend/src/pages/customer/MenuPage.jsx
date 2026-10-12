@@ -66,7 +66,7 @@ const MenuPage = ({ setActiveTab }) => {
               <select
                 value={selectedRestaurantId || ''}
                 onChange={(e) => selectRestaurant(e.target.value)}
-                style={{ background: 'none', border: 'none', color: '#fff', fontSize: '0.88rem', cursor: 'pointer', outline: 'none' }}
+                style={{ background: 'none', border: 'none', color: 'var(--dash-text, #fff)', fontSize: '0.88rem', cursor: 'pointer' }}
               >
                 {restaurants.map(r => (
                   <option key={r.id || r._id} value={r.id || r._id} style={{ background: '#222', color: '#fff' }}>
@@ -149,7 +149,7 @@ const MenuPage = ({ setActiveTab }) => {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.35rem' }}>
               <span style={{ fontWeight: 600, color: 'var(--dash-text, #fff)', fontSize: '0.95rem' }}>{item.name}</span>
-              <span style={{ color: 'var(--dash-accent, #C6F135)', fontWeight: 700, fontSize: '0.95rem', flexShrink: 0 }}>${item.price}</span>
+              <span style={{ color: 'var(--dash-accent)', fontWeight: 700, fontSize: '0.95rem', flexShrink: 0 }}>${item.price}</span>
             </div>
             <p style={{ color: 'var(--dash-muted, #8a8a8a)', fontSize: '0.8rem', marginBottom: '0.5rem', lineHeight: 1.5, flex: 1 }}>{item.desc}</p>
 

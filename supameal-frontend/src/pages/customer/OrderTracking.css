@@ -32,13 +32,13 @@
 }
 
 .tracking-step.done .tracking-dot {
-  background: var(--dash-accent, #C6F135);
-  border-color: var(--dash-accent, #C6F135);
+  background: var(--dash-accent);
+  border-color: var(--dash-accent);
 }
 
 .tracking-step.active .tracking-dot {
-  background: var(--dash-accent, #C6F135);
-  border-color: var(--dash-accent, #C6F135);
+  background: var(--dash-accent);
+  border-color: var(--dash-accent);
   box-shadow: 0 0 0 6px rgba(198, 241, 53, 0.2);
 }
 
@@ -61,7 +61,7 @@
 }
 
 .tracking-step.done .tracking-connector {
-  background: var(--dash-accent, #C6F135);
+  background: var(--dash-accent);
 }
 
 .tracking-step-body {
@@ -77,7 +77,7 @@
 }
 
 .tracking-step.done .tracking-step-label {
-  color: var(--dash-accent, #C6F135);
+  color: var(--dash-accent);
 }
 
 .tracking-step:not(.done):not(.active) .tracking-step-label {
@@ -98,7 +98,7 @@
 
 .tracking-step.done .tracking-time,
 .tracking-step.active .tracking-time {
-  color: var(--dash-accent, #C6F135);
+  color: var(--dash-accent);
   font-weight: 600;
 }
 
@@ -121,7 +121,7 @@
 .delivery-update-item:last-child { border-bottom: none; }
 
 .delivery-update-time {
-  color: var(--dash-accent, #C6F135);
+  color: var(--dash-accent);
   font-weight: 600;
   white-space: nowrap;
 }

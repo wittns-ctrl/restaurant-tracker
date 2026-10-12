@@ -1,13 +1,13 @@
 /* Dashboard theme — template-inspired neon accent */
 .dashboard-shell {
-  --dash-accent: #d78a26;
-  --dash-accent-dim: rgba(198, 241, 53, 0.12);
-  --dash-accent-border: rgba(198, 241, 53, 0.25);
-  --dash-bg: #0a0a0a;
-  --dash-sidebar: #111111;
-  --dash-card: #181818;
-  --dash-text: #ffffff;
-  --dash-muted: #8a8a8a;
+  --dash-accent: var(--primary);
+  --dash-accent-dim: var(--primary-soft);
+  --dash-accent-border: var(--primary-border);
+  --dash-bg: var(--bg-dark);
+  --dash-sidebar: #111310;
+  --dash-card: var(--bg-card);
+  --dash-text: var(--text-main);
+  --dash-muted: var(--text-muted);
 
   display: flex;
   min-height: 100vh;
@@ -44,7 +44,7 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--dash-accent),#d78a26);
+  background: linear-gradient(135deg, var(--dash-accent), var(--primary-hover));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -104,6 +104,10 @@
 }
 
 .sidebar-search input:focus { outline: none; }
+.sidebar-search:focus-within {
+  border-color: var(--dash-accent);
+  box-shadow: 0 0 0 3px var(--dash-accent-dim);
+}
 .sidebar-search input::placeholder { color: rgba(255, 255, 255, 0.25); }
 
 .sidebar-search-kbd {
@@ -191,7 +195,7 @@
 }
 
 .home-link { color: rgba(255, 255, 255, 0.4) !important; }
-.logout-link { color: #e05555 !important; }
+.logout-link { color: var(--error) !important; }
 .logout-link:hover { background: rgba(224, 85, 85, 0.1) !important; }
 
 /* MAIN AREA */
@@ -579,7 +583,7 @@
   font-weight: 600;
   cursor: pointer;
   background: rgba(224, 85, 85, 0.1);
-  color: #e05555;
+  color: var(--error);
   border: 1px solid rgba(224, 85, 85, 0.2);
   margin-top: 0.5rem;
   justify-content: center;
@@ -611,6 +615,10 @@
   width: 170px;
 }
 .topbar-search input:focus { outline: none; }
+.topbar-search:focus-within {
+  border-color: var(--dash-accent);
+  box-shadow: 0 0 0 3px var(--dash-accent-dim);
+}
 
 /* POPOVER DROPDOWNS */
 .topbar-popover {
@@ -663,7 +671,7 @@
   position: absolute;
   top: 2px;
   right: 2px;
-  background: #e05555;
+  background: var(--error);
   color: #ffffff;
   font-size: 0.65rem;
   font-weight: 700;

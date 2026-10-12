@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Menu, X, Bell, ChevronRight, LogOut, Home, Search,
-  ChevronDown, User, CheckCircle, Package, Truck, CalendarCheck, Heart, UtensilsCrossed
+  ChevronDown, User, Package, Truck, CalendarCheck, Heart, UtensilsCrossed
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { notificationsApi, usersApi } from '../../services/api';
+import { notificationsApi } from '../../services/api';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import Logo from '../../components/Logo/Logo';
 import './DashboardLayout.css';
 
@@ -98,6 +99,7 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Search State
   const [searchQuery, setSearchQuery] = useState('');
@@ -106,55 +108,50 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
   // Notification State
   const [showNotifPopover, setShowNotifPopover] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const [activities, setActivities] = useState([]);
+  const activities = [];
 
-  // Load user notifications and activities
-  useEffect(() => {
-    let isMounted = true;
-    const loadNotifsAndActivities = async () => {
-      if (!user?.id) return;
-      try {
-        const stats = await usersApi.getDashboardStats(user.id);
-        if (isMounted && stats) {
-          if (stats.notifications && stats.notifications.length > 0) {
-            setNotifications(stats.notifications);
-          } else {
-            // Default welcome notification if empty
-            setNotifications([
-              {
-                id: 'notif-welcome',
-                title: 'Welcome to SupaMeal! 👋',
-                text: 'Your account is ready. Explore our menu or book a table!',
-                time: 'Just now',
-                unread: true,
-              },
-            ]);
-          }
+  // Helper: format a backend notification into what the UI expects
+  const formatNotif = (n) => ({
+    id: n.id || n._id,
+    title: n.title || 'Notification',
+    text: n.message || n.text || '',
+    time: n.createdAt
+      ? new Date(n.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      : n.time || '',
+    unread: n.unread ?? (n.isRead !== undefined ? !n.isRead : !n.read),
+  });
 
-          if (stats.activities && stats.activities.length > 0) {
-            setActivities(stats.activities);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load user notifications:', err);
-      }
-    };
-
-    loadNotifsAndActivities();
-    return () => { isMounted = false; };
+  // Load real notifications from API
+  const loadNotifications = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const raw = await notificationsApi.list(user.id);
+      const list = Array.isArray(raw) ? raw : raw?.data || [];
+      setNotifications(list.map(formatNotif));
+    } catch (err) {
+      console.error('Failed to load notifications:', err);
+    }
   }, [user?.id]);
+
+  useEffect(() => {
+    loadNotifications();
+    // Refresh every 60 s while the dashboard is open
+    const interval = setInterval(loadNotifications, 60_000);
+    return () => clearInterval(interval);
+  }, [loadNotifications]);
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate('/home', { replace: true });
   };
 
   const markAllRead = async () => {
     try {
       await notificationsApi.markAllRead();
       setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+      setShowNotifPopover(false);
     } catch {
-      setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+      console.error('Failed to mark notifications as read');
     }
   };
 
@@ -215,7 +212,7 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
             <Home size={20} />
             <span>Back to Home</span>
           </button>
-          <button className="sidebar-nav-item logout-link-prominent" onClick={handleLogout}>
+          <button className="sidebar-nav-item logout-link-prominent" onClick={() => setShowLogoutConfirm(true)}>
             <LogOut size={20} />
             <span>Logout</span>
           </button>
@@ -322,7 +319,7 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
                             <Bell size={14} color="var(--dash-accent)" />
                           </div>
                           <div className="notif-body">
-                            <p><strong>{n.title || 'Notice'}</strong>: {n.text}</p>
+                            <p><strong>{n.title || 'Notice'}</strong>{n.text ? `: ${n.text}` : ''}</p>
                             <span>{n.time}</span>
                           </div>
                         </div>
@@ -350,15 +347,19 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
       <aside className="dashboard-right-sidebar">
         <div className="right-sidebar-section">
           <h4>Notifications</h4>
-          {notifications.slice(0, 4).map(n => (
-            <div key={n.id} className={`notif-item ${n.unread ? 'unread' : ''}`}>
-              <div className="notif-icon-circle"><Bell size={16} /></div>
-              <div className="notif-body">
-                <p><strong>{n.title}</strong> {n.text}</p>
-                <span>{n.time}</span>
+          {notifications.length === 0 ? (
+            <p style={{ color: 'var(--dash-muted)', fontSize: '0.8rem' }}>No notifications yet.</p>
+          ) : (
+            notifications.slice(0, 5).map(n => (
+              <div key={n.id} className={`notif-item ${n.unread ? 'unread' : ''}`}>
+                <div className="notif-icon-circle"><Bell size={16} /></div>
+                <div className="notif-body">
+                  <p><strong>{n.title}</strong>{n.text ? ` — ${n.text}` : ''}</p>
+                  <span>{n.time}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
         <div className="right-sidebar-section">
@@ -380,6 +381,18 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
           </div>
         </div>
       </aside>
+
+      {showLogoutConfirm && (
+        <ConfirmDialog
+          title="Log out of your account?"
+          description="You’ll be signed out and returned to the SupaMeal home page."
+          confirmLabel="Log out"
+          tone="primary"
+          Icon={LogOut}
+          onCancel={() => setShowLogoutConfirm(false)}
+          onConfirm={handleLogout}
+        />
+      )}
     </div>
   );
 };

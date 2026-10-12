@@ -3,9 +3,11 @@ import { Calendar, Users, MapPin, XCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { bookingsApi } from '../../services/api';
+import ConfirmDialog from '../../components/ConfirmDialog';
+import ModifyBookingModal from '../../components/ModifyBookingModal';
 import './dashboard.css';
 
-const BookingCard = ({ booking, status, onCancel }) => (
+const BookingCard = ({ booking, status, onCancel, onModify }) => (
   <div className="list-row" style={{ alignItems: 'flex-start', padding: '1.25rem 0' }}>
     <div style={{ flex: 1 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
@@ -18,14 +20,26 @@ const BookingCard = ({ booking, status, onCancel }) => (
         <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><MapPin size={14} /> {booking.address}</span>
       </div>
       {booking.reason && (
-        <div style={{ marginTop: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#e05555', fontSize: '0.83rem' }}>
+        <div style={{ marginTop: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--error)', fontSize: '0.83rem' }}>
           <XCircle size={14} /> {booking.reason}
         </div>
       )}
     </div>
     <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
-      {status === 'pending' && <button className="dash-btn-danger" onClick={() => onCancel(booking.id)}>Cancel</button>}
-      {status === 'confirmed' && <button className="dash-btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.82rem' }}>Modify</button>}
+      {(status === 'confirmed' || status === 'pending') && (
+        <button
+          className="dash-btn-outline"
+          style={{ padding: '0.5rem 1rem', fontSize: '0.82rem' }}
+          onClick={() => onModify(booking)}
+        >
+          Modify
+        </button>
+      )}
+      {(status === 'confirmed' || status === 'pending') && (
+        <button className="dash-btn-danger" onClick={() => onCancel(booking)}>
+          Cancel
+        </button>
+      )}
     </div>
   </div>
 );
@@ -33,6 +47,8 @@ const BookingCard = ({ booking, status, onCancel }) => (
 const MyBookings = () => {
   const [tab, setTab] = useState('confirmed');
   const [bookings, setBookings] = useState({ confirmed: [], pending: [], rejected: [] });
+  const [modifyingBooking, setModifyingBooking] = useState(null);
+  const [cancelTarget, setCancelTarget] = useState(null);
   const { user } = useAuth();
   const { showToast } = useToast();
 
@@ -53,10 +69,12 @@ const MyBookings = () => {
 
   useEffect(() => { loadBookings(); }, [user?.id]);
 
-  const handleCancel = async (id) => {
+  const handleCancel = async () => {
+    if (!cancelTarget) return;
     try {
-      await bookingsApi.cancel(id);
-      showToast('Booking cancelled.');
+      await bookingsApi.cancel(cancelTarget.id);
+      showToast(`Booking at ${cancelTarget.restaurant} cancelled.`);
+      setCancelTarget(null);
       await loadBookings();
     } catch (err) {
       console.error(err);
@@ -82,7 +100,7 @@ const MyBookings = () => {
           {['confirmed', 'pending', 'rejected'].map(t => (
             <button key={t} className={`tab-btn ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>
               {t.charAt(0).toUpperCase() + t.slice(1)}
-              <span style={{ marginLeft: '0.5rem', background: tab === t ? 'var(--dash-accent, #C6F135)' : 'rgba(255,255,255,0.1)', color: tab === t ? '#000' : 'var(--dash-muted, #8a8a8a)', borderRadius: '10px', padding: '1px 8px', fontSize: '0.75rem', fontWeight: 700 }}>
+              <span style={{ marginLeft: '0.5rem', background: tab === t ? 'var(--dash-accent)' : 'rgba(255,255,255,0.1)', color: tab === t ? '#000' : 'var(--dash-muted, #8a8a8a)', borderRadius: '10px', padding: '1px 8px', fontSize: '0.75rem', fontWeight: 700 }}>
                 {counts[t]}
               </span>
             </button>
@@ -95,9 +113,35 @@ const MyBookings = () => {
             <p>No {tab} bookings found.</p>
           </div>
         ) : (
-          bookings[tab].map(b => <BookingCard key={b.id} booking={b} status={tab} onCancel={handleCancel} />)
+          bookings[tab].map(b => (
+            <BookingCard
+              key={b.id}
+              booking={b}
+              status={tab}
+              onCancel={setCancelTarget}
+              onModify={(bookingToEdit) => setModifyingBooking(bookingToEdit)}
+            />
+          ))
         )}
       </div>
+
+      {modifyingBooking && (
+        <ModifyBookingModal
+          booking={modifyingBooking}
+          onClose={() => setModifyingBooking(null)}
+          onUpdated={loadBookings}
+        />
+      )}
+
+      {cancelTarget && (
+        <ConfirmDialog
+          title="Cancel this booking?"
+          description={`Your booking at ${cancelTarget.restaurant} on ${cancelTarget.date} at ${cancelTarget.time} will be cancelled.`}
+          confirmLabel="Cancel booking"
+          onConfirm={handleCancel}
+          onCancel={() => setCancelTarget(null)}
+        />
+      )}
     </>
   );
 };

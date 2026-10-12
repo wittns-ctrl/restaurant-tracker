@@ -47,41 +47,48 @@ const SignUp = () => {
         <p>Let's get you started</p>
       </div>
 
-      {error && <p className="auth-form-error">{error}</p>}
+      {error && <p role="alert" className="auth-form-error">{error}</p>}
 
       <form onSubmit={handleSignUp}>
         <div className="auth-input-group">
+          <label htmlFor="signup-first-name">First name</label>
           <div className="auth-input-wrapper">
             <User size={18} className="auth-input-icon" />
-            <input type="text" placeholder="First Name" className="auth-input" required value={form.firstName} onChange={e => setForm(p => ({ ...p, firstName: e.target.value }))} />
+            <input id="signup-first-name" autoComplete="given-name" type="text" placeholder="First name" className="auth-input" required value={form.firstName} onChange={e => setForm(p => ({ ...p, firstName: e.target.value }))} />
           </div>
         </div>
 
         <div className="auth-input-group">
+          <label htmlFor="signup-last-name">Last name</label>
           <div className="auth-input-wrapper">
             <User size={18} className="auth-input-icon" />
-            <input type="text" placeholder="Last Name" className="auth-input" required value={form.lastName} onChange={e => setForm(p => ({ ...p, lastName: e.target.value }))} />
+            <input id="signup-last-name" autoComplete="family-name" type="text" placeholder="Last name" className="auth-input" required value={form.lastName} onChange={e => setForm(p => ({ ...p, lastName: e.target.value }))} />
           </div>
         </div>
 
         <div className="auth-input-group">
+          <label htmlFor="signup-phone">Phone number</label>
           <div className="auth-input-wrapper">
             <Phone size={18} className="auth-input-icon" />
-            <input type="tel" placeholder="Phone Number" className="auth-input" required value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
+            <input id="signup-phone" autoComplete="tel" type="tel" placeholder="Phone number" className="auth-input" required value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
           </div>
         </div>
 
         <div className="auth-input-group">
+          <label htmlFor="signup-email">Email address</label>
           <div className="auth-input-wrapper">
             <Mail size={18} className="auth-input-icon" />
-            <input type="email" placeholder="Email Address" className="auth-input" required value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
+            <input id="signup-email" autoComplete="email" type="email" placeholder="Email address" className="auth-input" required value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
           </div>
         </div>
 
         <div className="auth-input-group">
+          <label htmlFor="signup-password">Password</label>
           <div className="auth-input-wrapper">
             <Lock size={18} className="auth-input-icon" />
             <input 
+              id="signup-password"
+              autoComplete="new-password"
               type={showPassword ? "text" : "password"} 
               placeholder="Password" 
               className="auth-input" 

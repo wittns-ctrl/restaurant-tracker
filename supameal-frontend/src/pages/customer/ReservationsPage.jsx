@@ -4,6 +4,7 @@ import { CalendarCheck, Plus, Calendar, Clock, MapPin, ChevronRight } from 'luci
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { bookingsApi } from '../../services/api';
+import ConfirmDialog from '../../components/ConfirmDialog';
 
 const STATUS_STYLE = {
   confirmed: { bg: '#dcfce7', color: '#166534' },
@@ -18,6 +19,7 @@ export default function ReservationsPage() {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [cancelTarget, setCancelTarget] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -35,11 +37,13 @@ export default function ReservationsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const onCancel = async (id) => {
+  const confirmCancel = async () => {
+    if (!cancelTarget) return;
     try {
-      await bookingsApi.cancel(id);
-      setReservations((prev) => prev.filter((r) => r.id !== id));
-      showToast('Reservation cancelled', 'success');
+      await bookingsApi.cancel(cancelTarget.id);
+      setReservations((prev) => prev.filter((r) => r.id !== cancelTarget.id));
+      showToast(`Reservation at ${cancelTarget.restaurant} cancelled`, 'success');
+      setCancelTarget(null);
     } catch (err) {
       showToast(err.message || 'Cancellation failed', 'error');
     }
@@ -190,7 +194,7 @@ export default function ReservationsPage() {
                         }}
                       >View</Link>
                       <button
-                        onClick={() => onCancel(r.id)}
+                        onClick={() => setCancelTarget(r)}
                         style={{
                           padding: '8px 14px',
                           fontSize: 13,
@@ -210,6 +214,15 @@ export default function ReservationsPage() {
           )}
         </div>
       </div>
+      {cancelTarget && (
+        <ConfirmDialog
+          title="Cancel this reservation?"
+          description={`Your reservation at ${cancelTarget.restaurant} on ${cancelTarget.date} at ${cancelTarget.time} will be cancelled.`}
+          confirmLabel="Cancel reservation"
+          onConfirm={confirmCancel}
+          onCancel={() => setCancelTarget(null)}
+        />
+      )}
     </div>
   );
 }

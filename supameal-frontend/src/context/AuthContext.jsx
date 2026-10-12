@@ -147,13 +147,11 @@ export const AuthProvider = ({ children }) => {
     window.location.href = `${getApiBaseUrl()}/auth/apple`;
   }, [getApiBaseUrl]);
 
-  const logout = useCallback(async () => {
+  const logout = useCallback(() => {
     const email = user?.email;
-    try {
-      if (email) await authApi.logout({ email });
-    } catch {
-      // ignore logout API errors
-    }
+    // Start the server-side logout while the access token is still available,
+    // but don't make leaving the dashboard depend on the network response.
+    if (email) authApi.logout({ email }).catch(() => {});
     forceLogout();
   }, [user, forceLogout]);
 

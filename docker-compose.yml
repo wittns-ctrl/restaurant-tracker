@@ -50,6 +50,8 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       FROM_EMAIL: ${FROM_EMAIL:-}
+      SUPPORT_EMAIL: ${SUPPORT_EMAIL:-support@supameal.com}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-http://localhost:3000/auth/google/callback}
@@ -71,6 +73,12 @@ services:
       args:
         # Baked into the bundle at build time — must be reachable from the browser
         VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+        VITE_SOCIAL_FACEBOOK_URL: ${VITE_SOCIAL_FACEBOOK_URL:-}
+        VITE_SOCIAL_INSTAGRAM_URL: ${VITE_SOCIAL_INSTAGRAM_URL:-}
+        VITE_SOCIAL_X_URL: ${VITE_SOCIAL_X_URL:-}
+        VITE_SOCIAL_LINKEDIN_URL: ${VITE_SOCIAL_LINKEDIN_URL:-}
+        VITE_SUPPORT_EMAIL: ${VITE_SUPPORT_EMAIL:-support@supameal.com}
+        VITE_CAREERS_EMAIL: ${VITE_CAREERS_EMAIL:-careers@supameal.com}
     restart: unless-stopped
     ports:
       - "8080:80"

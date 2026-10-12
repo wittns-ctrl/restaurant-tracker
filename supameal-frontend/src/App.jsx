@@ -33,6 +33,8 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 const ProfilePage = lazy(() => import('./pages/customer/ProfilePage'));
 const ReservationsPage = lazy(() => import('./pages/customer/ReservationsPage'));
 const BookTablePage = lazy(() => import('./pages/customer/BookTableDash'));
+const OffersPage = lazy(() => import('./pages/OffersPage'));
+const FooterInfoPage = lazy(() => import('./pages/FooterInfoPage'));
 
 const ROLE_HOME = {
   customer: '/customer/dashboard',
@@ -71,7 +73,15 @@ const BookTableRoute = () => {
   const location = useLocation();
   const setActiveTab = (tab) => navigate(tab === 'bookings' ? '/reservations' : '/customer/dashboard');
   const initialRestaurantId = location.state?.restaurantId || '';
-  return <BookTablePage setActiveTab={setActiveTab} initialRestaurantId={initialRestaurantId} />;
+  return (
+    <BookTablePage
+      setActiveTab={setActiveTab}
+      initialRestaurantId={initialRestaurantId}
+      initialBookingDate={location.state?.bookingDate || ''}
+      initialBookingTime={location.state?.bookingTime || ''}
+      initialGuests={location.state?.guests || 2}
+    />
+  );
 };
 
 function AppRoutes() {
@@ -87,6 +97,8 @@ function AppRoutes() {
         <Route path="/home" element={<LandingPage />} />
         <Route path="/restaurants" element={<RestaurantsPage />} />
         <Route path="/restaurants/:id" element={<RestaurantDetail />} />
+        <Route path="/offers" element={<OffersPage />} />
+        <Route path="/company/:page" element={<FooterInfoPage />} />
         <Route path="/menu/:restaurantId" element={<MenuPage />} />
         <Route
           path="/login"

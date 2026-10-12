@@ -85,6 +85,9 @@ const StripeCheckout = ({ publishableKey, clientSecret, onSuccess, onError }) =>
 
   // Remount the Elements tree if a different intent (clientSecret) is issued.
   const elementKey = clientSecret || 'none';
+  const stripePrimary = typeof window !== 'undefined'
+    ? getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#F5A623'
+    : '#F5A623';
 
   if (!stripePromise || !clientSecret) {
     return (
@@ -102,7 +105,7 @@ const StripeCheckout = ({ publishableKey, clientSecret, onSuccess, onError }) =>
         clientSecret,
         appearance: {
           theme: 'night',
-          variables: { colorPrimary: '#C6F135', colorBackground: '#141414' },
+          variables: { colorPrimary: stripePrimary, colorBackground: '#151815' },
         },
       }}
     >

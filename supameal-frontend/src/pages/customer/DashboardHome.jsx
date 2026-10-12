@@ -112,7 +112,7 @@ const DashboardHome = ({ setActiveTab }) => {
                 </div>
                 <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:'0.4rem' }}>
                   <span className={`status-badge status-${order.status}`}>{order.statusLabel}</span>
-                  <span style={{ color: 'var(--dash-accent, #C6F135)', fontWeight: 600 }}>{order.price}</span>
+                  <span style={{ color: 'var(--dash-accent)', fontWeight: 600 }}>{order.price}</span>
                 </div>
               </div>
             ))
@@ -170,7 +170,7 @@ const DashboardHome = ({ setActiveTab }) => {
                 <img src={r.image || img1} alt={r.name} style={{ width:'100%', height:'110px', objectFit:'cover' }} />
                 <div style={{ padding: '0.75rem' }}>
                   <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize:'0.9rem' }}>{r.name}</div>
-                  <div style={{ color: 'var(--dash-accent, #C6F135)', fontSize:'0.8rem', marginTop:'0.25rem' }}>★ {r.rating || 4.5} · {r.cuisine || 'Fine Dining'}</div>
+                  <div style={{ color: 'var(--dash-accent)', fontSize:'0.8rem', marginTop:'0.25rem' }}>★ {r.rating || 4.5} · {r.cuisine || 'Fine Dining'}</div>
                 </div>
               </div>
             ))}

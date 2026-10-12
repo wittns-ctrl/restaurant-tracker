@@ -62,11 +62,13 @@ export const CartProvider = ({ children }) => {
   }, [loadMenu]);
 
   const selectRestaurant = useCallback((restaurantId) => {
+    if (String(selectedRestaurantId) === String(restaurantId)) return;
     localStorage.setItem(RESTAURANT_KEY, restaurantId);
     setCart({});
     setMenuItems([]);
+    setSelectedRestaurantId(restaurantId);
     loadMenu(restaurantId);
-  }, [loadMenu]);
+  }, [loadMenu, selectedRestaurantId]);
 
   const addToCart = (id) => {
     setCart(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }));

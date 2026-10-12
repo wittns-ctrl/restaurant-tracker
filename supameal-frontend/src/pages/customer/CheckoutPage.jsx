@@ -166,10 +166,10 @@ const CheckoutPage = ({ setActiveTab }) => {
     return (
       <>
         <div style={{ textAlign: 'center', padding: '5rem 2rem' }}>
-          <CheckCircle size={80} color="var(--dash-accent, #C6F135)" style={{ marginBottom: '1.5rem' }} />
+          <CheckCircle size={80} color="var(--dash-accent)" style={{ marginBottom: '1.5rem' }} />
           <h2 style={{ color: 'var(--dash-text, #fff)', fontSize: '2rem', marginBottom: '0.75rem' }}>Order Placed!</h2>
           <p style={{ color: 'var(--dash-muted, #8a8a8a)', maxWidth: 400, margin: '0 auto 2rem', lineHeight: 1.7 }}>
-            Your order <strong style={{ color: 'var(--dash-accent, #C6F135)' }}>#{placedOrderId}</strong> has been confirmed. Estimated delivery: 25–35 minutes.
+            Your order <strong style={{ color: 'var(--dash-accent)' }}>#{placedOrderId}</strong> has been confirmed. Estimated delivery: 25–35 minutes.
           </p>
           {paymentWarning && (
             <p style={{ color: '#d97706', maxWidth: 460, margin: '0 auto 2rem', fontSize: '0.85rem' }}>
@@ -242,7 +242,7 @@ const CheckoutPage = ({ setActiveTab }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div className="dash-panel" style={{ marginBottom: 0 }}>
             <h3 style={{ color: 'var(--dash-text, #fff)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <MapPin size={20} color="var(--dash-accent, #C6F135)" /> Delivery Address
+              <MapPin size={20} color="var(--dash-accent)" /> Delivery Address
             </h3>
             <div className="form-row">
               <div className="dash-form-group">
@@ -272,7 +272,7 @@ const CheckoutPage = ({ setActiveTab }) => {
 
           <div className="dash-panel" style={{ marginBottom: 0 }}>
             <h3 style={{ color: 'var(--dash-text, #fff)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <Clock size={20} color="var(--dash-accent, #C6F135)" /> Delivery Time
+              <Clock size={20} color="var(--dash-accent)" /> Delivery Time
             </h3>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
               {TIME_SLOTS.map(slot => (
@@ -285,17 +285,17 @@ const CheckoutPage = ({ setActiveTab }) => {
 
           <div className="dash-panel" style={{ marginBottom: 0 }}>
             <h3 style={{ color: 'var(--dash-text, #fff)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <Tag size={20} color="var(--dash-accent, #C6F135)" /> Promo Code
+              <Tag size={20} color="var(--dash-accent)" /> Promo Code
             </h3>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <input className="dash-input" placeholder="Enter promo code" value={promo} onChange={e => setPromo(e.target.value)} disabled={promoApplied || isPaying} style={{ flex: 1 }} />
               {promoApplied ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#4caf80', fontWeight: 600 }}><CheckCircle size={18} /> Applied!</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--success)', fontWeight: 600 }}><CheckCircle size={18} /> Applied!</div>
               ) : (
                 <button className="dash-btn-outline" style={{ padding: '0 1.5rem', whiteSpace: 'nowrap' }} onClick={applyPromo} disabled={isPaying}>Apply</button>
               )}
             </div>
-            {promoApplied && <p style={{ color: '#4caf80', fontSize: '0.82rem', marginTop: '0.5rem' }}>${promoDiscount.toFixed(2)} discount applied!</p>}
+            {promoApplied && <p style={{ color: 'var(--success)', fontSize: '0.82rem', marginTop: '0.5rem' }}>${promoDiscount.toFixed(2)} discount applied!</p>}
           </div>
         </div>
 
@@ -317,7 +317,7 @@ const CheckoutPage = ({ setActiveTab }) => {
                 <span>Delivery Fee</span><span>${delivery.toFixed(2)}</span>
               </div>
               {promoApplied && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#4caf80', fontSize: '0.88rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)', fontSize: '0.88rem' }}>
                   <span>Promo Discount</span><span>-${promoDiscount.toFixed(2)}</span>
                 </div>
               )}

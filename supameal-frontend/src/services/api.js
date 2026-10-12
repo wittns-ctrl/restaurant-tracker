@@ -179,6 +179,14 @@ export const mailApi = {
   contact: (data) => apiRequest('/mail/contact', { method: 'POST', body: JSON.stringify(data) }),
 };
 
+export const newsletterApi = {
+  subscribe: (email) => apiRequest('/mail/newsletter/subscribe', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+    skipAuth: true,
+  }),
+};
+
 // NOTE: pagination — list endpoints now return { data, pagination }.
 // Use the helpers below to read them defensively.
 export const unwrapList = (res) => (Array.isArray(res) ? res : res?.data || []);

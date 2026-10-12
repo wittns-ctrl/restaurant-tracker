@@ -73,7 +73,7 @@ const RegisterRestaurant = () => {
         <p>Join the SupaMeal network</p>
       </div>
 
-      {error && <p style={{ color: '#e05555', textAlign: 'center', marginBottom: '1rem' }}>{error}</p>}
+      {error && <p style={{ color: 'var(--error)', textAlign: 'center', marginBottom: '1rem' }}>{error}</p>}
 
       <form onSubmit={handleRegister}>
         <div className="auth-input-group">

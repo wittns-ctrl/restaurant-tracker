@@ -31,7 +31,7 @@ const CartPage = ({ setActiveTab }) => {
           <div className="dash-panel" style={{ marginBottom: 0 }}>
             <div className="dash-panel-header">
               <h3>Cart Items ({cartItems.length})</h3>
-              <button style={{ color: '#e05555', fontSize: '0.82rem', background: 'none', border: 'none', cursor: 'pointer' }} onClick={clearCart}>Clear All</button>
+              <button style={{ color: 'var(--error)', fontSize: '0.82rem', background: 'none', border: 'none', cursor: 'pointer' }} onClick={clearCart}>Clear All</button>
             </div>
 
             {cartItems.map(item => (
@@ -49,8 +49,8 @@ const CartPage = ({ setActiveTab }) => {
                   <button className="qty-btn qty-btn-minus" onClick={() => updateQty(item.id, -1)}>−</button>
                   <span style={{ color: 'var(--dash-text, #fff)', fontWeight: 700, minWidth: 20, textAlign: 'center' }}>{item.qty}</span>
                   <button className="qty-btn qty-btn-plus" onClick={() => updateQty(item.id, 1)}>+</button>
-                  <span style={{ color: 'var(--dash-accent, #C6F135)', fontWeight: 700, minWidth: 52, textAlign: 'right' }}>${(item.price * item.qty).toFixed(2)}</span>
-                  <button onClick={() => updateQty(item.id, -item.qty)} style={{ background: 'none', border: 'none', color: '#e05555', cursor: 'pointer', padding: '0.25rem' }}>
+                  <span style={{ color: 'var(--dash-accent)', fontWeight: 700, minWidth: 52, textAlign: 'right' }}>${(item.price * item.qty).toFixed(2)}</span>
+                  <button onClick={() => updateQty(item.id, -item.qty)} style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', padding: '0.25rem' }}>
                     <Trash2 size={18} />
                   </button>
                 </div>

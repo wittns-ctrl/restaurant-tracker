@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { MapPin, Phone, Mail, Send } from 'lucide-react';
 import Button from '../../components/Button/Button';
 import { mailApi } from '../../services/api';
@@ -8,16 +8,26 @@ const ContactUs = () => {
   const [form, setForm] = useState({ fullName: '', email: '', message: '' });
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const updateField = (field, value) => {
+    setForm((previous) => ({ ...previous, [field]: value }));
+    setSent(false);
+    setError('');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSending(true);
     try {
       await mailApi.contact(form);
       setSent(true);
       setForm({ fullName: '', email: '', message: '' });
     } catch (err) {
       setError(err?.message || 'Could not send your message. Please try again.');
+    } finally {
+      setSending(false);
     }
   };
 
@@ -68,26 +78,26 @@ const ContactUs = () => {
           <div className="contact-form-wrapper">
             <form className="contact-form" onSubmit={handleSubmit}>
               <h3>Send us a message</h3>
-              {sent && <p style={{ color: '#4caf80', marginBottom: '1rem' }}>Message sent successfully!</p>}
-              {error && <p style={{ color: '#f44336', marginBottom: '1rem' }}>{error}</p>}
+              {sent && <p role="status" aria-live="polite" style={{ color: 'var(--success)', marginBottom: '1rem' }}>Message sent successfully!</p>}
+              {error && <p role="alert" style={{ color: 'var(--error)', marginBottom: '1rem' }}>{error}</p>}
               
               <div className="form-group">
-                <label>Full Name</label>
-                <input type="text" placeholder="John Doe" className="form-input" required value={form.fullName} onChange={e => setForm(p => ({ ...p, fullName: e.target.value }))} />
+                <label htmlFor="contact-full-name">Full Name</label>
+                <input id="contact-full-name" autoComplete="name" type="text" placeholder="John Doe" className="form-input" required value={form.fullName} onChange={e => updateField('fullName', e.target.value)} />
               </div>
               
               <div className="form-group">
-                <label>Email Address</label>
-                <input type="email" placeholder="john@example.com" className="form-input" required value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
+                <label htmlFor="contact-email">Email Address</label>
+                <input id="contact-email" autoComplete="email" type="email" placeholder="john@example.com" className="form-input" required value={form.email} onChange={e => updateField('email', e.target.value)} />
               </div>
               
               <div className="form-group">
-                <label>Message</label>
-                <textarea placeholder="How can we help you?" className="form-input" rows="5" required value={form.message} onChange={e => setForm(p => ({ ...p, message: e.target.value }))}></textarea>
+                <label htmlFor="contact-message">Message</label>
+                <textarea id="contact-message" placeholder="How can we help you?" className="form-input" rows="5" required value={form.message} onChange={e => updateField('message', e.target.value)}></textarea>
               </div>
               
-              <Button variant="primary" type="submit" className="contact-submit-btn">
-                <Send size={18} /> Send Message
+              <Button variant="primary" type="submit" className="contact-submit-btn" disabled={sending}>
+                <Send size={18} /> {sending ? 'Sending…' : 'Send Message'}
               </Button>
             </form>
           </div>

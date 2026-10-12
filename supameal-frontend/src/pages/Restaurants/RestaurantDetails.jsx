@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, MapPin, Clock, Users, Phone, Navigation, Heart } from 'lucide-react';
+import { ArrowLeft, Star, MapPin, Clock, Users, Phone, Navigation, Heart, ShoppingCart, Plus, Minus } from 'lucide-react';
 import Navbar from '../../sections/Navbar/Navbar';
 import Footer from '../../sections/Footer/Footer';
 import Button from '../../components/Button/Button';
@@ -21,7 +21,7 @@ const RestaurantDetails = () => {
   const [reviewText, setReviewText] = useState('');
   const [reviewStatus, setReviewStatus] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { selectRestaurant } = useCart();
+  const { selectRestaurant, cart, addToCart, removeFromCart, cartCount } = useCart();
   const { user } = useAuth();
 
   useEffect(() => {
@@ -193,19 +193,58 @@ const RestaurantDetails = () => {
                     {Object.entries(menuByCategory).map(([category, items]) => (
                       <div key={category} className="menu-category">
                         <h4>{category}</h4>
-                        {items.map(item => (
-                          <div key={item.id} className="menu-item">
-                            <div className="menu-item-info">
-                              <span className="item-name">{item.name}</span>
-                              <span className="item-desc">{item.desc || item.description}</span>
+                        {items.map(item => {
+                          const qty = cart[item.id] || 0;
+                          return (
+                            <div key={item.id} className="menu-item" style={{ alignItems: 'center' }}>
+                              <div className="menu-item-info">
+                                <span className="item-name">{item.name}</span>
+                                <span className="item-desc">{item.desc || item.description}</span>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+                                <span className="item-price">${item.price}</span>
+                                {qty > 0 ? (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    <button
+                                      onClick={() => removeFromCart(item.id)}
+                                      aria-label={`Remove one ${item.name} from cart`}
+                                      style={{ width: 26, height: 26, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)', background: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    >
+                                      <Minus size={12} />
+                                    </button>
+                                    <span style={{ color: '#fff', fontWeight: 700, minWidth: 18, textAlign: 'center', fontSize: '0.9rem' }}>{qty}</span>
+                                    <button
+                                      onClick={() => addToCart(item.id)}
+                                      aria-label={`Add one ${item.name} to cart`}
+                                      style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--primary)', border: 'none', color: '#000', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                    >
+                                      <Plus size={12} />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => { selectRestaurant(id); addToCart(item.id); }}
+                                    style={{ padding: '0.3rem 0.7rem', background: 'var(--primary)', border: 'none', borderRadius: 6, color: '#000', fontWeight: 700, fontSize: '0.78rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                                  >
+                                    + Add
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                            <span className="item-price">${item.price}</span>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     ))}
                     {Object.keys(menuByCategory).length === 0 && (
                       <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem 0' }}>Menu coming soon</p>
+                    )}
+                    {cartCount > 0 && (
+                      <button
+                        onClick={() => { selectRestaurant(id); navigate('/customer/dashboard?tab=cart'); }}
+                        style={{ width: '100%', marginTop: '1rem', padding: '0.75rem', background: 'var(--primary)', border: 'none', borderRadius: 10, color: '#000', fontWeight: 700, fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                      >
+                        <ShoppingCart size={18} /> View Cart ({cartCount} items)
+                      </button>
                     )}
                   </div>
                 )}
@@ -221,9 +260,9 @@ const RestaurantDetails = () => {
                               type="button"
                               onClick={() => setReviewRating(n)}
                               aria-label={`${n} star${n > 1 ? 's' : ''}`}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: '#ffc107' }}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: 'var(--warning)' }}
                             >
-                              <Star size={18} fill={n <= reviewRating ? '#ffc107' : 'none'} />
+                              <Star size={18} fill={n <= reviewRating ? 'var(--warning)' : 'none'} />
                             </button>
                           ))}
                         </div>
@@ -240,7 +279,7 @@ const RestaurantDetails = () => {
                         <button
                           type="submit"
                           className="full-width-btn"
-                          style={{ marginTop: '0.6rem', width: '100%', background: 'var(--primary, #C6F135)', color: '#111', border: 'none', borderRadius: 8, padding: '0.6rem', fontWeight: 700, cursor: 'pointer' }}
+                          style={{ marginTop: '0.6rem', width: '100%', background: 'var(--primary)', color: '#111', border: 'none', borderRadius: 8, padding: '0.6rem', fontWeight: 700, cursor: 'pointer' }}
                         >
                           Submit Review
                         </button>
@@ -252,7 +291,7 @@ const RestaurantDetails = () => {
                       reviews.map(r => (
                         <div key={r.id} style={{ padding: '1rem 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem' }}>
-                            <Star size={14} fill="#ffc107" color="#ffc107" />
+                            <Star size={14} fill="var(--warning)" color="var(--warning)" />
                             <strong>{r.rating}</strong>
                             <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{r.customerName}</span>
                           </div>

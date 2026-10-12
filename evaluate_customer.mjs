@@ -78,6 +78,16 @@ async function testCustomerWorkflow() {
   if (testRestaurant) {
     const reviewsRes = await fetch(`${BASE_URL}/reviews?restaurantId=${testRestaurant._id || testRestaurant.id}`);
     console.log('GET /reviews status:', reviewsRes.status, await reviewsRes.json());
+    const createReviewRes = await fetch(`${BASE_URL}/reviews`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        restaurantId: testRestaurant._id || testRestaurant.id,
+        rating: 5,
+        comment: 'Amazing food and great service!'
+      })
+    });
+    console.log('POST /reviews status:', createReviewRes.status, await createReviewRes.json());
   }
 
   // 7. NOTIFICATIONS
@@ -92,17 +102,33 @@ async function testCustomerWorkflow() {
   if (testRestaurant) {
     const bookingPayload = {
       restaurantId: testRestaurant._id || testRestaurant.id,
-      date: '2026-10-15',
-      time: '19:00',
+      bookingDate: '2026-10-15',
+      bookingTime: '19:00',
       guests: 2,
-      specialRequests: 'Window seat please'
+      specialRequest: 'Window seat please'
     };
     const createBookingRes = await fetch(`${BASE_URL}/bookings`, {
       method: 'POST',
       headers,
       body: JSON.stringify(bookingPayload)
     });
-    console.log('POST /bookings status:', createBookingRes.status, await createBookingRes.json());
+    const createdBooking = await createBookingRes.json();
+    console.log('POST /bookings status:', createBookingRes.status, createdBooking);
+
+    if (createdBooking?.id || createdBooking?._id) {
+      const bookingId = createdBooking.id || createdBooking._id;
+      // Test modifying booking
+      const patchBookingRes = await fetch(`${BASE_URL}/bookings/${bookingId}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({
+          bookingTime: '20:00',
+          guests: 3,
+          specialRequest: 'Corner booth please'
+        })
+      });
+      console.log('PATCH /bookings/:id status:', patchBookingRes.status, await patchBookingRes.json());
+    }
   }
 
   // 9. PROMO CODE VALIDATION
@@ -126,19 +152,15 @@ async function testCustomerWorkflow() {
       items: [
         {
           menuItemId: testMenuItem._id || testMenuItem.id,
-          name: testMenuItem.name,
-          price: testMenuItem.price,
-          quantity: 2
+          qty: 2
         }
       ],
       deliveryAddress: {
         street: '42 Evaluation Lane, Kigali',
         city: 'Kigali',
-        phone: '0722750571'
+        instructions: 'Call upon arrival'
       },
-      paymentMethod: 'cash_on_delivery',
-      deliveryFee: 1500,
-      notes: 'Customer evaluation test order'
+      timeSlot: 'ASAP'
     };
     const createOrderRes = await fetch(`${BASE_URL}/orders`, {
       method: 'POST',

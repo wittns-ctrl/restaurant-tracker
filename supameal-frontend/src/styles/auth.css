@@ -26,7 +26,7 @@
 }
 
 .auth-left span{
- color:#d78a26;
+ color:var(--primary);
 }
 
 .auth-right{
@@ -49,13 +49,13 @@
 
  background:transparent;
 
- border:1px solid #d78a26;
+ border:1px solid var(--primary);
 
  color:white;
 }
 
 .auth-right button{
- background:#d78a26;
+ background:var(--primary);
 
  border:none;
 

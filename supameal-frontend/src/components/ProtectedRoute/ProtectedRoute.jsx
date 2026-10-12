@@ -11,34 +11,20 @@ const ROLE_LANDING = {
 
 const ALLOWED_ROLES = ['customer', 'owner', 'admin'];
 
-const getStoredToken = () => {
-  if (typeof window === 'undefined') return null;
-  try {
-    return window.localStorage.getItem('accessToken');
-  } catch {
-    return null;
-  }
-};
-
 export default function ProtectedRoute({ children, roles }) {
   const { isAuthenticated, loading, user } = useAuth();
   const { showToast } = useToast();
   const location = useLocation();
-  const hasStoredToken = !!getStoredToken();
-
   const requiredRoles = roles && roles.length > 0 ? roles : ALLOWED_ROLES;
 
   useEffect(() => {
     if (loading) return;
-    if (!isAuthenticated) {
-      showToast('Please sign in to access this page', 'info');
-    } else if (!requiredRoles.includes(user?.role)) {
-      const landing = ROLE_LANDING[user?.role] || '/login';
+    if (isAuthenticated && !requiredRoles.includes(user?.role)) {
       showToast(`You don't have permission to access that page`, 'error');
     }
   }, [isAuthenticated, loading, user, requiredRoles, showToast]);
 
-  if (loading || (!isAuthenticated && !hasStoredToken)) {
+  if (loading) {
     return (
       <div style={{
         minHeight: '100vh',
@@ -56,7 +42,7 @@ export default function ProtectedRoute({ children, roles }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    return <Navigate to="/login" replace state={{ from: location.pathname, fromState: location.state }} />;
   }
 
   if (!requiredRoles.includes(user?.role)) {

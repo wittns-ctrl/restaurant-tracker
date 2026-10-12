@@ -92,6 +92,7 @@
   outline: none;
   border-color: var(--primary);
   background-color: #111;
+  box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
 .form-textarea {

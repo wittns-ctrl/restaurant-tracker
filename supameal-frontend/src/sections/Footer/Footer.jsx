@@ -4,7 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import { FaFacebookF, FaInstagram, FaTwitter, FaLinkedinIn } from 'react-icons/fa';
 import Button from '../../components/Button/Button';
 import Logo from '../../components/Logo/Logo';
-import { mailApi } from '../../services/api';
+import { newsletterApi } from '../../services/api';
 import './Footer.css';
 
 const Footer = () => {
@@ -16,64 +16,70 @@ const Footer = () => {
     if (!newsletterEmail.trim() || newsletterState === 'loading') return;
     setNewsletterState('loading');
     try {
-      await mailApi.contact({
-        fullName: 'Newsletter subscription',
-        email: newsletterEmail.trim(),
-        message: 'Please add me to the SupaMeal newsletter.',
-      });
-      setNewsletterState('done');
+      const result = await newsletterApi.subscribe(newsletterEmail.trim());
+      setNewsletterState(result.emailSent ? 'done' : 'saved');
       setNewsletterEmail('');
     } catch {
       setNewsletterState('error');
     }
   };
 
+  const socialLinks = [
+    { label: 'Facebook', href: import.meta.env.VITE_SOCIAL_FACEBOOK_URL, Icon: FaFacebookF },
+    { label: 'Instagram', href: import.meta.env.VITE_SOCIAL_INSTAGRAM_URL, Icon: FaInstagram },
+    { label: 'X', href: import.meta.env.VITE_SOCIAL_X_URL, Icon: FaTwitter },
+    { label: 'LinkedIn', href: import.meta.env.VITE_SOCIAL_LINKEDIN_URL, Icon: FaLinkedinIn },
+  ].filter(({ href }) => href);
+
   return (
     <footer className="footer">
       <div className="container">
         <div className="footer-content">
           <div className="footer-brand">
-            <Link to="/" className="footer-logo-link">
+            <Link to="/home" className="footer-logo-link">
               <Logo />
             </Link>
             <p className="footer-description">
               Making every meal special with the best<br />
               restaurants and seamless bookings.
             </p>
-            <div className="social-links">
-              <a href="#" className="social-link"><FaFacebookF size={16} /></a>
-              <a href="#" className="social-link"><FaInstagram size={16} /></a>
-              <a href="#" className="social-link"><FaTwitter size={16} /></a>
-              <a href="#" className="social-link"><FaLinkedinIn size={16} /></a>
-            </div>
+            {socialLinks.length > 0 && (
+              <div className="social-links" aria-label="SupaMeal social media">
+                {socialLinks.map(({ label, href, Icon }) => (
+                  <a key={label} href={href} className="social-link" aria-label={label} target="_blank" rel="noreferrer">
+                    <Icon size={16} />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
           
           <div className="footer-links-group">
             <h4 className="footer-heading">COMPANY</h4>
             <ul className="footer-links">
-              <li><Link to="/#about">About Us</Link></li>
-              <li><a href="#">Careers</a></li>
-              <li><a href="#">Blog</a></li>
-              <li><a href="#">Press</a></li>
+            <li><Link to="/home#about">About Us</Link></li>
+            <li><Link to="/company/careers">Careers</Link></li>
+            <li><Link to="/company/blog">Blog</Link></li>
+            <li><Link to="/company/press">Press</Link></li>
             </ul>
           </div>
           
           <div className="footer-links-group">
             <h4 className="footer-heading">SUPPORT</h4>
             <ul className="footer-links">
-              <li><a href="#">Help Center</a></li>
-              <li><Link to="/#contact">Contact Us</Link></li>
-              <li><a href="#">Terms & Conditions</a></li>
-              <li><a href="#">Privacy Policy</a></li>
+            <li><Link to="/company/help">Help Center</Link></li>
+            <li><Link to="/home#contact">Contact Us</Link></li>
+            <li><Link to="/company/terms">Terms & Conditions</Link></li>
+            <li><Link to="/company/privacy">Privacy Policy</Link></li>
             </ul>
           </div>
           
           <div className="footer-links-group">
             <h4 className="footer-heading">FOR RESTAURANTS</h4>
             <ul className="footer-links">
-              <li><Link to="/register-restaurant">Partner with Us</Link></li>
+            <li><Link to="/register-restaurant">Partner with Us</Link></li>
               <li><Link to="/owner-login">Restaurant Login</Link></li>
-              <li><a href="#">Resources</a></li>
+            <li><Link to="/company/resources">Resources</Link></li>
             </ul>
           </div>
           
@@ -88,14 +94,19 @@ const Footer = () => {
                   placeholder="Enter your email"
                   className="newsletter-input"
                   value={newsletterEmail}
-                  onChange={e => setNewsletterEmail(e.target.value)}
+                  onChange={e => {
+                    setNewsletterEmail(e.target.value);
+                    setNewsletterState(null);
+                  }}
                 />
-                <button className="newsletter-btn" type="submit" aria-label="Subscribe to newsletter">
+                  <button className="newsletter-btn" type="submit" aria-label="Subscribe to newsletter" disabled={newsletterState === 'loading'}>
                   <ArrowRight size={18} />
                 </button>
               </form>
-              {newsletterState === 'done' && <p className="newsletter-text" style={{ color: '#7ddf64', marginTop: '0.5rem' }}>Subscribed! Check your inbox.</p>}
-              {newsletterState === 'error' && <p className="newsletter-text" style={{ color: '#ff6b6b', marginTop: '0.5rem' }}>Subscription failed. Try again.</p>}
+              {newsletterState === 'loading' && <p className="newsletter-feedback" role="status">Subscribing…</p>}
+              {newsletterState === 'done' && <p className="newsletter-feedback newsletter-feedback--success" role="status">You’re subscribed. Check your inbox for a welcome email.</p>}
+              {newsletterState === 'saved' && <p className="newsletter-feedback" role="status">You’re subscribed. Email delivery is temporarily unavailable.</p>}
+              {newsletterState === 'error' && <p className="newsletter-feedback newsletter-feedback--error" role="alert">Subscription failed. Please try again.</p>}
             </div>
           </div>
         </div>

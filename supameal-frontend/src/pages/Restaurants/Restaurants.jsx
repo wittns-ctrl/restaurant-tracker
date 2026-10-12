@@ -18,9 +18,11 @@ const Restaurants = () => {
   const [rating, setRating] = useState('');
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   const loadRestaurants = async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const data = await restaurantsApi.list({
         search: searchTerm || undefined,
@@ -34,6 +36,7 @@ const Restaurants = () => {
       })));
     } catch (err) {
       console.error('Failed to load restaurants:', err);
+      setLoadError(err.message || 'Restaurants could not be loaded. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -62,6 +65,7 @@ const Restaurants = () => {
                 <Search className="search-icon" size={20} />
                 <input 
                   type="text" 
+                  aria-label="Search restaurants, cuisines, or dishes"
                   placeholder="Search restaurants, cuisines, or dishes..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -93,6 +97,11 @@ const Restaurants = () => {
 
           {loading ? (
             <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem' }}>Loading restaurants...</p>
+          ) : loadError ? (
+            <div role="alert" style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--error)', padding: '2rem' }}>
+              <p>{loadError}</p>
+              <Button variant="outline" style={{ marginTop: '1rem' }} onClick={loadRestaurants}>Try again</Button>
+            </div>
           ) : (
             <div className="restaurants-grid">
               {restaurants.map((restaurant) => (

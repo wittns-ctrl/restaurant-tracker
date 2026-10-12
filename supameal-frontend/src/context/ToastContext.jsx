@@ -5,31 +5,31 @@ const ToastContext = createContext(null);
 
 const TYPE_STYLES = {
   info: {
-    bg: '#2563eb',
-    ring: '#93c5fd',
+    bg: 'var(--bg-card, #151815)',
+    ring: 'var(--primary-border, rgba(245, 166, 35, 0.4))',
     Icon: Info,
-    iconColor: '#dbeafe',
+    iconColor: 'var(--primary, #f5a623)',
     label: 'Info',
   },
   success: {
-    bg: '#16a34a',
-    ring: '#86efac',
+    bg: 'var(--bg-card, #151815)',
+    ring: 'var(--success-border, rgba(76, 175, 128, 0.4))',
     Icon: CheckCircle,
-    iconColor: '#dcfce7',
+    iconColor: 'var(--success, #4caf80)',
     label: 'Success',
   },
   error: {
-    bg: '#dc2626',
-    ring: '#fca5a5',
+    bg: 'var(--bg-card, #151815)',
+    ring: 'var(--error-border, rgba(240, 112, 112, 0.4))',
     Icon: AlertCircle,
-    iconColor: '#fee2e2',
+    iconColor: 'var(--error, #f07070)',
     label: 'Error',
   },
   warning: {
-    bg: '#d97706',
-    ring: '#fcd34d',
+    bg: 'var(--bg-card, #151815)',
+    ring: 'var(--warning, #f5b942)',
     Icon: AlertTriangle,
-    iconColor: '#fef3c7',
+    iconColor: 'var(--warning, #f5b942)',
     label: 'Warning',
   },
 };
