@@ -26,6 +26,12 @@
   object-position: center;
   /* Add a slight dark overlay to the image itself if needed */
   filter: brightness(0.8) contrast(1.1);
+  opacity: 0;
+  transition: opacity 1.4s ease-in-out;
+}
+
+.hero-image--active {
+  opacity: 1;
 }
 
 .hero-gradient {
@@ -152,5 +158,11 @@
   .hero-features {
     flex-direction: column;
     gap: 1.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-image {
+    transition-duration: 0.01ms;
   }
 }

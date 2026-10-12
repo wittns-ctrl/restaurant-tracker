@@ -17,6 +17,10 @@ const Footer = () => {
     setNewsletterState('loading');
     try {
       const result = await newsletterApi.subscribe(newsletterEmail.trim());
+      if (result.alreadySubscribed) {
+        setNewsletterState('already-subscribed');
+        return;
+      }
       setNewsletterState(result.emailSent ? 'done' : 'saved');
       setNewsletterEmail('');
     } catch {
@@ -118,6 +122,7 @@ const Footer = () => {
             {newsletterState === 'loading' && <p className="newsletter-feedback" role="status">Subscribing…</p>}
             {newsletterState === 'done' && <p className="newsletter-feedback newsletter-feedback--success" role="status">You’re subscribed. Check your inbox for a welcome email.</p>}
             {newsletterState === 'saved' && <p className="newsletter-feedback" role="status">You’re subscribed. Email delivery is temporarily unavailable.</p>}
+            {newsletterState === 'already-subscribed' && <p className="newsletter-feedback newsletter-feedback--error" role="status">This email is already subscribed.</p>}
             {newsletterState === 'error' && <p className="newsletter-feedback newsletter-feedback--error" role="alert">Subscription failed. Please try again.</p>}
           </div>
         </div>

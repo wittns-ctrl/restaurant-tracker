@@ -1,16 +1,51 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowRight, CheckCircle2, Clock, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Button from '../../components/Button/Button';
 import heroImage from '../../assets/images/hero_food.png';
 import './Hero.css';
 
+const heroSlides = [
+  { src: '/images/hero-slides/supameal-hero-01.png', alt: 'A beautifully plated restaurant dish' },
+  { src: '/images/hero-slides/supameal-hero-02.png', alt: 'Freshly prepared food served at a restaurant' },
+  { src: '/images/hero-slides/supameal-hero-03.png', alt: 'A warm meal ready to enjoy' },
+  { src: '/images/hero-slides/supameal-hero-04.png', alt: 'A chef-crafted dining experience' },
+  { src: '/images/hero-slides/supameal-hero-05.png', alt: 'A colorful spread of fresh ingredients' },
+  { src: '/images/hero-slides/supameal-hero-06.png', alt: 'A delicious meal served fresh' },
+  { src: '/images/hero-slides/supameal-hero-07.png', alt: 'A restaurant favorite plated for guests' },
+  { src: '/images/hero-slides/supameal-hero-08.png', alt: 'A freshly prepared dish with rich flavors' },
+  { src: '/images/hero-slides/supameal-hero-09.png', alt: 'A welcoming restaurant table with food' },
+  { src: '/images/hero-slides/supameal-hero-10.png', alt: 'A vibrant meal to share' },
+];
+
 const Hero = () => {
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setActiveSlide((current) => (current + 1) % heroSlides.length);
+    }, 10_000);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
   return (
     <section className="hero">
       <div className="hero-background">
         <div className="hero-gradient"></div>
-        <img src={heroImage} alt="Delicious Steak" className="hero-image" />
+        {heroSlides.map((slide, index) => (
+          <img
+            key={slide.src}
+            src={slide.src}
+            alt={index === activeSlide ? slide.alt : ''}
+            className={`hero-image${index === activeSlide ? ' hero-image--active' : ''}`}
+            aria-hidden={index !== activeSlide}
+            onError={(event) => {
+              event.currentTarget.onerror = null;
+              event.currentTarget.src = heroImage;
+            }}
+          />
+        ))}
       </div>
       
       <div className="container hero-container">
