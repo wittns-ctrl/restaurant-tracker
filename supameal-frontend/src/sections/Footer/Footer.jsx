@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import { FaFacebookF, FaInstagram, FaTwitter, FaLinkedinIn } from 'react-icons/fa';
+import { FaFacebookF, FaInstagram, FaTwitter, FaLinkedinIn, FaWhatsapp } from 'react-icons/fa';
 import Button from '../../components/Button/Button';
 import Logo from '../../components/Logo/Logo';
 import { newsletterApi } from '../../services/api';
@@ -24,12 +24,21 @@ const Footer = () => {
     }
   };
 
+  const whatsappPhone = (import.meta.env.VITE_WHATSAPP_PHONE || '').replace(/\D/g, '');
   const socialLinks = [
     { label: 'Facebook', href: import.meta.env.VITE_SOCIAL_FACEBOOK_URL, Icon: FaFacebookF },
     { label: 'Instagram', href: import.meta.env.VITE_SOCIAL_INSTAGRAM_URL, Icon: FaInstagram },
-    { label: 'X', href: import.meta.env.VITE_SOCIAL_X_URL, Icon: FaTwitter },
+    { label: 'Twitter', href: import.meta.env.VITE_SOCIAL_TWITTER_URL || import.meta.env.VITE_SOCIAL_X_URL, Icon: FaTwitter },
     { label: 'LinkedIn', href: import.meta.env.VITE_SOCIAL_LINKEDIN_URL, Icon: FaLinkedinIn },
-  ].filter(({ href }) => href);
+    {
+      label: 'WhatsApp',
+      href: import.meta.env.VITE_SOCIAL_WHATSAPP_URL || (whatsappPhone ? `https://wa.me/${whatsappPhone}` : ''),
+      Icon: FaWhatsapp,
+    },
+  ].map((link) => ({
+    ...link,
+    href: /^https?:\/\//i.test(link.href?.trim() || '') ? link.href.trim() : '',
+  }));
 
   return (
     <footer className="footer">
@@ -43,15 +52,17 @@ const Footer = () => {
               Making every meal special with the best<br />
               restaurants and seamless bookings.
             </p>
-            {socialLinks.length > 0 && (
-              <div className="social-links" aria-label="SupaMeal social media">
-                {socialLinks.map(({ label, href, Icon }) => (
-                  <a key={label} href={href} className="social-link" aria-label={label} target="_blank" rel="noreferrer">
-                    <Icon size={16} />
-                  </a>
-                ))}
-              </div>
-            )}
+            <div className="social-links" aria-label="SupaMeal social media">
+              {socialLinks.map(({ label, href, Icon }) => href ? (
+                <a key={label} href={href} className="social-link" aria-label={label} title={label} target="_blank" rel="noopener noreferrer">
+                  <Icon size={16} />
+                </a>
+              ) : (
+                <span key={label} className="social-link social-link--unconfigured" aria-label={label} title={`${label} profile is not configured`} aria-disabled="true">
+                  <Icon size={16} />
+                </span>
+              ))}
+            </div>
           </div>
           
           <div className="footer-links-group">
@@ -103,11 +114,11 @@ const Footer = () => {
                   <ArrowRight size={18} />
                 </button>
               </form>
-              {newsletterState === 'loading' && <p className="newsletter-feedback" role="status">Subscribing…</p>}
-              {newsletterState === 'done' && <p className="newsletter-feedback newsletter-feedback--success" role="status">You’re subscribed. Check your inbox for a welcome email.</p>}
-              {newsletterState === 'saved' && <p className="newsletter-feedback" role="status">You’re subscribed. Email delivery is temporarily unavailable.</p>}
-              {newsletterState === 'error' && <p className="newsletter-feedback newsletter-feedback--error" role="alert">Subscription failed. Please try again.</p>}
             </div>
+            {newsletterState === 'loading' && <p className="newsletter-feedback" role="status">Subscribing…</p>}
+            {newsletterState === 'done' && <p className="newsletter-feedback newsletter-feedback--success" role="status">You’re subscribed. Check your inbox for a welcome email.</p>}
+            {newsletterState === 'saved' && <p className="newsletter-feedback" role="status">You’re subscribed. Email delivery is temporarily unavailable.</p>}
+            {newsletterState === 'error' && <p className="newsletter-feedback newsletter-feedback--error" role="alert">Subscription failed. Please try again.</p>}
           </div>
         </div>
         

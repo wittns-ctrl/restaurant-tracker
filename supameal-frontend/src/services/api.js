@@ -185,6 +185,15 @@ export const newsletterApi = {
     body: JSON.stringify({ email }),
     skipAuth: true,
   }),
+  unsubscribe: (token) => apiRequest('/mail/newsletter/unsubscribe', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
+    skipAuth: true,
+  }),
+  sendUpdate: (subject, message) => apiRequest('/mail/newsletter/send', {
+    method: 'POST',
+    body: JSON.stringify({ subject, message }),
+  }),
 };
 
 // NOTE: pagination — list endpoints now return { data, pagination }.

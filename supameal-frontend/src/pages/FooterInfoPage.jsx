@@ -1,8 +1,10 @@
 import { ArrowLeft, ArrowRight, BriefcaseBusiness, FileText, HelpCircle, Newspaper, ShieldCheck, Store } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
+import Navbar from '../sections/Navbar/Navbar';
+import Footer from '../sections/Footer/Footer';
 import './FooterInfoPage.css';
 
-const contactEmail = import.meta.env.VITE_SUPPORT_EMAIL || 'support@supameal.com';
+const contactEmail = import.meta.env.VITE_SUPPORT_EMAIL || 'mugishawitness15@gmail.com';
 const careersEmail = import.meta.env.VITE_CAREERS_EMAIL || contactEmail;
 
 const pages = {
@@ -86,6 +88,8 @@ export default function FooterInfoPage() {
     : { to: page.action.to };
 
   return (
+    <>
+    <Navbar />
     <main className="footer-info-page">
       <div className="footer-info-container">
         <Link className="footer-info-back" to="/home"><ArrowLeft size={17} /> Back to SupaMeal</Link>
@@ -111,5 +115,7 @@ export default function FooterInfoPage() {
         </article>
       </div>
     </main>
+    <Footer />
+    </>
   );
 }

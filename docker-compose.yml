@@ -50,7 +50,7 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       FROM_EMAIL: ${FROM_EMAIL:-}
-      SUPPORT_EMAIL: ${SUPPORT_EMAIL:-support@supameal.com}
+      SUPPORT_EMAIL: ${SUPPORT_EMAIL:-mugishawitness15@gmail.com}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
@@ -75,9 +75,12 @@ services:
         VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
         VITE_SOCIAL_FACEBOOK_URL: ${VITE_SOCIAL_FACEBOOK_URL:-}
         VITE_SOCIAL_INSTAGRAM_URL: ${VITE_SOCIAL_INSTAGRAM_URL:-}
+        VITE_SOCIAL_TWITTER_URL: ${VITE_SOCIAL_TWITTER_URL:-}
         VITE_SOCIAL_X_URL: ${VITE_SOCIAL_X_URL:-}
         VITE_SOCIAL_LINKEDIN_URL: ${VITE_SOCIAL_LINKEDIN_URL:-}
-        VITE_SUPPORT_EMAIL: ${VITE_SUPPORT_EMAIL:-support@supameal.com}
+        VITE_SOCIAL_WHATSAPP_URL: ${VITE_SOCIAL_WHATSAPP_URL:-}
+        VITE_WHATSAPP_PHONE: ${VITE_WHATSAPP_PHONE:-}
+        VITE_SUPPORT_EMAIL: ${VITE_SUPPORT_EMAIL:-mugishawitness15@gmail.com}
         VITE_CAREERS_EMAIL: ${VITE_CAREERS_EMAIL:-careers@supameal.com}
     restart: unless-stopped
     ports:

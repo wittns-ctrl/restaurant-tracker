@@ -1,6 +1,6 @@
 .offers-page {
   min-height: 100vh;
-  padding: 3.5rem 0 5rem;
+  padding: 7.5rem 0 5rem;
   background: var(--bg-dark);
 }
 
@@ -168,9 +168,9 @@
 
 @media (max-width: 900px) { .offers-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 620px) {
-  .offers-page { padding-top: 2rem; }
+  .offers-page { padding-top: 6.5rem; }
   .offers-header { align-items: flex-start; flex-direction: column; gap: 1rem; }
   .offers-grid { grid-template-columns: 1fr; }
-  .offers-image-wrap { height: 210px; }
+  .offer-image-wrap { height: 210px; }
   .offers-bottom-cta { align-items: flex-start; flex-direction: column; }
 }

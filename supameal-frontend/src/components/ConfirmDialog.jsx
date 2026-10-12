@@ -9,6 +9,7 @@ export default function ConfirmDialog({
   cancelLabel = 'Cancel',
   tone = 'danger',
   Icon = AlertTriangle,
+  confirmDisabled = false,
   onConfirm,
   onCancel,
 }) {
@@ -42,7 +43,7 @@ export default function ConfirmDialog({
           <button ref={cancelButtonRef} type="button" className="confirm-dialog__cancel" onClick={onCancel}>
             {cancelLabel}
           </button>
-          <button type="button" className="confirm-dialog__confirm" onClick={onConfirm}>
+          <button type="button" className="confirm-dialog__confirm" onClick={onConfirm} disabled={confirmDisabled}>
             {confirmLabel}
           </button>
         </div>

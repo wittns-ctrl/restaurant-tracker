@@ -1,4 +1,4 @@
-.footer-info-page { min-height: 100vh; padding: 2.5rem 0 5rem; background: var(--bg-dark); }
+.footer-info-page { min-height: 100vh; padding: 7.5rem 0 5rem; background: var(--bg-dark); }
 .footer-info-container { width: min(860px, calc(100% - 2rem)); margin: 0 auto; }
 .footer-info-back { display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem; color: var(--text-muted); font-size: 0.9rem; }
 .footer-info-back:hover { color: var(--primary); }

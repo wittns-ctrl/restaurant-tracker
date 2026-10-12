@@ -1,7 +1,6 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Button from '../../components/Button/Button';
 import promoImg from '../../assets/images/promo_pasta.png';
 import './Promo.css';
 
@@ -31,9 +30,9 @@ const Promo = () => {
             </p>
             
             <Link to="/offers" className="promo-link">
-              <Button variant="outline" className="promo-btn">
+              <span className="btn btn-outline promo-btn">
                 Explore Offers <ArrowRight size={18} />
-              </Button>
+              </span>
             </Link>
           </div>
           

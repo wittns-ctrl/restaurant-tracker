@@ -95,6 +95,12 @@
   background: var(--primary-hover, #d98b16);
 }
 
+.confirm-dialog__confirm:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  transform: none;
+}
+
 .confirm-dialog--danger .confirm-dialog__confirm {
   color: #1b1111;
   background: var(--error, #f07070);

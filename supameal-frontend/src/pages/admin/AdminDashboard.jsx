@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { restaurantsApi, usersApi, notificationsApi, adminApi } from '../../services/api';
+import { restaurantsApi, usersApi, notificationsApi, adminApi, newsletterApi } from '../../services/api';
 import DashboardLayout from '../../layouts/DashboardLayout/DashboardLayout';
+import ConfirmDialog from '../../components/ConfirmDialog';
 import {
   BarChart2, Users, Store, CheckCircle, XCircle, Ban, TrendingUp,
-  Bell, Settings, AlertCircle, ShieldCheck, UserCheck, UserX, RefreshCw
+  Bell, Settings, AlertCircle, ShieldCheck, UserCheck, UserX, RefreshCw, Send
 } from 'lucide-react';
 import '../customer/dashboard.css';
 
@@ -36,6 +37,7 @@ export const adminSidebarConfig = [
     icon: Settings,
     subItems: [
       { id: 'notifications', label: 'Notifications' },
+      { id: 'newsletter', label: 'Newsletter' },
       { id: 'settings', label: 'Settings' },
     ],
   },
@@ -508,7 +510,7 @@ const AdminSettings = ({ showToast }) => (
         <h3 style={{ marginBottom: '1.5rem' }}>Platform Configuration</h3>
         {[
           { label: 'Platform Name', value: 'SupaMeal' },
-          { label: 'Support Email', value: 'support@supameal.com' },
+          { label: 'Support Email', value: 'mugishawitness15@gmail.com' },
           { label: 'Commission Rate (%)', value: '12' },
           { label: 'Max Restaurants Per Owner', value: '5' },
         ].map((field, i) => (
@@ -543,6 +545,63 @@ const AdminSettings = ({ showToast }) => (
     </div>
   </>
 );
+
+const NewsletterComposer = ({ showToast }) => {
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [confirming, setConfirming] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  const handleSend = async () => {
+    setSending(true);
+    try {
+      const result = await newsletterApi.sendUpdate(subject.trim(), message.trim());
+      showToast(`Newsletter sent to ${result.sent} of ${result.total} subscribers${result.failed ? `; ${result.failed} could not be delivered` : ''}.`);
+      setSubject('');
+      setMessage('');
+      setConfirming(false);
+    } catch (err) {
+      showToast(err.message || 'Could not send the newsletter update.', 'error');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="page-header">
+        <h1>Newsletter</h1>
+        <p>Send platform news and new offers to customers who subscribed from the site footer.</p>
+      </div>
+      <form className="dash-panel" onSubmit={(event) => { event.preventDefault(); setConfirming(true); }} style={{ maxWidth: 760 }}>
+        <div className="dash-form-group">
+          <label htmlFor="newsletter-subject">Subject</label>
+          <input id="newsletter-subject" className="dash-input" value={subject} onChange={(event) => setSubject(event.target.value)} maxLength={160} required />
+        </div>
+        <div className="dash-form-group">
+          <label htmlFor="newsletter-message">Update</label>
+          <textarea id="newsletter-message" className="dash-input" value={message} onChange={(event) => setMessage(event.target.value)} minLength={10} maxLength={5000} rows={7} required />
+        </div>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.84rem', marginBottom: '1rem' }}>This message will be emailed to active newsletter subscribers. Each email includes an unsubscribe link.</p>
+        <button type="submit" className="dash-btn-primary" disabled={sending} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Send size={16} /> Review and send
+        </button>
+      </form>
+      {confirming && (
+        <ConfirmDialog
+          title="Send this SupaMeal update?"
+          description={`“${subject.trim()}” will be sent to all active newsletter subscribers.`}
+          confirmLabel={sending ? 'Sending…' : 'Send update'}
+          confirmDisabled={sending}
+          tone="primary"
+          Icon={Send}
+          onConfirm={handleSend}
+          onCancel={() => !sending && setConfirming(false)}
+        />
+      )}
+    </>
+  );
+};
 
 // ── Main Admin Dashboard ───────────────────────────────────────────────────
 const AdminDashboard = () => {
@@ -628,6 +687,7 @@ const AdminDashboard = () => {
       case 'owners': return <UserTable users={users} type="owner" onToggleBlock={handleToggleBlock} />;
       case 'analytics': return <PlatformAnalytics />;
       case 'notifications': return <NotificationsCenter notifications={notifications} onDismiss={handleDismissNotification} />;
+      case 'newsletter': return <NewsletterComposer showToast={showToast} />;
       case 'settings': return <AdminSettings showToast={showToast} />;
       default: return <AdminOverview setActiveTab={setActiveTab} restaurants={restaurants} users={users} />;
     }

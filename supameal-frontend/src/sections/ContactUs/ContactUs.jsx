@@ -4,6 +4,8 @@ import Button from '../../components/Button/Button';
 import { mailApi } from '../../services/api';
 import './ContactUs.css';
 
+const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL || 'mugishawitness15@gmail.com';
+
 const ContactUs = () => {
   const [form, setForm] = useState({ fullName: '', email: '', message: '' });
   const [sent, setSent] = useState(false);
@@ -59,7 +61,7 @@ const ContactUs = () => {
                 </div>
                 <div>
                   <strong>Phone Number</strong>
-                  <p>+250 788 123 456</p>
+                  <p><a href="tel:+250736752015">0736752015</a></p>
                 </div>
               </div>
               
@@ -69,7 +71,7 @@ const ContactUs = () => {
                 </div>
                 <div>
                   <strong>Email Address</strong>
-                  <p>hello@supameal.com</p>
+                  <p><a href={`mailto:${supportEmail}`}>{supportEmail}</a></p>
                 </div>
               </div>
             </div>
@@ -83,17 +85,17 @@ const ContactUs = () => {
               
               <div className="form-group">
                 <label htmlFor="contact-full-name">Full Name</label>
-                <input id="contact-full-name" autoComplete="name" type="text" placeholder="John Doe" className="form-input" required value={form.fullName} onChange={e => updateField('fullName', e.target.value)} />
+                <input id="contact-full-name" autoComplete="name" type="text" placeholder="John Doe" className="form-input" maxLength={100} required value={form.fullName} onChange={e => updateField('fullName', e.target.value)} />
               </div>
               
               <div className="form-group">
                 <label htmlFor="contact-email">Email Address</label>
-                <input id="contact-email" autoComplete="email" type="email" placeholder="john@example.com" className="form-input" required value={form.email} onChange={e => updateField('email', e.target.value)} />
+                <input id="contact-email" autoComplete="email" type="email" placeholder="john@example.com" className="form-input" maxLength={254} required value={form.email} onChange={e => updateField('email', e.target.value)} />
               </div>
               
               <div className="form-group">
                 <label htmlFor="contact-message">Message</label>
-                <textarea id="contact-message" placeholder="How can we help you?" className="form-input" rows="5" required value={form.message} onChange={e => updateField('message', e.target.value)}></textarea>
+                <textarea id="contact-message" placeholder="How can we help you?" className="form-input" rows="5" minLength={10} maxLength={5000} required value={form.message} onChange={e => updateField('message', e.target.value)}></textarea>
               </div>
               
               <Button variant="primary" type="submit" className="contact-submit-btn" disabled={sending}>

@@ -35,6 +35,7 @@ const ReservationsPage = lazy(() => import('./pages/customer/ReservationsPage'))
 const BookTablePage = lazy(() => import('./pages/customer/BookTableDash'));
 const OffersPage = lazy(() => import('./pages/OffersPage'));
 const FooterInfoPage = lazy(() => import('./pages/FooterInfoPage'));
+const NewsletterUnsubscribePage = lazy(() => import('./pages/NewsletterUnsubscribePage'));
 
 const ROLE_HOME = {
   customer: '/customer/dashboard',
@@ -99,6 +100,7 @@ function AppRoutes() {
         <Route path="/restaurants/:id" element={<RestaurantDetail />} />
         <Route path="/offers" element={<OffersPage />} />
         <Route path="/company/:page" element={<FooterInfoPage />} />
+        <Route path="/newsletter/unsubscribe/:token" element={<NewsletterUnsubscribePage />} />
         <Route path="/menu/:restaurantId" element={<MenuPage />} />
         <Route
           path="/login"

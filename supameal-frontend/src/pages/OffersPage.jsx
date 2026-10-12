@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { ArrowRight, Check, Clock3, MapPin, Tag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Button from '../components/Button/Button';
+import Navbar from '../sections/Navbar/Navbar';
+import Footer from '../sections/Footer/Footer';
 import promoPasta from '../assets/images/promo_pasta.png';
 import heroFood from '../assets/images/hero_food.png';
 import restaurantInterior from '../assets/images/restaurant_interior.png';
@@ -68,6 +70,8 @@ export default function OffersPage() {
   };
 
   return (
+    <>
+    <Navbar />
     <main className="offers-page">
       <div className="offers-container">
         <header className="offers-header">
@@ -133,5 +137,7 @@ export default function OffersPage() {
         </div>
       </div>
     </main>
+    <Footer />
+    </>
   );
 }

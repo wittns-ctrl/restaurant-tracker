@@ -52,6 +52,9 @@
   font-size: 0.95rem;
 }
 
+.contact-detail-item p a { color: inherit; }
+.contact-detail-item p a:hover { color: var(--primary); }
+
 .contact-form-wrapper {
   background-color: var(--bg-card);
   padding: 3rem;
