@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { User, Lock, Camera } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { usersApi } from '../../services/api';
+import { resolveImageUrl, uploadsApi, usersApi } from '../../services/api';
 import './dashboard.css';
 
 const getProfileForm = (user) => ({
@@ -33,13 +33,19 @@ const ProfilePage = () => {
   const displayName = `${profile.firstName} ${profile.lastName}`.trim() || user?.name || 'Customer';
   const avatarLabel = getAvatarLabel(displayName);
 
+  const savedAvatar = user?.profile?.imageurl || user?.imageurl || '';
+
   useEffect(() => {
     setProfile(getProfileForm(user));
-    setAvatarPreview(user?.profile?.imageurl || user?.imageurl || '');
-  }, [user]);
+  }, [user?.id, user?.name, user?.email, user?.phone, user?.deliveryAddress?.street]);
 
-  const handleAvatarChange = (event) => {
-    const file = event.target.files?.[0];
+  useEffect(() => {
+    setAvatarPreview(savedAvatar);
+  }, [savedAvatar]);
+
+  const handleAvatarChange = async (event) => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
@@ -52,13 +58,31 @@ const ProfilePage = () => {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setAvatarPreview(typeof reader.result === 'string' ? reader.result : '');
-      setError('');
-      setMessage('Profile picture ready. Save changes to keep it.');
-    };
-    reader.readAsDataURL(file);
+    if (!user?.id) {
+      setError('Sign in again before changing your profile picture.');
+      return;
+    }
+
+    setLoading(true);
+    setMessage('');
+    setError('');
+    try {
+      const { url } = await uploadsApi.upload(file);
+      const nextProfile = {
+        bio: user?.profile?.bio || '',
+        imageurl: url,
+      };
+      const updated = await usersApi.update(user.id, { profile: nextProfile });
+      updateUser(updated);
+      setAvatarPreview(updated?.profile?.imageurl || url);
+      setMessage('Profile picture updated.');
+    } catch (err) {
+      setError(err?.message || 'Failed to update profile picture');
+    } finally {
+      setLoading(false);
+      // Allow selecting the same file again after a failed upload.
+      input.value = '';
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -139,7 +163,7 @@ const ProfilePage = () => {
             <div style={{ position:'relative', display:'inline-block', marginBottom:'1rem' }}>
               <div className="profile-summary-avatar">
                 {avatarPreview ? (
-                  <img className="profile-avatar-image" src={avatarPreview} alt={`${displayName} avatar`} />
+                      <img className="profile-avatar-image" src={resolveImageUrl(avatarPreview)} alt={`${displayName} avatar`} />
                 ) : (
                   avatarLabel
                 )}
@@ -179,7 +203,7 @@ const ProfilePage = () => {
                 <div className="profile-avatar-editor">
                   <div className="profile-avatar-preview">
                     {avatarPreview ? (
-                      <img className="profile-avatar-image" src={avatarPreview} alt={`${displayName} avatar`} />
+                      <img className="profile-avatar-image" src={resolveImageUrl(avatarPreview)} alt={`${displayName} avatar`} />
                     ) : (
                       avatarLabel
                     )}

@@ -5,7 +5,7 @@ import {
   ChevronDown, User, Package, Truck, CalendarCheck, Heart, UtensilsCrossed
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { notificationsApi } from '../../services/api';
+import { notificationsApi, resolveImageUrl } from '../../services/api';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import Logo from '../../components/Logo/Logo';
 import './DashboardLayout.css';
@@ -35,7 +35,7 @@ const UserAvatar = ({ user, className = 'user-avatar-sm' }) => {
   return (
     <div className={className}>
       {avatarSrc ? (
-        <img className="user-avatar-image" src={avatarSrc} alt={user?.name || 'User avatar'} />
+        <img className="user-avatar-image" src={resolveImageUrl(avatarSrc)} alt={user?.name || 'User avatar'} />
       ) : (
         label
       )}

@@ -78,6 +78,9 @@ export const uploadsApi = {
 // '/uploads/x.jpg' → API origin; http(s) passes through; '' → null.
 export function resolveImageUrl(url) {
   if (!url) return null;
+  // Older profile uploads were stored as data URLs. Keep those photos visible
+  // while new uploads use persistent /uploads paths.
+  if (url.startsWith('data:image/')) return url;
   if (url.startsWith('/uploads/')) return `${API_URL}${url}`;
   if (url.startsWith('http')) return url;
   return null;
