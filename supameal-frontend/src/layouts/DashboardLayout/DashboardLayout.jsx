@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Menu, X, Bell, ChevronRight, LogOut, Home, Search,
+  Menu, X, Bell, ChevronRight, LogOut, Home, Search, Trash2,
   ChevronDown, User, Package, Truck, CalendarCheck, Heart, UtensilsCrossed
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { notificationsApi, resolveImageUrl } from '../../services/api';
+import { notificationsApi } from '../../services/api';
 import ConfirmDialog from '../../components/ConfirmDialog';
+import { useToast } from '../../context/ToastContext';
 import Logo from '../../components/Logo/Logo';
 import './DashboardLayout.css';
 
@@ -24,21 +25,16 @@ const getAvatarLabel = (name) => {
   if (!name) return 'U';
   const parts = String(name).trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return 'U';
-  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
 };
 
 const UserAvatar = ({ user, className = 'user-avatar-sm' }) => {
-  const avatarSrc = user?.profile?.imageurl || user?.imageurl || '';
   const label = getAvatarLabel(user?.name);
 
   return (
     <div className={className}>
-      {avatarSrc ? (
-        <img className="user-avatar-image" src={resolveImageUrl(avatarSrc)} alt={user?.name || 'User avatar'} />
-      ) : (
-        label
-      )}
+      {label}
     </div>
   );
 };
@@ -107,7 +103,10 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
 
   // Notification State
   const [showNotifPopover, setShowNotifPopover] = useState(false);
+  const [notificationToDelete, setNotificationToDelete] = useState(null);
+  const [deletingNotification, setDeletingNotification] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const { showToast } = useToast();
   const activities = [];
 
   // Helper: format a backend notification into what the UI expects
@@ -152,6 +151,21 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
       setShowNotifPopover(false);
     } catch {
       console.error('Failed to mark notifications as read');
+    }
+  };
+
+  const deleteNotification = async () => {
+    if (!notificationToDelete || deletingNotification) return;
+    setDeletingNotification(true);
+    try {
+      await notificationsApi.dismiss(notificationToDelete.id);
+      setNotifications((previous) => previous.filter((item) => item.id !== notificationToDelete.id));
+      setNotificationToDelete(null);
+      showToast('Notification deleted.', 'success');
+    } catch (err) {
+      showToast(err?.message || 'Could not delete this notification.', 'error');
+    } finally {
+      setDeletingNotification(false);
     }
   };
 
@@ -322,6 +336,16 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
                             <p><strong>{n.title || 'Notice'}</strong>{n.text ? `: ${n.text}` : ''}</p>
                             <span>{n.time}</span>
                           </div>
+                          <button
+                            type="button"
+                            aria-label={`Delete notification: ${n.title || 'Notification'}`}
+                            title="Delete notification"
+                            onClick={() => setNotificationToDelete(n)}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'none', border: '1px solid var(--dash-border)', borderRadius: '0.5rem', color: 'var(--dash-muted)', cursor: 'pointer', padding: '0.4rem 0.55rem', flexShrink: 0 }}
+                          >
+                            <Trash2 size={15} />
+                            <span style={{ fontSize: '0.75rem' }}>Delete</span>
+                          </button>
                         </div>
                       ))
                     )}
@@ -357,6 +381,16 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
                   <p><strong>{n.title}</strong>{n.text ? ` — ${n.text}` : ''}</p>
                   <span>{n.time}</span>
                 </div>
+                <button
+                  type="button"
+                  aria-label={`Delete notification: ${n.title || 'Notification'}`}
+                  title="Delete notification"
+                  onClick={() => setNotificationToDelete(n)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'none', border: '1px solid var(--dash-border)', borderRadius: '0.5rem', color: 'var(--dash-muted)', cursor: 'pointer', padding: '0.4rem 0.55rem', flexShrink: 0 }}
+                >
+                  <Trash2 size={15} />
+                  <span style={{ fontSize: '0.75rem' }}>Delete</span>
+                </button>
               </div>
             ))
           )}
@@ -391,6 +425,16 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
           Icon={LogOut}
           onCancel={() => setShowLogoutConfirm(false)}
           onConfirm={handleLogout}
+        />
+      )}
+      {notificationToDelete && (
+        <ConfirmDialog
+          title="Delete this notification?"
+          description={`${notificationToDelete.title || 'This notification'} will be permanently deleted from your notifications.`}
+          confirmLabel={deletingNotification ? 'Deleting…' : 'Delete notification'}
+          confirmDisabled={deletingNotification}
+          onCancel={() => !deletingNotification && setNotificationToDelete(null)}
+          onConfirm={deleteNotification}
         />
       )}
     </div>

@@ -1,8 +1,9 @@
 ﻿import React, { useState, useEffect, lazy, Suspense } from "react";
-import { Package, Clock } from "lucide-react";
+import { Package, Clock, Trash2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { ordersApi } from "../../services/api";
+import ConfirmDialog from "../../components/ConfirmDialog";
 import "./dashboard.css";
 
 const WriteReviewModal = lazy(() => import("../../components/WriteReviewModal"));
@@ -46,6 +47,8 @@ const ReviewButton = ({ order }) => {
 const MyOrders = ({ setActiveTab }) => {
   const [tab, setTab] = useState("current");
   const [orders, setOrders] = useState({ current: [], history: [] });
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const { user } = useAuth();
   const { showToast } = useToast();
 
@@ -76,6 +79,24 @@ const MyOrders = ({ setActiveTab }) => {
     } catch (err) {
       console.error(err);
       showToast(err.message || "Could not reorder — please try again.", "error");
+    }
+  };
+
+  const handleDeleteHistory = async () => {
+    if (!deleteTarget || deleting) return;
+    setDeleting(true);
+    try {
+      await ordersApi.removeFromHistory(deleteTarget.id);
+      setOrders((previous) => ({
+        ...previous,
+        history: previous.history.filter((order) => order.id !== deleteTarget.id),
+      }));
+      showToast('Order removed from your history.', 'success');
+      setDeleteTarget(null);
+    } catch (err) {
+      showToast(err.message || 'Could not remove this order from your history.', 'error');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -254,10 +275,30 @@ const MyOrders = ({ setActiveTab }) => {
                   Reorder
                 </button>
               )}
+              {tab === 'history' && (
+                <button
+                  className="dash-btn-outline"
+                  style={{ padding: "0.45rem 1rem", fontSize: "0.82rem", color: 'var(--error)' }}
+                  onClick={() => setDeleteTarget(order)}
+                >
+                  <Trash2 size={14} style={{ marginRight: 5, verticalAlign: 'middle' }} />
+                  Delete
+                </button>
+              )}
             </div>
           </div>
         ))}
       </div>
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Delete this order from your history?"
+          description={`Order #${deleteTarget.orderId || deleteTarget.id?.slice(-4)} will be removed from your order history. Payment and restaurant records are retained.`}
+          confirmLabel={deleting ? 'Deleting…' : 'Delete order'}
+          confirmDisabled={deleting}
+          onConfirm={handleDeleteHistory}
+          onCancel={() => !deleting && setDeleteTarget(null)}
+        />
+      )}
     </>
   );
 };

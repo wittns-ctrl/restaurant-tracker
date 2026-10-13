@@ -95,6 +95,7 @@ export const ordersApi = {
   },
   get: (id) => apiRequest(`/orders/${id}`),
   tracking: (id) => apiRequest(`/orders/${id}/tracking`),
+  removeFromHistory: (id) => apiRequest(`/orders/${id}/history`, { method: 'DELETE' }),
   // One-time short-lived ticket for the SSE live-tracking stream (EventSource
   // can't send an Authorization header, so we trade the JWT for a ticket)
   streamTicket: (id) => apiRequest(`/orders/${id}/ticket`, { method: 'POST' }),
@@ -111,6 +112,7 @@ export const bookingsApi = {
   },
   update: (id, data) => apiRequest(`/bookings/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   cancel: (id) => apiRequest(`/bookings/${id}`, { method: 'DELETE' }),
+  removeFromHistory: (id) => apiRequest(`/bookings/${id}/history`, { method: 'DELETE' }),
 };
 
 // Users
