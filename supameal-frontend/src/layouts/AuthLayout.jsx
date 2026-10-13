@@ -18,7 +18,13 @@ const AuthLayout = ({ children, title, subtitle }) => {
           
           <div className="auth-left-content">
             <div className="auth-welcome-text">
-              {title && <h2>{title}</h2>}
+              {title && (
+                <h2 className="auth-welcome-title">
+                  {title === 'Welcome back to SupaMeal' ? (
+                    <>Welcome back to <span>SupaMeal</span></>
+                  ) : title}
+                </h2>
+              )}
               {subtitle && <p>{subtitle}</p>}
             </div>
           </div>

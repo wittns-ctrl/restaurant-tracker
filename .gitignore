@@ -7,3 +7,5 @@ dist/
 build/
 coverage/
 *.log
+# Local tool caches
+tmp/

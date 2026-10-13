@@ -1,16 +1,49 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowRight, CheckCircle2, Clock, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Button from '../../components/Button/Button';
 import heroImage from '../../assets/images/hero_food.png';
 import './Hero.css';
 
+const heroSlides = [
+  '/images/hero-slides/hero-01-scallops.png',
+  '/images/hero-slides/hero-02-tomato-basil-pasta.png',
+  '/images/hero-slides/hero-03-gourmet-burger.png',
+  '/images/hero-slides/hero-04-salmon.png',
+  '/images/hero-slides/hero-05-herb-roasted-chicken.png',
+];
+
 const Hero = () => {
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (reduceMotion.matches) return undefined;
+
+    const intervalId = window.setInterval(() => {
+      setActiveSlide((current) => (current + 1) % heroSlides.length);
+    }, 5_000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
   return (
     <section className="hero">
       <div className="hero-background">
         <div className="hero-gradient"></div>
-        <img src={heroImage} alt="Delicious Steak" className="hero-image" />
+        {heroSlides.map((image, index) => (
+          <img
+            key={image}
+            src={image}
+            alt=""
+            aria-hidden="true"
+            className={`hero-image${index === activeSlide ? ' hero-image--active' : ''}`}
+            onError={(event) => {
+              event.currentTarget.onerror = null;
+              event.currentTarget.src = heroImage;
+            }}
+          />
+        ))}
       </div>
       
       <div className="container hero-container">
