@@ -84,6 +84,7 @@
 }
 
 .auth-welcome-title span {
+  display: block;
   color: var(--primary);
 }
 
@@ -147,6 +148,20 @@
   margin-top: 4rem;
 }
 
+.auth-layout--signup .auth-card {
+  min-height: 850px;
+}
+
+.auth-layout--signup .auth-right {
+  justify-content: flex-start;
+  padding-top: 7.5rem;
+  padding-bottom: 2rem;
+}
+
+.auth-layout--signup .auth-form-container {
+  margin-top: 0;
+}
+
 @media (max-width: 992px) {
   .auth-layout {
     padding: 1rem;
@@ -156,6 +171,10 @@
     flex-direction: column;
     min-height: auto;
     overflow: visible;
+  }
+
+  .auth-layout--signup .auth-card {
+    min-height: auto;
   }
   
   .auth-left {
@@ -171,14 +190,15 @@
     text-align: left;
   }
 
-  .auth-welcome-title span {
-    display: block;
-  }
-  
   .auth-right {
     position: relative;
     width: 100%;
     height: auto;
+    padding: 2rem 1.5rem;
+  }
+
+  .auth-layout--signup .auth-right {
+    justify-content: center;
     padding: 2rem 1.5rem;
   }
   

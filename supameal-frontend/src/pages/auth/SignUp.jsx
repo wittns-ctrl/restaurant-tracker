@@ -38,9 +38,11 @@ const SignUp = () => {
 
   return (
     <AuthLayout 
+      className="auth-layout--signup"
       title="Create your account and" 
       subtitle="start your delicious journey."
     >
+      <div className="signup-form-content">
       <div className="auth-form-header">
         <Utensils size={32} className="auth-form-icon" style={{ color: '#8b7355' }} />
         <h3>Create Account</h3>
@@ -125,6 +127,7 @@ const SignUp = () => {
         <Link to="/login" className="auth-footer-link" style={{ color: 'var(--primary)' }}>
           Login
         </Link>
+      </div>
       </div>
     </AuthLayout>
   );

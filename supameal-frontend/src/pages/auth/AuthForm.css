@@ -117,32 +117,95 @@
 
 .auth-social-btn {
   width: 100%;
+  min-height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.8rem;
-  background-color: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  color: #ffffff;
+  background-color: rgba(245, 166, 35, 0.1);
+  border: 1px solid rgba(245, 166, 35, 0.65);
+  color: var(--text-main, #ffffff);
   padding: 0.85rem 1rem;
   border-radius: 6px;
   margin-bottom: 0.75rem;
   cursor: pointer;
-  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .auth-social-btn svg {
   width: 18px;
   height: 18px;
-  color: #ffffff;
+  color: var(--primary, #f5a623);
   fill: currentColor;
 }
 
 .auth-social-btn:hover {
-  background-color: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.5);
+  background-color: var(--primary, #f5a623);
+  border-color: var(--primary, #f5a623);
+  color: #111111;
+  box-shadow: 0 0 0 3px var(--primary-soft, rgba(245, 166, 35, 0.2));
+  transform: translateY(-1px);
+}
+
+.auth-social-btn:hover svg {
+  color: #111111;
+}
+
+.auth-social-btn:focus-visible {
+  outline: 2px solid var(--primary, #f5a623);
+  outline-offset: 3px;
+}
+
+.signup-form-content .auth-form-header {
+  margin-bottom: 1rem;
+}
+
+.signup-form-content .auth-form-icon {
+  margin-bottom: 0.5rem;
+}
+
+.signup-form-content .auth-form-header h3 {
+  font-size: 1.55rem;
+  margin-bottom: 0.25rem;
+}
+
+.signup-form-content .auth-form-header p {
+  font-size: 0.85rem;
+}
+
+.signup-form-content .auth-input-group {
+  margin-bottom: 0.65rem;
+}
+
+.signup-form-content .auth-input-group label {
+  margin-bottom: 0.3rem;
+  font-size: 0.85rem;
+}
+
+.signup-form-content .auth-input {
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+}
+
+.signup-form-content .auth-submit-btn {
+  margin-top: 0.5rem;
+  padding: 0.7rem;
+}
+
+.signup-form-content .auth-form-divider {
+  margin: 0.75rem 0;
+}
+
+.signup-form-content .auth-social-btn {
+  min-height: 46px;
+  margin-bottom: 0.5rem;
+  padding: 0.65rem 1rem;
+}
+
+.signup-form-content .auth-footer {
+  margin-top: 0.85rem;
 }
 
 .auth-form-error {

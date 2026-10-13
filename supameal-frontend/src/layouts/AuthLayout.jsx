@@ -5,9 +5,9 @@ import { ArrowLeft } from 'lucide-react';
 import './AuthLayout.css';
 import bgImage from '../assets/images/hero_food.png';
 
-const AuthLayout = ({ children, title, subtitle }) => {
+const AuthLayout = ({ children, title, subtitle, className = '' }) => {
   return (
-    <div className="auth-layout">
+    <div className={`auth-layout ${className}`.trim()}>
       <div className="auth-card">
         <div className="auth-left">
           <div 

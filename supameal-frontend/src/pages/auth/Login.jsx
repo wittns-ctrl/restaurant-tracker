@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronRight, ShieldCheck, UtensilsCrossed, Store, LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { ShieldCheck, UtensilsCrossed, Store, LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { FaGoogle } from 'react-icons/fa';
 import AuthLayout from '../../layouts/AuthLayout';
 import Button from '../../components/Button/Button';
@@ -213,23 +213,12 @@ const Login = () => {
         <FaGoogle /> Continue with Google
       </button>
 
-      <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center' }}>Or explore public pages:</p>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <Link to="/restaurants" className="auth-footer-link" style={{ fontSize: '0.85rem' }}>Restaurants</Link>
-          <span style={{ color: 'var(--text-muted)' }}>·</span>
-          <Link to="/book-table" className="auth-footer-link" style={{ fontSize: '0.85rem' }}>Book a Table</Link>
-          <span style={{ color: 'var(--text-muted)' }}>·</span>
-          <Link to="/register-restaurant" className="auth-footer-link" style={{ fontSize: '0.85rem' }}>Register Restaurant</Link>
-        </div>
+      <div className="auth-footer" style={{ justifyContent: 'center', gap: '0.4rem', marginTop: '1rem' }}>
+        <span>Don’t have an account?</span>
+        <Link to="/signup" className="auth-footer-link">Sign up</Link>
       </div>
 
-      <div className="auth-footer" style={{ justifyContent: 'center', marginTop: '1.5rem' }}>
-        <span>New to SupaMeal?</span>
-        <Link to="/signup" className="auth-footer-link">
-          Create an account <ChevronRight size={16} />
-        </Link>
-      </div>
+
     </AuthLayout>
   );
 };
