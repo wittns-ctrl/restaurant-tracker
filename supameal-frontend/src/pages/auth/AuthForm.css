@@ -67,6 +67,19 @@
   box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
+.auth-input-wrapper:has(textarea.owner-register-description) {
+  align-items: flex-start;
+}
+
+.auth-input-wrapper:has(textarea.owner-register-description) .auth-input-icon {
+  top: 1rem;
+}
+
+textarea.owner-register-description {
+  min-height: 7rem;
+  resize: vertical;
+}
+
 .auth-input-icon {
   position: absolute;
   left: 1rem;
@@ -84,6 +97,10 @@
 
 .auth-input:focus {
   outline: none;
+}
+
+.auth-input-wrapper:has(.auth-input-action) .auth-input {
+  padding-right: 3rem;
 }
 
 .auth-input-action {
@@ -213,6 +230,43 @@
   text-align: center;
   margin-bottom: 1rem;
   font-size: 0.9rem;
+}
+
+.owner-register-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  text-align: center;
+}
+
+.owner-register-gate > p,
+.owner-register-signed-in {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  margin: 0 0 0.75rem;
+}
+
+.owner-register-signed-in {
+  margin-bottom: 1.25rem;
+}
+
+.owner-register-footer {
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.auth-gate-signout {
+  color: var(--primary);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  text-decoration: underline;
 }
 
 .auth-form-success {

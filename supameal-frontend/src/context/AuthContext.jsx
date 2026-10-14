@@ -139,8 +139,9 @@ export const AuthProvider = ({ children }) => {
     return (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '');
   }, []);
 
-  const loginWithGoogle = useCallback(() => {
-    window.location.href = `${getApiBaseUrl()}/auth/google`;
+  const loginWithGoogle = useCallback((options = {}) => {
+    const query = options.role === 'owner' ? '?role=owner' : '';
+    window.location.href = `${getApiBaseUrl()}/auth/google${query}`;
   }, [getApiBaseUrl]);
 
   const loginWithApple = useCallback(() => {

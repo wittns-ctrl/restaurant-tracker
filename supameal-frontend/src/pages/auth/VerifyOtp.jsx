@@ -90,10 +90,12 @@ const VerifyOtp = () => {
     setError('');
     setSuccess('');
     try {
-      const res = await verifyOtp(email, code);
+      await verifyOtp(email, code);
       setSuccess('Email verified! Redirecting...');
       localStorage.removeItem('pendingVerificationEmail');
-      setTimeout(() => navigate('/customer/dashboard'), 1200);
+      const redirect = localStorage.getItem('pendingVerificationRedirect');
+      localStorage.removeItem('pendingVerificationRedirect');
+      setTimeout(() => navigate(redirect || '/customer/dashboard', { replace: true }), 1200);
     } catch (err) {
       setError(err.message || 'Verification failed. Please try again.');
     } finally {

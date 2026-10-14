@@ -34,6 +34,7 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get('returnTo');
 
   useEffect(() => {
     const oauthError = searchParams.get('error');
@@ -72,6 +73,10 @@ const Login = () => {
     try {
       const user = await loginWithCredentials(email.trim(), password);
       const loggedInRole = user?.role === 'owner' ? 'restaurant_owner' : user?.role || role;
+      if (returnTo === '/register-restaurant' && ['customer', 'restaurant_owner'].includes(loggedInRole)) {
+        navigate('/register-restaurant', { replace: true });
+        return;
+      }
       if (location.state?.from === '/book-table' && loggedInRole === 'customer') {
         navigate('/book-table', { replace: true, state: location.state.fromState || null });
         return;
@@ -82,6 +87,15 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleLogin = () => {
+    if (returnTo === '/register-restaurant') {
+      sessionStorage.setItem('oauthReturnTo', '/register-restaurant');
+    } else {
+      sessionStorage.removeItem('oauthReturnTo');
+    }
+    loginWithGoogle();
   };
 
   if (loading) return <Loader text="Signing you in..." />;
@@ -209,7 +223,7 @@ const Login = () => {
         <span>OR</span>
       </div>
 
-      <button type="button" className="auth-social-btn" onClick={loginWithGoogle}>
+      <button type="button" className="auth-social-btn" onClick={handleGoogleLogin}>
         <FaGoogle /> Continue with Google
       </button>
 

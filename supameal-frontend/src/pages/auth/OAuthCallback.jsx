@@ -34,14 +34,30 @@ export default function OAuthCallback() {
   useEffect(() => {
     const code = searchParams.get('code');
     const error = searchParams.get('error');
+    const ownerIntent = sessionStorage.getItem('ownerOAuthIntent');
+    const oauthReturnTo = sessionStorage.getItem('oauthReturnTo');
 
     if (error) {
-      navigate(`/login?error=${encodeURIComponent(error)}`, { replace: true });
+      if (ownerIntent === 'login') {
+        sessionStorage.removeItem('ownerOAuthIntent');
+        sessionStorage.removeItem('oauthReturnTo');
+        navigate(`/owner-login?error=${encodeURIComponent(error)}`, { replace: true });
+      } else {
+        sessionStorage.removeItem('oauthReturnTo');
+        navigate(`/login?error=${encodeURIComponent(error)}`, { replace: true });
+      }
       return;
     }
 
     if (!code) {
-      navigate('/login?error=OAuth+failed', { replace: true });
+      if (ownerIntent === 'login') {
+        sessionStorage.removeItem('ownerOAuthIntent');
+        sessionStorage.removeItem('oauthReturnTo');
+        navigate('/owner-login?error=OAuth+failed', { replace: true });
+      } else {
+        sessionStorage.removeItem('oauthReturnTo');
+        navigate('/login?error=OAuth+failed', { replace: true });
+      }
       return;
     }
 
@@ -52,12 +68,32 @@ export default function OAuthCallback() {
         // Exchange the one-time code for tokens — tokens never touch the URL
         const res = await exchangeCodeOnce(code);
         if (cancelled) return;
+        const role = res.user?.role;
+        const isOwner = role === 'owner' || role === 'restaurant_owner';
+        if (ownerIntent === 'login' && !isOwner) {
+          sessionStorage.removeItem('ownerOAuthIntent');
+          sessionStorage.removeItem('oauthReturnTo');
+          navigate(`/owner-login?error=${encodeURIComponent('This Google account is not registered as a restaurant owner.')}`, { replace: true });
+          return;
+        }
         persistAuth(res.user, res.accessToken, res.refreshToken);
+        if (ownerIntent === 'login') sessionStorage.removeItem('ownerOAuthIntent');
+        if (oauthReturnTo === '/register-restaurant' && (!ownerIntent || isOwner)) {
+          sessionStorage.removeItem('oauthReturnTo');
+          navigate('/register-restaurant', { replace: true });
+          return;
+        }
         const roleKey = res.user?.role === 'owner' ? 'restaurant_owner' : res.user?.role;
         navigate(DASHBOARD_ROUTES[roleKey] || DASHBOARD_ROUTES.customer, { replace: true });
       } catch {
         if (cancelled) return;
-        navigate('/login?error=Invalid+or+expired+OAuth+code', { replace: true });
+        if (ownerIntent === 'login') {
+          sessionStorage.removeItem('ownerOAuthIntent');
+          navigate('/owner-login?error=Invalid+or+expired+OAuth+code', { replace: true });
+        } else {
+          sessionStorage.removeItem('oauthReturnTo');
+          navigate('/login?error=Invalid+or+expired+OAuth+code', { replace: true });
+        }
       }
     };
     exchange();

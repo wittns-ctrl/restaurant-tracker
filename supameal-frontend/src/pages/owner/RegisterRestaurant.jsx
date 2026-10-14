@@ -1,70 +1,69 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Store, MapPin, Phone, Mail, User } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Store, MapPin, Phone, Mail, UserRound, FileText, Clock3, Users, Utensils } from 'lucide-react';
 import AuthLayout from '../../layouts/AuthLayout';
 import Button from '../../components/Button/Button';
 import Loader from '../../components/Loader/Loader';
 import { useAuth } from '../../context/AuthContext';
-import { authApi, restaurantsApi } from '../../services/api';
+import { restaurantsApi } from '../../services/api';
 import '../auth/AuthForm.css';
 
+const accountSignupPath = '/signup?returnTo=%2Fregister-restaurant';
+const ownerLoginPath = '/owner-login?returnTo=%2Fregister-restaurant';
+
 const RegisterRestaurant = () => {
+  const { user, isAuthenticated, updateUser, logout } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState({
-    restaurantName: '', ownerName: '', businessEmail: '', contactNumber: '', fullAddress: '', password: '',
+    restaurantName: '',
+    contactNumber: '',
+    fullAddress: '',
+    city: '',
+    description: '',
+    opening: '',
+    capacity: '50',
+    cuisine: '',
   });
-  const { loginWithCredentials, persistAuth } = useAuth();
   const navigate = useNavigate();
+  const canRegister = isAuthenticated && ['customer', 'owner'].includes(user?.role);
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
+  const handleRegister = async (event) => {
+    event.preventDefault();
+    if (!canRegister) {
+      setError('Create or sign in to your account before registering a restaurant.');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
     try {
-      const signupRes = await authApi.signup({
-        name: form.ownerName,
-        email: form.businessEmail,
-        password: form.password,
-        phone: form.contactNumber.trim(),
-        role: 'owner',
-      });
-
-      let user;
-      if (signupRes.user && signupRes.accessToken) {
-        // Owners are auto-verified by the backend — tokens come back with the
-        // signup response itself, so there is no localStorage to read yet.
-        user = signupRes.user;
-        persistAuth(signupRes.user, signupRes.accessToken, signupRes.refreshToken);
-      } else {
-        user = await loginWithCredentials(form.businessEmail, form.password);
-      }
-
-      await restaurantsApi.register({
-        name: form.restaurantName,
-        description: `${form.restaurantName} - registered via SupaMeal`,
+      const registration = await restaurantsApi.register({
+        name: form.restaurantName.trim(),
+        description: form.description.trim(),
         ownerId: user.id,
-        // The form only collects a free-text address; coordinates stay 0
-        // until the owner sets a precise location from their dashboard.
-        location: { address: form.fullAddress, city: 'Downtown', latitude: 0, longitude: 0 },
+        location: { address: form.fullAddress.trim(), city: form.city.trim(), latitude: 0, longitude: 0 },
         phone: form.contactNumber.trim(),
-        opening: 'Mon-Sun: 10:00 AM - 10:00 PM',
-        capacity: 50,
+        opening: form.opening.trim(),
+        capacity: Number(form.capacity),
+        cuisine: form.cuisine.trim() || 'International',
         images: [],
       });
+      if (registration?.ownerAccount) updateUser(registration.ownerAccount);
       navigate('/owner/dashboard', { replace: true });
     } catch (err) {
-      setError(err.message || 'Registration failed');
+      setError(err.message || 'Restaurant registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (isLoading) return <Loader text="Setting up your restaurant..." />;
+  if (isLoading) return <Loader text="Registering your restaurant..." />;
 
   return (
-    <AuthLayout 
-      title="Partner with us" 
+    <AuthLayout
+      className="auth-layout--owner-register"
+      title="Partner with us"
       subtitle="Reach more customers and grow your business."
     >
       <div className="auth-form-header">
@@ -73,62 +72,119 @@ const RegisterRestaurant = () => {
         <p>Join the SupaMeal network</p>
       </div>
 
-      {error && <p style={{ color: 'var(--error)', textAlign: 'center', marginBottom: '1rem' }}>{error}</p>}
+      {error && <p role="alert" className="auth-form-error">{error}</p>}
 
-      <form onSubmit={handleRegister}>
-        <div className="auth-input-group">
-          <div className="auth-input-wrapper">
-            <Store size={18} className="auth-input-icon" />
-            <input type="text" placeholder="Restaurant Name" className="auth-input" required value={form.restaurantName} onChange={e => setForm(p => ({ ...p, restaurantName: e.target.value }))} />
+      {!canRegister ? (
+        <div className="owner-register-gate">
+          <p>
+            You need a SupaMeal account before you can register a restaurant.
+            Sign up first, then return here to submit your restaurant details.
+          </p>
+          {isAuthenticated && user?.role === 'admin' && (
+            <button type="button" className="auth-gate-signout" onClick={logout}>
+              Sign out
+            </button>
+          )}
+          <div className="auth-footer owner-register-footer">
+            <span>Already a partner?</span>
+            <Link to={ownerLoginPath} className="auth-footer-link">Owner Login</Link>
+          </div>
+          <div className="auth-footer owner-register-footer">
+            <span>Don’t have a user account?</span>
+            <Link to={accountSignupPath} className="auth-footer-link">Sign up</Link>
           </div>
         </div>
-
-        <div className="auth-input-group">
-          <div className="auth-input-wrapper">
-            <User size={18} className="auth-input-icon" />
-            <input type="text" placeholder="Owner Full Name" className="auth-input" required value={form.ownerName} onChange={e => setForm(p => ({ ...p, ownerName: e.target.value }))} />
+      ) : (
+        <>
+          <p className="owner-register-signed-in">
+            Signed in as <strong>{user.name || user.email}</strong>. This account will be enabled for restaurant owner access after registration.
+          </p>
+          <form onSubmit={handleRegister}>
+            <div className="auth-input-group">
+              <label htmlFor="restaurant-name">Restaurant Name</label>
+              <div className="auth-input-wrapper">
+                <Store size={18} className="auth-input-icon" />
+                <input id="restaurant-name" type="text" placeholder="Restaurant Name" className="auth-input" required minLength={2} maxLength={120} value={form.restaurantName} onChange={e => setForm(p => ({ ...p, restaurantName: e.target.value }))} />
+              </div>
+            </div>
+            <div className="auth-input-group">
+              <label htmlFor="owner-name">Owner Full Name</label>
+              <div className="auth-input-wrapper">
+                <UserRound size={18} className="auth-input-icon" />
+                <input id="owner-name" type="text" className="auth-input" value={user?.name || ''} readOnly aria-describedby="owner-account-note" />
+              </div>
+            </div>
+            <div className="auth-input-group">
+              <label htmlFor="business-email">Business Email</label>
+              <div className="auth-input-wrapper">
+                <Mail size={18} className="auth-input-icon" />
+                <input id="business-email" type="email" className="auth-input" value={user?.email || ''} readOnly aria-describedby="owner-account-note" />
+              </div>
+              <small id="owner-account-note">Owner details come from your signed-in SupaMeal account.</small>
+            </div>
+            <div className="auth-input-group">
+              <label htmlFor="restaurant-phone">Contact Number</label>
+              <div className="auth-input-wrapper">
+                <Phone size={18} className="auth-input-icon" />
+                <input id="restaurant-phone" type="tel" placeholder="Contact Number" className="auth-input" required pattern="[+0-9 ()-]{7,20}" value={form.contactNumber} onChange={e => setForm(p => ({ ...p, contactNumber: e.target.value }))} />
+              </div>
+            </div>
+            <div className="auth-input-group">
+              <label htmlFor="restaurant-address">Full Address</label>
+              <div className="auth-input-wrapper">
+                <MapPin size={18} className="auth-input-icon" />
+                <input id="restaurant-address" type="text" placeholder="Street, building, or neighborhood" className="auth-input" required minLength={3} value={form.fullAddress} onChange={e => setForm(p => ({ ...p, fullAddress: e.target.value }))} />
+              </div>
+            </div>
+            <div className="auth-input-group">
+              <label htmlFor="restaurant-city">City</label>
+              <div className="auth-input-wrapper">
+                <MapPin size={18} className="auth-input-icon" />
+                <input id="restaurant-city" type="text" placeholder="City" className="auth-input" required minLength={2} value={form.city} onChange={e => setForm(p => ({ ...p, city: e.target.value }))} />
+              </div>
+            </div>
+            <div className="auth-input-group">
+              <label htmlFor="restaurant-description">Restaurant Description</label>
+              <div className="auth-input-wrapper">
+                <FileText size={18} className="auth-input-icon" />
+                <textarea id="restaurant-description" placeholder="Tell customers about your restaurant" className="auth-input owner-register-description" required minLength={10} maxLength={1000} rows={3} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} />
+              </div>
+            </div>
+            <div className="auth-input-group">
+              <label htmlFor="restaurant-opening">Opening Hours</label>
+              <div className="auth-input-wrapper">
+                <Clock3 size={18} className="auth-input-icon" />
+                <input id="restaurant-opening" type="text" placeholder="e.g. Mon–Sun, 10:00 AM–10:00 PM" className="auth-input" required minLength={3} value={form.opening} onChange={e => setForm(p => ({ ...p, opening: e.target.value }))} />
+              </div>
+            </div>
+            <div className="auth-input-group">
+              <label htmlFor="restaurant-capacity">Seating Capacity</label>
+              <div className="auth-input-wrapper">
+                <Users size={18} className="auth-input-icon" />
+                <input id="restaurant-capacity" type="number" placeholder="50" className="auth-input" required min={1} max={10000} value={form.capacity} onChange={e => setForm(p => ({ ...p, capacity: e.target.value }))} />
+              </div>
+            </div>
+            <div className="auth-input-group">
+              <label htmlFor="restaurant-cuisine">Cuisine Type</label>
+              <div className="auth-input-wrapper">
+                <Utensils size={18} className="auth-input-icon" />
+                <input id="restaurant-cuisine" type="text" placeholder="e.g. Rwandan, Italian, Grill" className="auth-input" value={form.cuisine} onChange={e => setForm(p => ({ ...p, cuisine: e.target.value }))} />
+              </div>
+            </div>
+            <Button variant="primary" className="auth-submit-btn" type="submit">
+              Submit & Open Dashboard
+            </Button>
+          </form>
+          <div className="auth-footer owner-register-footer">
+            <span>Already a partner?</span>
+            <Link to={ownerLoginPath} className="auth-footer-link">Owner Login</Link>
           </div>
-        </div>
-
-        <div className="auth-input-group">
-          <div className="auth-input-wrapper">
-            <Mail size={18} className="auth-input-icon" />
-            <input type="email" placeholder="Business Email" className="auth-input" required value={form.businessEmail} onChange={e => setForm(p => ({ ...p, businessEmail: e.target.value }))} />
+          <div className="auth-footer owner-register-footer">
+            <span>Don’t have a user account?</span>
+            <Link to={accountSignupPath} className="auth-footer-link">Sign up</Link>
           </div>
-        </div>
-
-        <div className="auth-input-group">
-          <div className="auth-input-wrapper">
-            <Phone size={18} className="auth-input-icon" />
-            <input type="tel" placeholder="Contact Number" className="auth-input" required value={form.contactNumber} onChange={e => setForm(p => ({ ...p, contactNumber: e.target.value }))} />
-          </div>
-        </div>
-
-        <div className="auth-input-group">
-          <div className="auth-input-wrapper">
-            <MapPin size={18} className="auth-input-icon" />
-            <input type="text" placeholder="Full Address" className="auth-input" required value={form.fullAddress} onChange={e => setForm(p => ({ ...p, fullAddress: e.target.value }))} />
-          </div>
-        </div>
-
-        <div className="auth-input-group">
-          <div className="auth-input-wrapper">
-            <User size={18} className="auth-input-icon" />
-            <input type="password" placeholder="Account Password (min 8 characters)" className="auth-input" required minLength={8} value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))} />
-          </div>
-        </div>
-
-        <Button variant="primary" className="auth-submit-btn" type="submit">
-          Submit & Open Dashboard
-        </Button>
-      </form>
-      
-      <div className="auth-footer" style={{ justifyContent: 'center', marginTop: '1.5rem', gap: '0.5rem' }}>
-        <span>Already a partner?</span>
-        <Link to="/owner-login" className="auth-footer-link" style={{ color: 'var(--primary)' }}>
-          Owner Login
-        </Link>
-      </div>
+        </>
+      )}
     </AuthLayout>
   );
 };

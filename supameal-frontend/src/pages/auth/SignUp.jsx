@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, EyeOff, Eye, User, Phone, Utensils } from 'lucide-react';
 import { FaGoogle } from 'react-icons/fa';
 import AuthLayout from '../../layouts/AuthLayout';
@@ -14,6 +14,13 @@ const SignUp = () => {
   const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', email: '', password: '' });
   const { signup, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get('returnTo') === '/register-restaurant' ? '/register-restaurant' : null;
+
+  const handleGoogleSignup = () => {
+    if (returnTo) sessionStorage.setItem('oauthReturnTo', returnTo);
+    loginWithGoogle();
+  };
 
   const handleSignUp = async (e) => {
     e.preventDefault();
@@ -28,6 +35,7 @@ const SignUp = () => {
         role: 'customer',
       });
       localStorage.setItem('pendingVerificationEmail', form.email);
+      if (returnTo) localStorage.setItem('pendingVerificationRedirect', returnTo);
       navigate('/verify-otp');
     } catch (err) {
       setError(err.message || 'Signup failed');
@@ -117,8 +125,7 @@ const SignUp = () => {
       <div className="auth-form-divider">
         <span>OR</span>
       </div>
-
-      <button type="button" className="auth-social-btn" onClick={loginWithGoogle}>
+      <button type="button" className="auth-social-btn" onClick={handleGoogleSignup}>
         <FaGoogle /> Continue with Google
       </button>
 

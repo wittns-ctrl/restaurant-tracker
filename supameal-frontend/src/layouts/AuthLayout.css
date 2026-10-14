@@ -148,6 +148,32 @@
   margin-top: 4rem;
 }
 
+.auth-layout--owner-register .auth-right {
+  justify-content: flex-start;
+  overflow-y: auto;
+  padding-top: 7rem;
+  padding-bottom: 2rem;
+}
+
+.auth-layout--owner-register .auth-form-container {
+  margin-top: 0;
+}
+
+.auth-layout--owner-login .auth-card {
+  min-height: 800px;
+}
+
+.auth-layout--owner-login .auth-right {
+  justify-content: flex-start;
+  overflow-y: auto;
+  padding-top: 7rem;
+  padding-bottom: 2rem;
+}
+
+.auth-layout--owner-login .auth-form-container {
+  margin-top: 0;
+}
+
 .auth-layout--signup .auth-card {
   min-height: 850px;
 }
@@ -199,6 +225,22 @@
 
   .auth-layout--signup .auth-right {
     justify-content: center;
+    padding: 2rem 1.5rem;
+  }
+
+  .auth-layout--owner-register .auth-right {
+    justify-content: flex-start;
+    overflow: visible;
+    padding: 2rem 1.5rem;
+  }
+
+  .auth-layout--owner-login .auth-card {
+    min-height: auto;
+  }
+
+  .auth-layout--owner-login .auth-right {
+    justify-content: center;
+    overflow: visible;
     padding: 2rem 1.5rem;
   }
   
