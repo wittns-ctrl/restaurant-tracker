@@ -56,12 +56,17 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    // Remove the pre-cookie session format from browsers upgrading from the
+    // previous release. New sessions are restored only from the HttpOnly cookie.
+    localStorage.removeItem('user');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
     const init = async () => {
       await refreshToken();
       setLoading(false);
     };
     init();
-  }, [refreshToken, forceLogout]);
+  }, [refreshToken]);
 
   useEffect(() => {
     clearRefreshTimer();
@@ -125,7 +130,7 @@ export const AuthProvider = ({ children }) => {
     // Revoke the server session while the access token is still available.
     authApi.logout().catch(() => {});
     forceLogout();
-  }, [user, forceLogout]);
+  }, [forceLogout]);
 
   const updateUser = useCallback((updatedUserData) => {
     setUser((prev) => {
