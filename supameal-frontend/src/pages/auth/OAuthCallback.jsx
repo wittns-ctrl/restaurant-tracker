@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { authApi } from '../../services/api';
 import Loader from '../../components/Loader/Loader';
+import { homeForUser, userHasRole } from '../../utils/auth';
 
 // React StrictMode replays effects in development. Since OAuth codes are
 // one-time use, keep a single exchange promise per code so the replay shares
@@ -18,13 +19,6 @@ function exchangeCodeOnce(code) {
   }
   return codeExchanges.get(code);
 }
-
-const DASHBOARD_ROUTES = {
-  customer: '/customer/dashboard',
-  owner: '/owner/dashboard',
-  restaurant_owner: '/owner/dashboard',
-  admin: '/admin/dashboard',
-};
 
 export default function OAuthCallback() {
   const [searchParams] = useSearchParams();
@@ -68,8 +62,7 @@ export default function OAuthCallback() {
         // Exchange the one-time code for tokens — tokens never touch the URL
         const res = await exchangeCodeOnce(code);
         if (cancelled) return;
-        const role = res.user?.role;
-        const isOwner = role === 'owner' || role === 'restaurant_owner';
+        const isOwner = userHasRole(res.user, 'owner');
         if (ownerIntent === 'login' && !isOwner) {
           sessionStorage.removeItem('ownerOAuthIntent');
           sessionStorage.removeItem('oauthReturnTo');
@@ -83,8 +76,7 @@ export default function OAuthCallback() {
           navigate('/register-restaurant', { replace: true });
           return;
         }
-        const roleKey = res.user?.role === 'owner' ? 'restaurant_owner' : res.user?.role;
-        navigate(DASHBOARD_ROUTES[roleKey] || DASHBOARD_ROUTES.customer, { replace: true });
+        navigate(homeForUser(res.user), { replace: true });
       } catch {
         if (cancelled) return;
         if (ownerIntent === 'login') {

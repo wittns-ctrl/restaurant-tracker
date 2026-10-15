@@ -7,6 +7,7 @@ import Button from '../../components/Button/Button';
 import Loader from '../../components/Loader/Loader';
 import { useAuth } from '../../context/AuthContext';
 import { authApi } from '../../services/api';
+import { homeForUser, userHasRole } from '../../utils/auth';
 import './AuthForm.css';
 
 const DASHBOARD_ROUTES = {
@@ -72,8 +73,8 @@ const Login = () => {
     setLoading(true);
     try {
       const user = await loginWithCredentials(email.trim(), password);
-      const loggedInRole = user?.role === 'owner' ? 'restaurant_owner' : user?.role || role;
-      if (returnTo === '/register-restaurant' && ['customer', 'restaurant_owner'].includes(loggedInRole)) {
+      const loggedInRole = userHasRole(user, 'owner') ? 'restaurant_owner' : user?.role || role;
+      if (returnTo === '/register-restaurant' && (userHasRole(user, 'customer') || userHasRole(user, 'owner'))) {
         navigate('/register-restaurant', { replace: true });
         return;
       }
@@ -81,7 +82,7 @@ const Login = () => {
         navigate('/book-table', { replace: true, state: location.state.fromState || null });
         return;
       }
-      navigate(DASHBOARD_ROUTES[loggedInRole] || DASHBOARD_ROUTES[role], { replace: true });
+      navigate(homeForUser(user) || DASHBOARD_ROUTES[loggedInRole] || DASHBOARD_ROUTES[role], { replace: true });
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');
     } finally {

@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { NotificationsProvider } from './context/NotificationsContext';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
+import { homeForUser } from './utils/auth';
 
 import LandingPage from './pages/LandingPage';
 
@@ -37,12 +38,6 @@ const OffersPage = lazy(() => import('./pages/OffersPage'));
 const FooterInfoPage = lazy(() => import('./pages/FooterInfoPage'));
 const NewsletterUnsubscribePage = lazy(() => import('./pages/NewsletterUnsubscribePage'));
 
-const ROLE_HOME = {
-  customer: '/customer/dashboard',
-  owner: '/owner/dashboard',
-  admin: '/admin/dashboard',
-};
-
 const RouteFallback = () => (
   <div
     style={{
@@ -59,8 +54,8 @@ const RouteFallback = () => (
 
 const HomeRedirect = () => {
   const { user, isAuthenticated } = useAuth();
-  if (isAuthenticated && user?.role && ROLE_HOME[user.role]) {
-    return <Navigate to={ROLE_HOME[user.role]} replace />;
+  if (isAuthenticated && user?.role) {
+    return <Navigate to={homeForUser(user)} replace />;
   }
   return <LandingPage />;
 };
@@ -88,7 +83,7 @@ const BookTableRoute = () => {
 function AppRoutes() {
   const { user, isAuthenticated } = useAuth();
   const loginRedirect = isAuthenticated ? (
-    <Navigate to={ROLE_HOME[user?.role] || '/customer/dashboard'} replace />
+    <Navigate to={homeForUser(user)} replace />
   ) : null;
 
   return (

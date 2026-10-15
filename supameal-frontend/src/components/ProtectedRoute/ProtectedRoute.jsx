@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
+import { userHasRole } from '../../utils/auth';
 
 const ROLE_LANDING = {
   customer: '/customer/dashboard',
@@ -19,7 +20,7 @@ export default function ProtectedRoute({ children, roles }) {
 
   useEffect(() => {
     if (loading) return;
-    if (isAuthenticated && !requiredRoles.includes(user?.role)) {
+    if (isAuthenticated && !requiredRoles.some((role) => userHasRole(user, role))) {
       showToast(`You don't have permission to access that page`, 'error');
     }
   }, [isAuthenticated, loading, user, requiredRoles, showToast]);
@@ -45,7 +46,7 @@ export default function ProtectedRoute({ children, roles }) {
     return <Navigate to="/login" replace state={{ from: location.pathname, fromState: location.state }} />;
   }
 
-  if (!requiredRoles.includes(user?.role)) {
+  if (!requiredRoles.some((role) => userHasRole(user, role))) {
     const fallback = ROLE_LANDING[user?.role] || '/login';
     return <Navigate to={fallback} replace />;
   }

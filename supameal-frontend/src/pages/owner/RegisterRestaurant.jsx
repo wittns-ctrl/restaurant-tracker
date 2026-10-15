@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Store, MapPin, Phone, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '../../layouts/AuthLayout';
 import Button from '../../components/Button/Button';
 import Loader from '../../components/Loader/Loader';
 import { useAuth } from '../../context/AuthContext';
-import { authApi, restaurantsApi } from '../../services/api';
+import { restaurantsApi } from '../../services/api';
+import { userHasRole } from '../../utils/auth';
 import '../auth/AuthForm.css';
 
 const accountSignupPath = '/signup?returnTo=%2Fregister-restaurant';
@@ -24,16 +25,15 @@ const loadRegistrationDraft = () => {
 };
 
 const RegisterRestaurant = () => {
-  const { user, isAuthenticated, updateUser, logout, loginWithCredentials } = useAuth();
+  const { user, isAuthenticated, logout, loginWithCredentials } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [ownerEmail, setOwnerEmail] = useState('');
   const [ownerPassword, setOwnerPassword] = useState('');
-  const [emailCheck, setEmailCheck] = useState({ email: '', status: 'idle' });
   const [showOwnerPassword, setShowOwnerPassword] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState(loadRegistrationDraft);
-  const navigate = useNavigate();
-  const canRegister = isAuthenticated && ['customer', 'owner'].includes(user?.role);
+  const canRegister = isAuthenticated && (userHasRole(user, 'customer') || userHasRole(user, 'owner'));
 
   useEffect(() => {
     try {
@@ -42,30 +42,6 @@ const RegisterRestaurant = () => {
       // Registration still works when browser storage is unavailable.
     }
   }, [form]);
-
-  const checkCustomerEmail = async (email) => {
-    const normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) return null;
-
-    setEmailCheck({ email: normalizedEmail, status: 'checking' });
-    try {
-      const result = await authApi.checkCustomerAccount(normalizedEmail);
-      const status = result.isCustomerAccount
-        ? 'customer'
-        : result.needsVerification
-          ? 'unverified'
-          : 'no-customer';
-      if (ownerEmail.trim().toLowerCase() === normalizedEmail) {
-        setEmailCheck({ email: normalizedEmail, status });
-      }
-      return result;
-    } catch {
-      if (ownerEmail.trim().toLowerCase() === normalizedEmail) {
-        setEmailCheck({ email: normalizedEmail, status: 'unavailable' });
-      }
-      return null;
-    }
-  };
 
   const handleRegister = async (event) => {
     event.preventDefault();
@@ -77,24 +53,15 @@ const RegisterRestaurant = () => {
         if (isAuthenticated) {
           throw new Error('This account cannot register a restaurant. Sign out and use a customer or owner account.');
         }
-        const customerAccount = await checkCustomerEmail(ownerEmail);
-        if (!customerAccount) {
-          throw new Error('Could not check this email right now. Please try again.');
-        }
-        if (!customerAccount.isCustomerAccount) {
-          throw new Error(customerAccount.needsVerification
-            ? 'Verify your customer account first.'
-            : 'Create an account first.');
-        }
         accountUser = await loginWithCredentials(ownerEmail.trim(), ownerPassword);
-        if (accountUser?.role !== 'customer') {
+        if (!userHasRole(accountUser, 'customer')) {
           await logout();
-          throw new Error('Sign in with a customer account to register a restaurant.');
+          throw new Error('Sign in with a customer account to submit a restaurant application.');
         }
         setOwnerPassword('');
       }
 
-      const registration = await restaurantsApi.register({
+      await restaurantsApi.register({
         name: form.restaurantName.trim(),
         description: `${form.restaurantName.trim()} - registered via SupaMeal`,
         ownerId: accountUser.id,
@@ -111,8 +78,7 @@ const RegisterRestaurant = () => {
         images: [],
       });
       sessionStorage.removeItem(registrationDraftKey);
-      if (registration?.ownerAccount) updateUser(registration.ownerAccount);
-      navigate('/owner/dashboard', { replace: true });
+      setSubmitted(true);
     } catch (err) {
       setError(err.message || 'Restaurant registration failed. Please try again.');
     } finally {
@@ -135,11 +101,18 @@ const RegisterRestaurant = () => {
         <p>Join the SupaMeal network</p>
       </div>
 
+      {submitted ? (
+        <div role="status" aria-live="polite" className="owner-register-signed-in">
+          <strong>Application submitted for review.</strong>
+          <p>Your restaurant will appear in the owner portal after an administrator approves it.</p>
+          <Link to="/customer/dashboard" className="auth-footer-link">Return to customer dashboard</Link>
+        </div>
+      ) : <>
       {error && <p role="alert" className="auth-form-error">{error}</p>}
 
       {canRegister && (
         <p className="owner-register-signed-in">
-          Signed in as <strong>{user.name || user.email}</strong>. This account will be enabled for restaurant owner access after registration.
+          Signed in as <strong>{user.name || user.email}</strong>. Your application will be reviewed before owner access is enabled.
         </p>
       )}
       {isAuthenticated && user?.role === 'admin' && (
@@ -163,29 +136,9 @@ const RegisterRestaurant = () => {
                   value={isAuthenticated ? (user?.email || '') : ownerEmail}
                   onChange={event => {
                     setOwnerEmail(event.target.value);
-                    setEmailCheck({ email: '', status: 'idle' });
-                  }}
-                  onBlur={event => {
-                    if (!isAuthenticated) checkCustomerEmail(event.target.value);
                   }}
                 />
               </div>
-              {!isAuthenticated && emailCheck.email === ownerEmail.trim().toLowerCase() && emailCheck.status !== 'idle' && (
-                <small
-                  role={emailCheck.status === 'no-customer' || emailCheck.status === 'unavailable' ? 'alert' : 'status'}
-                  style={{
-                    display: 'block',
-                    marginTop: '0.45rem',
-                    color: emailCheck.status === 'customer' ? 'var(--success, #31c48d)' : 'var(--error, #f87171)',
-                  }}
-                >
-                  {emailCheck.status === 'checking' && 'Checking customer account…'}
-                  {emailCheck.status === 'customer' && 'Customer account found.'}
-                  {emailCheck.status === 'unverified' && 'Verify your customer account first.'}
-                  {emailCheck.status === 'no-customer' && 'Create an account first.'}
-                  {emailCheck.status === 'unavailable' && 'Could not check this email. Try again.'}
-                </small>
-              )}
             </div>
             {!isAuthenticated && (
               <div className="auth-input-group">
@@ -248,6 +201,7 @@ const RegisterRestaurant = () => {
             <span>Don’t have a user account?</span>
             <Link to={accountSignupPath} className="auth-footer-link">Sign up</Link>
           </div>
+      </>}
       </div>
     </AuthLayout>
   );

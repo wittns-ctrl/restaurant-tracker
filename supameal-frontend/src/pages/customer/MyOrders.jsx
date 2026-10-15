@@ -56,7 +56,7 @@ const MyOrders = ({ setActiveTab }) => {
     const load = async () => {
       if (!user?.id) return;
       try {
-        const data = await ordersApi.list({ customerId: user.id });
+        const data = await ordersApi.list({ customerId: user.id, view: 'customer' });
         const current = data.filter(
           (o) => !["delivered", "cancelled", "rejected"].includes(o.status)
         );

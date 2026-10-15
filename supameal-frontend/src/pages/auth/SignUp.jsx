@@ -103,6 +103,8 @@ const SignUp = () => {
               placeholder="Password" 
               className="auth-input" 
               required
+              minLength={15}
+              maxLength={72}
               value={form.password}
               onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
             />
@@ -115,6 +117,7 @@ const SignUp = () => {
               {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
             </button>
           </div>
+          <small>Use at least 15 characters. Passphrases and password managers are supported.</small>
         </div>
 
         <Button variant="primary" className="auth-submit-btn" type="submit" disabled={loading}>

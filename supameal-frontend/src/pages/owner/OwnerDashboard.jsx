@@ -1017,8 +1017,8 @@ const OwnerDashboard = () => {
     if (!restId) return;
     try {
       const [bookingData, orderData] = await Promise.all([
-        bookingsApi.list({ restaurantId: restId }),
-        ordersApi.list({ restaurantId: restId }),
+        bookingsApi.list({ restaurantId: restId, view: 'owner' }),
+        ordersApi.list({ restaurantId: restId, view: 'owner' }),
       ]);
       setBookings(bookingData.map(b => ({
         id: b.id, name: b.name, date: b.date, time: b.time, guests: b.guests,

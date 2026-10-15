@@ -1,20 +1,12 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { authApi } from '../services/api';
-import { setTokenRefreshListener } from '../api/client';
+import { setAccessToken, setTokenRefreshListener } from '../api/client';
 
 const AuthContext = createContext(null);
 
 const REFRESH_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes — refresh halfway through a 15-min token
 
-// The backend's sanitizeUser renames the 'owner' role to 'restaurant_owner',
-// but the router/ProtectedRoute only know 'owner'. Normalize ONCE here so
-// every consumer (routes, sidebars, OAuth callback) sees the canonical role.
-// Without this, owners hit an infinite login↔dashboard redirect loop (C1).
-const normalizeRole = (u) => {
-  if (!u) return u;
-  const role = u.role === 'restaurant_owner' ? 'owner' : u.role;
-  return role === u.role ? u : { ...u, role };
-};
+const normalizeUser = (u) => u ? { ...u, roles: u.roles || [u.role] } : u;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -28,28 +20,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const persistAuth = useCallback((authUser, accessToken, refreshToken) => {
-    const normalized = normalizeRole(authUser);
+  const persistAuth = useCallback((authUser, token) => {
+    const normalized = normalizeUser(authUser);
     setUser(normalized);
-    localStorage.setItem('user', JSON.stringify(normalized));
-    if (accessToken) localStorage.setItem('accessToken', accessToken);
-    if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+    setAccessToken(token);
   }, []);
 
   const forceLogout = useCallback(() => {
     setUser(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    setAccessToken(null);
     clearRefreshTimer();
   }, []);
 
   const refreshToken = useCallback(async () => {
-    const stored = localStorage.getItem('refreshToken');
-    if (!stored) return false;
     try {
-      const res = await authApi.refresh(stored);
-      persistAuth(res.user, res.accessToken, res.refreshToken);
+      const res = await authApi.refresh();
+      persistAuth(res.user, res.accessToken);
       return true;
     } catch (err) {
       forceLogout();
@@ -61,30 +47,17 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     setTokenRefreshListener((data) => {
       if (data.user) {
-        const normalized = normalizeRole(data.user);
+        const normalized = normalizeUser(data.user);
         setUser(normalized);
-        localStorage.setItem('user', JSON.stringify(normalized));
+        setAccessToken(data.accessToken);
       }
     });
     return () => setTokenRefreshListener(null);
   }, []);
 
   useEffect(() => {
-    const stored = localStorage.getItem('user');
-    const access = localStorage.getItem('accessToken');
-    const refresh = localStorage.getItem('refreshToken');
-
     const init = async () => {
-      if (stored && access) {
-        try {
-          // Re-normalize stored users written before the role fix (C1)
-          setUser(normalizeRole(JSON.parse(stored)));
-        } catch {
-          forceLogout();
-        }
-      } else if (refresh) {
-        await refreshToken();
-      }
+      await refreshToken();
       setLoading(false);
     };
     init();
@@ -92,7 +65,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     clearRefreshTimer();
-    if (user && localStorage.getItem('refreshToken')) {
+    if (user) {
       refreshTimer.current = setInterval(refreshToken, REFRESH_INTERVAL_MS);
     }
     return clearRefreshTimer;
@@ -100,7 +73,7 @@ export const AuthProvider = ({ children }) => {
 
   const loginWithCredentials = useCallback(async (email, password) => {
     const res = await authApi.login({ email, password });
-    persistAuth(res.user, res.accessToken, res.refreshToken);
+    persistAuth(res.user, res.accessToken);
     return res.user;
   }, [persistAuth]);
 
@@ -118,7 +91,7 @@ export const AuthProvider = ({ children }) => {
   const verifyOtp = useCallback(async (email, otp) => {
     const res = await authApi.verifyOtp({ email, otp });
     if (res.user && res.accessToken) {
-      persistAuth(res.user, res.accessToken, res.refreshToken);
+      persistAuth(res.user, res.accessToken);
     }
     return res;
   }, [persistAuth]);
@@ -149,17 +122,14 @@ export const AuthProvider = ({ children }) => {
   }, [getApiBaseUrl]);
 
   const logout = useCallback(() => {
-    const email = user?.email;
-    // Start the server-side logout while the access token is still available,
-    // but don't make leaving the dashboard depend on the network response.
-    if (email) authApi.logout({ email }).catch(() => {});
+    // Revoke the server session while the access token is still available.
+    authApi.logout().catch(() => {});
     forceLogout();
   }, [user, forceLogout]);
 
   const updateUser = useCallback((updatedUserData) => {
     setUser((prev) => {
-      const newUser = normalizeRole({ ...prev, ...updatedUserData });
-      localStorage.setItem('user', JSON.stringify(newUser));
+      const newUser = normalizeUser({ ...prev, ...updatedUserData });
       return newUser;
     });
   }, []);

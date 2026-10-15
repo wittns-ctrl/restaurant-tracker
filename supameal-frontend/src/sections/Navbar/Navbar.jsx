@@ -5,6 +5,7 @@ import Button from '../../components/Button/Button';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import Logo from '../../components/Logo/Logo';
 import { useAuth } from '../../context/AuthContext';
+import { homeForUser } from '../../utils/auth';
 import './Navbar.css';
 
 const Navbar = () => {
@@ -15,11 +16,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
 
-  const dashboardUrl = user?.role === 'owner'
-    ? '/owner/dashboard'
-    : user?.role === 'admin'
-    ? '/admin/dashboard'
-    : '/customer/dashboard';
+  const dashboardUrl = homeForUser(user);
 
   const confirmLogout = () => {
     setShowLogoutConfirm(false);

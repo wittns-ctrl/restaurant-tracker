@@ -26,7 +26,7 @@ export default function ReservationsPage() {
     setLoadError('');
     try {
       // The backend scopes customers to their own bookings automatically
-      const data = await bookingsApi.list();
+      const data = await bookingsApi.list({ view: 'customer' });
       setReservations(Array.isArray(data) ? data : []);
     } catch (err) {
       setLoadError(err.message || 'Failed to load reservations');

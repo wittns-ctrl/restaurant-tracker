@@ -10,6 +10,13 @@ class ApiError extends Error {
 }
 
 let onTokenRefreshed = null; // hook so AuthContext can persist rotated tokens
+let accessToken = null;
+export function setAccessToken(token) {
+  accessToken = token || null;
+}
+export function getAccessToken() {
+  return accessToken;
+}
 export function setTokenRefreshListener(fn) {
   onTokenRefreshed = fn;
 }
@@ -18,23 +25,19 @@ let isRefreshing = false;
 let refreshPromise = null;
 
 async function tryRefreshToken() {
-  const refreshToken = localStorage.getItem('refreshToken');
-  if (!refreshToken) return false;
   if (!isRefreshing) {
     isRefreshing = true;
     refreshPromise = fetch(`${API_URL}/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
+      credentials: 'include',
+      body: JSON.stringify({}),
     })
       .then(async (res) => {
         if (!res.ok) return false;
         const data = await res.json().catch(() => null);
         if (!data?.accessToken) return false;
-        localStorage.setItem('accessToken', data.accessToken);
-        if (data.refreshToken) {
-          localStorage.setItem('refreshToken', data.refreshToken);
-        }
+        setAccessToken(data.accessToken);
         if (onTokenRefreshed) onTokenRefreshed(data);
         return true;
       })
@@ -49,7 +52,7 @@ async function tryRefreshToken() {
 
 export async function apiRequest(path, options = {}) {
   const { skipAuth, headers: extraHeaders, timeoutMs, ...rest } = options;
-  const token = localStorage.getItem('accessToken');
+  const token = accessToken;
   const headers = {
     'Content-Type': 'application/json',
     ...(extraHeaders || {}),
@@ -62,7 +65,7 @@ export async function apiRequest(path, options = {}) {
 
   let res;
   try {
-    res = await fetch(`${API_URL}${path}`, { ...rest, headers, signal: controller.signal });
+    res = await fetch(`${API_URL}${path}`, { ...rest, headers, credentials: 'include', signal: controller.signal });
   } catch (err) {
     if (err.name === 'AbortError') {
       throw new ApiError('Request timed out', 0);
@@ -76,7 +79,7 @@ export async function apiRequest(path, options = {}) {
   if (res.status === 401 && !skipAuth && !path.startsWith('/auth/')) {
     const refreshed = await tryRefreshToken();
     if (refreshed) {
-      const newToken = localStorage.getItem('accessToken');
+      const newToken = accessToken;
       if (newToken) {
         headers.Authorization = `Bearer ${newToken}`;
         // Fresh AbortController + timer: the original controller was already
@@ -85,7 +88,7 @@ export async function apiRequest(path, options = {}) {
         const retryController = new AbortController();
         const retryTimeout = setTimeout(() => retryController.abort(), timeoutMs || DEFAULT_TIMEOUT_MS);
         try {
-          res = await fetch(`${API_URL}${path}`, { ...rest, headers, signal: retryController.signal });
+          res = await fetch(`${API_URL}${path}`, { ...rest, headers, credentials: 'include', signal: retryController.signal });
         } catch (err) {
           if (err.name === 'AbortError') {
             throw new ApiError('Request timed out', 0);

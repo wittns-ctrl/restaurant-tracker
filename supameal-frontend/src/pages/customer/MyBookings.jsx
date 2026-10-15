@@ -66,7 +66,7 @@ const MyBookings = () => {
   const loadBookings = async () => {
     if (!user?.id) return;
     try {
-      const data = await bookingsApi.list({ customerId: user.id });
+      const data = await bookingsApi.list({ customerId: user.id, view: 'customer' });
       const grouped = { confirmed: [], pending: [], history: [] };
       data.forEach(b => {
         const rawStatus = b.backendStatus || b.status;

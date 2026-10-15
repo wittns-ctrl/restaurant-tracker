@@ -6,10 +6,14 @@ import AuthLayout from '../../layouts/AuthLayout';
 import Button from '../../components/Button/Button';
 import Loader from '../../components/Loader/Loader';
 import { useAuth } from '../../context/AuthContext';
+import { userHasRole } from '../../utils/auth';
+import { authApi } from '../../services/api';
 import '../auth/AuthForm.css';
 
 const OwnerLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [forgotMessage, setForgotMessage] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -34,6 +38,26 @@ const OwnerLogin = () => {
     loginWithGoogle({ role: 'owner' });
   };
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setError('');
+    setForgotMessage('');
+    if (!email.trim()) {
+      setError('Please enter your email to reset your password.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await authApi.forgot({ email: email.trim() });
+      setForgotMessage(response.message || 'Reset link sent to your email. Check your inbox.');
+    } catch (err) {
+      setError(err.message || 'Failed to send reset link');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     sessionStorage.removeItem('ownerOAuthIntent');
@@ -47,7 +71,7 @@ const OwnerLogin = () => {
       const user = await loginWithCredentials(email.trim(), password);
       // This portal is owner-only — an admin/customer who logs in here must
       // not keep an authenticated session pointed at the owner dashboard.
-      if (user?.role !== 'owner') {
+      if (!userHasRole(user, 'owner')) {
         await logout();
         setError('This account is not a restaurant owner account.');
         setIsLoading(false);
@@ -60,22 +84,55 @@ const OwnerLogin = () => {
     }
   };
 
-  if (isLoading) return <Loader text="Opening owner dashboard..." />;
+  if (isLoading) return <Loader text={isForgotPassword ? 'Sending reset link...' : 'Opening owner dashboard...'} />;
 
   return (
     <AuthLayout
       className="auth-layout--owner-login"
-      title="Owner Portal"
-      subtitle="Manage your restaurant, orders, and reservations."
+      title={isForgotPassword ? 'Reset Your Password' : 'Owner Portal'}
+      subtitle={isForgotPassword ? "We'll send you a secure reset link." : 'Manage your restaurant, orders, and reservations.'}
     >
       <div className="auth-form-header">
         <Store size={32} className="auth-form-icon" />
-        <h3>Partner Login</h3>
-        <p>Access your restaurant dashboard</p>
+        <h3>{isForgotPassword ? 'Forgot Password' : 'Partner Login'}</h3>
+        <p>{isForgotPassword ? 'Enter your email to receive a reset link' : 'Access your restaurant dashboard'}</p>
       </div>
 
       {(error || oauthError) && <p role="alert" className="auth-form-error">{error || oauthError}</p>}
+      {forgotMessage && <p role="status" aria-live="polite" className="auth-form-success" style={{ fontSize: '0.9rem', marginBottom: '1rem', textAlign: 'center' }}>{forgotMessage}</p>}
 
+      {isForgotPassword ? (
+        <form onSubmit={handleForgotPassword}>
+          <div className="auth-input-group">
+            <label htmlFor="owner-reset-email">Email</label>
+            <div className="auth-input-wrapper">
+              <Mail size={18} className="auth-input-icon" />
+              <input
+                id="owner-reset-email"
+                type="email"
+                className="auth-input"
+                placeholder="owner@restaurant.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+              />
+            </div>
+          </div>
+          <Button variant="primary" className="auth-submit-btn" type="submit" disabled={isLoading}>
+            Send Reset Link
+          </Button>
+          <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+            <button
+              type="button"
+              onClick={() => { setIsForgotPassword(false); setError(''); setForgotMessage(''); }}
+              className="auth-forgot-link"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}
+            >
+              Back to Sign In
+            </button>
+          </div>
+        </form>
+      ) : <>
       <form onSubmit={handleLogin}>
         <div className="auth-input-group">
           <label>Email</label>
@@ -93,6 +150,9 @@ const OwnerLogin = () => {
         </div>
         <div className="auth-input-group">
           <label>Password</label>
+          <button type="button" onClick={() => { setIsForgotPassword(true); setError(''); setForgotMessage(''); }} className="auth-forgot-link" style={{ background: 'none', border: 'none', cursor: 'pointer', float: 'right' }}>
+            Forgot password?
+          </button>
           <div className="auth-input-wrapper">
             <Lock size={18} className="auth-input-icon" />
             <input
@@ -130,6 +190,7 @@ const OwnerLogin = () => {
           Register Restaurant
         </Link>
       </div>
+      </>}
     </AuthLayout>
   );
 };

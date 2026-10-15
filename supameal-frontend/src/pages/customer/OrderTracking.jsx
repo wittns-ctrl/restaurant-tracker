@@ -21,7 +21,7 @@ const OrderTracking = ({ orderId: orderIdProp, setActiveTab }) => {
     if (orderId) return;
     let alive = true;
     // Scope to the signed-in customer — a bare list() leaks every order on the platform
-    ordersApi.list(user?.id ? { customerId: user.id } : {})
+    ordersApi.list(user?.id ? { customerId: user.id, view: 'customer' } : { view: 'customer' })
       .then((data) => {
         if (alive) setRecentOrders(Array.isArray(data) ? data : data?.data || []);
       })

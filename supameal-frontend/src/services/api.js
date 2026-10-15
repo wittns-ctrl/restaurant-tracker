@@ -1,4 +1,4 @@
-import { apiRequest, API_URL, ApiError } from '../api/client';
+import { apiRequest, API_URL, ApiError, getAccessToken } from '../api/client';
 
 // Re-exported for consumers that build absolute URLs (SSE stream, image srcs)
 export { API_URL, ApiError };
@@ -9,15 +9,10 @@ export const authApi = {
   verifyOtp: (data) => apiRequest('/auth/verifyOtp', { method: 'POST', body: JSON.stringify(data) }),
   resendOtp: (email) => apiRequest('/auth/resend-otp', { method: 'POST', body: JSON.stringify({ email }) }),
   login: (data) => apiRequest('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
-  checkCustomerAccount: (email) => apiRequest('/auth/check-customer-account', {
-    method: 'POST',
-    body: JSON.stringify({ email }),
-    skipAuth: true,
-  }),
-  refresh: (refreshToken) => apiRequest('/auth/refresh', { method: 'POST', body: JSON.stringify({ refreshToken }), skipAuth: true }),
+  refresh: () => apiRequest('/auth/refresh', { method: 'POST', body: JSON.stringify({}), skipAuth: true }),
   forgot: (data) => apiRequest('/auth/forgot', { method: 'POST', body: JSON.stringify(data) }),
   reset: (data) => apiRequest('/auth/reset', { method: 'POST', body: JSON.stringify(data) }),
-  logout: (data) => apiRequest('/auth/logout', { method: 'POST', body: JSON.stringify(data) }),
+  logout: () => apiRequest('/auth/logout', { method: 'POST', body: JSON.stringify({}) }),
   // One-time code exchange for OAuth login (tokens are never in the URL)
   exchange: (code) => apiRequest('/auth/oauth/exchange', { method: 'POST', body: JSON.stringify({ code }), skipAuth: true }),
 };
@@ -65,12 +60,13 @@ export const menusApi = {
 // browser sets the multipart boundary). JWT is attached manually.
 export const uploadsApi = {
   upload: async (file) => {
-    const token = localStorage.getItem('accessToken');
+    const token = getAccessToken();
     const body = new FormData();
     body.append('file', file);
     const res = await fetch(`${API_URL}/uploads`, {
       method: 'POST',
       headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: 'include',
       body,
     });
     const data = await res.json().catch(() => ({}));
