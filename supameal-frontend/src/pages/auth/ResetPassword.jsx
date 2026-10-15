@@ -39,8 +39,12 @@ const ResetPassword = () => {
     setError('');
     setMessage('');
 
-    if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters.');
+    if (newPassword.length < 8 || newPassword.length > 200) {
+      setError('Password must be between 8 and 200 characters.');
+      return;
+    }
+    if (!/(?=.*[A-Z])(?=.*\d)/.test(newPassword)) {
+      setError('Password must contain at least one uppercase letter and one digit.');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -102,9 +106,12 @@ const ResetPassword = () => {
                   placeholder="New password"
                   className="auth-input"
                   required
+                  minLength={8}
+                  maxLength={200}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   autoComplete="new-password"
+                  aria-describedby="reset-password-rules"
                 />
                 <button
                   type="button"
@@ -116,6 +123,7 @@ const ResetPassword = () => {
                   {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                 </button>
               </div>
+              <small id="reset-password-rules">Use 8–200 characters, including at least one uppercase letter and one digit.</small>
             </div>
             <div className="auth-input-group">
               <label>Confirm Password</label>

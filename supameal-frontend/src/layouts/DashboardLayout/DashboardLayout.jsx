@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Menu, X, Bell, ChevronRight, LogOut, Home, Search, Trash2,
-  ChevronDown, User, Package, Truck, CalendarCheck, Heart, UtensilsCrossed
+  ChevronDown, User, Package, Truck, CalendarCheck, Heart, UtensilsCrossed,
+  PanelRightClose, PanelRightOpen,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { notificationsApi } from '../../services/api';
@@ -95,6 +96,15 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notificationsPanelOpen, setNotificationsPanelOpen] = useState(() => {
+    try {
+      const saved = localStorage.getItem('supaMeal.dashboard.notificationsPanel');
+      if (saved) return saved !== 'hidden';
+      return typeof window === 'undefined' || window.innerWidth > 1280;
+    } catch {
+      return true;
+    }
+  });
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Search State
@@ -108,6 +118,14 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
   const [notifications, setNotifications] = useState([]);
   const { showToast } = useToast();
   const activities = [];
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('supaMeal.dashboard.notificationsPanel', notificationsPanelOpen ? 'visible' : 'hidden');
+    } catch {
+      // The panel toggle still works for this dashboard session if storage is unavailable.
+    }
+  }, [notificationsPanelOpen]);
 
   // Helper: format a backend notification into what the UI expects
   const formatNotif = (n) => ({
@@ -188,7 +206,7 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
   });
 
   return (
-    <div className="dashboard-shell">
+    <div className={`dashboard-shell ${notificationsPanelOpen ? '' : 'notifications-panel-hidden'}`}>
       {sidebarOpen && (
         <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
       )}
@@ -359,6 +377,17 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
               <UserAvatar user={user} />
               <span>{user?.name || 'User'}</span>
             </div>
+
+            <button
+              type="button"
+              className="topbar-icon-btn notifications-panel-toggle"
+              aria-label={notificationsPanelOpen ? 'Hide notifications panel' : 'Show notifications panel'}
+              aria-pressed={notificationsPanelOpen}
+              title={notificationsPanelOpen ? 'Hide notifications panel' : 'Show notifications panel'}
+              onClick={() => setNotificationsPanelOpen(open => !open)}
+            >
+              {notificationsPanelOpen ? <PanelRightClose size={19} /> : <PanelRightOpen size={19} />}
+            </button>
           </div>
         </header>
 
@@ -368,9 +397,19 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
       </div>
 
       {/* RIGHT SIDEBAR (Notifications / Activities) */}
-      <aside className="dashboard-right-sidebar">
+      <aside className="dashboard-right-sidebar" aria-hidden={!notificationsPanelOpen}>
         <div className="right-sidebar-section">
-          <h4>Notifications</h4>
+          <div className="notifications-panel-heading">
+            <h4>Notifications</h4>
+            <button
+              type="button"
+              className="notifications-panel-close"
+              aria-label="Hide notifications panel"
+              onClick={() => setNotificationsPanelOpen(false)}
+            >
+              <PanelRightClose size={19} />
+            </button>
+          </div>
           {notifications.length === 0 ? (
             <p style={{ color: 'var(--dash-muted)', fontSize: '0.8rem' }}>No notifications yet.</p>
           ) : (

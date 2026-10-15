@@ -150,7 +150,7 @@
 
 .auth-layout--owner-register .auth-right {
   justify-content: flex-start;
-  overflow-y: auto;
+  overflow-y: hidden;
   padding-top: 7rem;
   padding-bottom: 2rem;
 }
@@ -186,6 +186,11 @@
 
 .auth-layout--signup .auth-form-container {
   margin-top: 0;
+}
+
+.auth-layout--signup.auth-layout--owner-register .auth-right {
+  padding-top: 6.5rem;
+  padding-bottom: 1.5rem;
 }
 
 @media (max-width: 992px) {
@@ -231,6 +236,10 @@
   .auth-layout--owner-register .auth-right {
     justify-content: flex-start;
     overflow: visible;
+    padding: 2rem 1.5rem;
+  }
+
+  .auth-layout--signup.auth-layout--owner-register .auth-right {
     padding: 2rem 1.5rem;
   }
 

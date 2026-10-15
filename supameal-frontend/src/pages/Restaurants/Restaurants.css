@@ -107,6 +107,51 @@
   gap: 2rem;
 }
 
+.restaurant-listing-card {
+  position: relative;
+  min-width: 0;
+}
+
+.restaurant-favorite-btn {
+  position: absolute;
+  z-index: 2;
+  top: 0.8rem;
+  right: 0.8rem;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(12, 13, 11, 0.72);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: color 160ms ease, background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.restaurant-favorite-btn:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+  transform: scale(1.06);
+}
+
+.restaurant-favorite-btn.is-favorite {
+  color: var(--primary);
+  background: rgba(245, 166, 35, 0.16);
+  border-color: rgba(245, 166, 35, 0.7);
+}
+
+.restaurant-favorite-btn:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.restaurant-favorite-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
 @media (max-width: 992px) {
   .search-filter-bar {
     flex-direction: column;

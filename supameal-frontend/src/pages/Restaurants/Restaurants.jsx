@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, Filter, ArrowLeft } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search, Filter, ArrowLeft, Heart } from 'lucide-react';
 import Navbar from '../../sections/Navbar/Navbar';
 import Footer from '../../sections/Footer/Footer';
 import Button from '../../components/Button/Button';
 import Dropdown from '../../components/Input/Dropdown';
 import RestaurantCard from '../../components/RestaurantCard/RestaurantCard';
-import { restaurantsApi, resolveImageUrl } from '../../services/api';
+import { restaurantsApi, resolveImageUrl, usersApi } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import './Restaurants.css';
 
 import img1 from '../../assets/images/restaurant_interior.png';
@@ -19,6 +21,11 @@ const Restaurants = () => {
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [favoriteIds, setFavoriteIds] = useState(() => new Set());
+  const [pendingFavoriteIds, setPendingFavoriteIds] = useState(() => new Set());
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const loadRestaurants = async () => {
     setLoading(true);
@@ -44,7 +51,59 @@ const Restaurants = () => {
 
   useEffect(() => { loadRestaurants(); }, []);
 
+  useEffect(() => {
+    let isCurrent = true;
+    if (!user?.id) {
+      setFavoriteIds(new Set());
+      return () => { isCurrent = false; };
+    }
+    setFavoriteIds(new Set());
+    usersApi.favorites(user.id)
+      .then(favorites => {
+        if (isCurrent) setFavoriteIds(new Set(favorites.map(restaurant => String(restaurant.id))));
+      })
+      .catch(err => console.error('Failed to load favorite restaurants:', err));
+    return () => { isCurrent = false; };
+  }, [user?.id]);
+
   const handleApplyFilters = () => loadRestaurants();
+
+  const toggleFavorite = async (event, restaurant) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!user?.id) {
+      showToast('Sign in to save restaurants to your favorites.', 'info');
+      navigate('/login');
+      return;
+    }
+
+    const restaurantId = String(restaurant.id);
+    const isFavorite = favoriteIds.has(restaurantId);
+    setPendingFavoriteIds(previous => new Set(previous).add(restaurantId));
+    try {
+      if (isFavorite) {
+        await usersApi.removeFavorite(user.id, restaurantId);
+        setFavoriteIds(previous => {
+          const next = new Set(previous);
+          next.delete(restaurantId);
+          return next;
+        });
+        showToast(`${restaurant.name} removed from favorites.`, 'success');
+      } else {
+        await usersApi.addFavorite(user.id, restaurantId);
+        setFavoriteIds(previous => new Set(previous).add(restaurantId));
+        showToast(`${restaurant.name} added to favorites.`, 'success');
+      }
+    } catch (err) {
+      showToast(err.message || 'Could not update your favorites.', 'error');
+    } finally {
+      setPendingFavoriteIds(previous => {
+        const next = new Set(previous);
+        next.delete(restaurantId);
+        return next;
+      });
+    }
+  };
 
   return (
     <>
@@ -105,16 +164,29 @@ const Restaurants = () => {
           ) : (
             <div className="restaurants-grid">
               {restaurants.map((restaurant) => (
-                <Link to={`/restaurants/${restaurant.id}`} key={restaurant.id} style={{ textDecoration: 'none' }}>
-                  <RestaurantCard
-                    image={restaurant.image}
-                    name={restaurant.name}
-                    location={typeof restaurant.location === 'string' ? restaurant.location : restaurant.location?.address || ''}
-                    rating={restaurant.rating ?? 'New'}
-                    reviews={restaurant.reviews ?? 0}
-                    priceLevel={restaurant.priceLevel ?? '$$'}
-                  />
-                </Link>
+                <div className="restaurant-listing-card" key={restaurant.id}>
+                  <Link to={`/restaurants/${restaurant.id}`} style={{ textDecoration: 'none' }}>
+                    <RestaurantCard
+                      image={restaurant.image}
+                      name={restaurant.name}
+                      location={typeof restaurant.location === 'string' ? restaurant.location : restaurant.location?.address || ''}
+                      rating={restaurant.rating ?? 'New'}
+                      reviews={restaurant.reviews ?? 0}
+                      priceLevel={restaurant.priceLevel ?? '$$'}
+                    />
+                  </Link>
+                  <button
+                    type="button"
+                    className={`restaurant-favorite-btn ${favoriteIds.has(String(restaurant.id)) ? 'is-favorite' : ''}`}
+                    aria-label={favoriteIds.has(String(restaurant.id)) ? `Remove ${restaurant.name} from favorites` : `Add ${restaurant.name} to favorites`}
+                    aria-pressed={favoriteIds.has(String(restaurant.id))}
+                    title={favoriteIds.has(String(restaurant.id)) ? 'Remove from favorites' : 'Add to favorites'}
+                    disabled={pendingFavoriteIds.has(String(restaurant.id))}
+                    onClick={event => toggleFavorite(event, restaurant)}
+                  >
+                    <Heart size={19} fill={favoriteIds.has(String(restaurant.id)) ? 'currentColor' : 'none'} />
+                  </button>
+                </div>
               ))}
               {restaurants.length === 0 && (
                 <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: 'var(--text-muted)' }}>No restaurants found.</p>

@@ -67,17 +67,8 @@
   box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
-.auth-input-wrapper:has(textarea.owner-register-description) {
-  align-items: flex-start;
-}
-
-.auth-input-wrapper:has(textarea.owner-register-description) .auth-input-icon {
-  top: 1rem;
-}
-
-textarea.owner-register-description {
-  min-height: 7rem;
-  resize: vertical;
+.auth-layout--owner-register .auth-form-container {
+  max-width: 400px;
 }
 
 .auth-input-icon {
@@ -223,6 +214,12 @@ textarea.owner-register-description {
 
 .signup-form-content .auth-footer {
   margin-top: 0.85rem;
+}
+
+.signup-form-content .owner-register-footer {
+  justify-content: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
 }
 
 .auth-form-error {

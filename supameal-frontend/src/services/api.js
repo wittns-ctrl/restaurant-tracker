@@ -9,6 +9,11 @@ export const authApi = {
   verifyOtp: (data) => apiRequest('/auth/verifyOtp', { method: 'POST', body: JSON.stringify(data) }),
   resendOtp: (email) => apiRequest('/auth/resend-otp', { method: 'POST', body: JSON.stringify({ email }) }),
   login: (data) => apiRequest('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
+  checkCustomerAccount: (email) => apiRequest('/auth/check-customer-account', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+    skipAuth: true,
+  }),
   refresh: (refreshToken) => apiRequest('/auth/refresh', { method: 'POST', body: JSON.stringify({ refreshToken }), skipAuth: true }),
   forgot: (data) => apiRequest('/auth/forgot', { method: 'POST', body: JSON.stringify(data) }),
   reset: (data) => apiRequest('/auth/reset', { method: 'POST', body: JSON.stringify(data) }),
