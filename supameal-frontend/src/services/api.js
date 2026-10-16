@@ -5,13 +5,14 @@ export { API_URL, ApiError };
 
 // Auth
 export const authApi = {
-  signup: (data) => apiRequest('/auth/signup', { method: 'POST', body: JSON.stringify(data) }),
-  verifyOtp: (data) => apiRequest('/auth/verifyOtp', { method: 'POST', body: JSON.stringify(data) }),
-  resendOtp: (email) => apiRequest('/auth/resend-otp', { method: 'POST', body: JSON.stringify({ email }) }),
-  login: (data) => apiRequest('/auth/login', { method: 'POST', body: JSON.stringify(data) }),
-  refresh: () => apiRequest('/auth/refresh', { method: 'POST', body: JSON.stringify({}), skipAuth: true }),
-  forgot: (data) => apiRequest('/auth/forgot', { method: 'POST', body: JSON.stringify(data) }),
-  reset: (data) => apiRequest('/auth/reset', { method: 'POST', body: JSON.stringify(data) }),
+  signup: (data) => apiRequest('/auth/customer/signup', { method: 'POST', body: JSON.stringify(data) }),
+  ownerSignup: (data) => apiRequest('/auth/owner/signup', { method: 'POST', body: JSON.stringify(data) }),
+  verifyOtp: (data, accountType = 'customer') => apiRequest(accountType === 'owner' ? '/auth/owner/verify-otp' : '/auth/verifyOtp', { method: 'POST', body: JSON.stringify(data) }),
+  resendOtp: (email, accountType = 'customer') => apiRequest(accountType === 'owner' ? '/auth/owner/resend-otp' : '/auth/resend-otp', { method: 'POST', body: JSON.stringify({ email }) }),
+  login: (data, accountType = 'customer') => apiRequest(accountType === 'customer' ? '/auth/customer/login' : `/auth/${accountType}/login`, { method: 'POST', body: JSON.stringify(data) }),
+  refresh: (accountType = 'customer') => apiRequest(accountType === 'customer' ? '/auth/refresh' : `/auth/${accountType}/refresh`, { method: 'POST', body: JSON.stringify({}), skipAuth: true }),
+  forgot: (data, accountType = 'customer') => apiRequest(accountType === 'customer' ? '/auth/forgot' : `/auth/${accountType}/forgot`, { method: 'POST', body: JSON.stringify(data) }),
+  reset: (data, accountType = 'customer') => apiRequest(accountType === 'customer' ? '/auth/reset' : `/auth/${accountType}/reset`, { method: 'POST', body: JSON.stringify(data) }),
   logout: () => apiRequest('/auth/logout', { method: 'POST', body: JSON.stringify({}) }),
   // One-time code exchange for OAuth login (tokens are never in the URL)
   exchange: (code) => apiRequest('/auth/oauth/exchange', { method: 'POST', body: JSON.stringify({ code }), skipAuth: true }),

@@ -102,6 +102,10 @@ function AppRoutes() {
           element={loginRedirect || <Login />}
         />
         <Route
+          path="/admin-login"
+          element={loginRedirect || <Login accountType="admin" />}
+        />
+        <Route
           path="/signup"
           element={loginRedirect || <SignUp />}
         />

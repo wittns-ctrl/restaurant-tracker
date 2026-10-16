@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Store, Mail, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
-import { FaGoogle } from 'react-icons/fa';
 import AuthLayout from '../../layouts/AuthLayout';
 import Button from '../../components/Button/Button';
 import Loader from '../../components/Loader/Loader';
@@ -18,25 +17,16 @@ const OwnerLogin = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const { loginWithCredentials, loginWithGoogle, logout } = useAuth();
+  const { loginWithCredentials, logout } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const oauthError = searchParams.get('error');
   const returnTo = searchParams.get('returnTo');
+  const applicationStatus = searchParams.get('status');
 
   useEffect(() => {
     if (oauthError) sessionStorage.removeItem('ownerOAuthIntent');
   }, [oauthError]);
-
-  const handleGoogleLogin = () => {
-    if (returnTo === '/register-restaurant') {
-      sessionStorage.setItem('oauthReturnTo', '/register-restaurant');
-    } else {
-      sessionStorage.removeItem('oauthReturnTo');
-    }
-    sessionStorage.setItem('ownerOAuthIntent', 'login');
-    loginWithGoogle({ role: 'owner' });
-  };
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
@@ -49,7 +39,7 @@ const OwnerLogin = () => {
 
     setIsLoading(true);
     try {
-      const response = await authApi.forgot({ email: email.trim() });
+      const response = await authApi.forgot({ email: email.trim() }, 'owner');
       setForgotMessage(response.message || 'Reset link sent to your email. Check your inbox.');
     } catch (err) {
       setError(err.message || 'Failed to send reset link');
@@ -68,12 +58,21 @@ const OwnerLogin = () => {
     }
     setIsLoading(true);
     try {
-      const user = await loginWithCredentials(email.trim(), password);
+      const user = await loginWithCredentials(email.trim(), password, 'owner');
       // This portal is owner-only — an admin/customer who logs in here must
       // not keep an authenticated session pointed at the owner dashboard.
-      if (!userHasRole(user, 'owner')) {
+      if (user.accountType !== 'owner') {
         await logout();
-        setError('This account is not a restaurant owner account.');
+        setError('This account does not belong to the restaurant owner sign-in.');
+        setIsLoading(false);
+        return;
+      }
+      if (!userHasRole(user, 'owner')) {
+        const pending = user.accountType === 'owner'
+          && user.restaurantMemberships?.some((membership) => membership.status === 'pending');
+        setError(pending
+          ? 'Your restaurant application is still under review. Owner access will be available after approval.'
+          : 'This owner account has no approved restaurant membership yet.');
         setIsLoading(false);
         return;
       }
@@ -99,6 +98,7 @@ const OwnerLogin = () => {
       </div>
 
       {(error || oauthError) && <p role="alert" className="auth-form-error">{error || oauthError}</p>}
+      {applicationStatus === 'pending' && <p role="status" className="auth-form-success">Your email is verified. The restaurant application is awaiting administrator approval.</p>}
       {forgotMessage && <p role="status" aria-live="polite" className="auth-form-success" style={{ fontSize: '0.9rem', marginBottom: '1rem', textAlign: 'center' }}>{forgotMessage}</p>}
 
       {isForgotPassword ? (
@@ -178,11 +178,6 @@ const OwnerLogin = () => {
           Sign In
         </Button>
       </form>
-
-      <div className="auth-form-divider"><span>OR</span></div>
-      <button type="button" className="auth-social-btn" onClick={handleGoogleLogin}>
-        <FaGoogle /> Continue with Google
-      </button>
 
       <div className="auth-footer" style={{ justifyContent: 'center', marginTop: '1.5rem', gap: '0.5rem' }}>
         <span>Not a partner yet?</span>

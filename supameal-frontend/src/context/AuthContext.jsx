@@ -23,24 +23,35 @@ export const AuthProvider = ({ children }) => {
   const persistAuth = useCallback((authUser, token) => {
     const normalized = normalizeUser(authUser);
     setUser(normalized);
-    setAccessToken(token);
+    setAccessToken(token, normalized?.accountType);
+    if (normalized?.accountType) localStorage.setItem('activeAuthAccountType', normalized.accountType);
   }, []);
 
   const forceLogout = useCallback(() => {
     setUser(null);
-    setAccessToken(null);
+    setAccessToken(null, 'customer');
+    localStorage.setItem('activeAuthAccountType', 'none');
     clearRefreshTimer();
   }, []);
 
-  const refreshToken = useCallback(async () => {
-    try {
-      const res = await authApi.refresh();
-      persistAuth(res.user, res.accessToken);
-      return true;
-    } catch (err) {
-      forceLogout();
-      return false;
+  const refreshToken = useCallback(async (accountType) => {
+    const preferredType = accountType ?? localStorage.getItem('activeAuthAccountType');
+    const accountTypes = preferredType === 'none'
+      ? []
+      : preferredType
+        ? [preferredType]
+        : ['customer', 'owner', 'admin'];
+    for (const type of accountTypes) {
+      try {
+        const res = await authApi.refresh(type);
+        persistAuth(res.user, res.accessToken);
+        return true;
+      } catch {
+        // Try the next independent realm during initial session restoration.
+      }
     }
+    forceLogout();
+    return false;
   }, [persistAuth, forceLogout]);
 
   // The api client auto-refreshes on 401 — persist rotated tokens here too
@@ -49,7 +60,8 @@ export const AuthProvider = ({ children }) => {
       if (data.user) {
         const normalized = normalizeUser(data.user);
         setUser(normalized);
-        setAccessToken(data.accessToken);
+        setAccessToken(data.accessToken, normalized?.accountType);
+        if (normalized?.accountType) localStorage.setItem('activeAuthAccountType', normalized.accountType);
       }
     });
     return () => setTokenRefreshListener(null);
@@ -71,13 +83,13 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     clearRefreshTimer();
     if (user) {
-      refreshTimer.current = setInterval(refreshToken, REFRESH_INTERVAL_MS);
+      refreshTimer.current = setInterval(() => refreshToken(user.accountType), REFRESH_INTERVAL_MS);
     }
     return clearRefreshTimer;
   }, [user, refreshToken]);
 
-  const loginWithCredentials = useCallback(async (email, password) => {
-    const res = await authApi.login({ email, password });
+  const loginWithCredentials = useCallback(async (email, password, accountType = 'customer') => {
+    const res = await authApi.login({ email, password }, accountType);
     persistAuth(res.user, res.accessToken);
     return res.user;
   }, [persistAuth]);
@@ -93,24 +105,24 @@ export const AuthProvider = ({ children }) => {
     return authApi.signup(data);
   }, []);
 
-  const verifyOtp = useCallback(async (email, otp) => {
-    const res = await authApi.verifyOtp({ email, otp });
+  const verifyOtp = useCallback(async (email, otp, accountType = 'customer') => {
+    const res = await authApi.verifyOtp({ email, otp }, accountType);
     if (res.user && res.accessToken) {
       persistAuth(res.user, res.accessToken);
     }
     return res;
   }, [persistAuth]);
 
-  const resendOtp = useCallback(async (email) => {
-    return authApi.resendOtp(email);
+  const resendOtp = useCallback(async (email, accountType = 'customer') => {
+    return authApi.resendOtp(email, accountType);
   }, []);
 
-  const forgotPassword = useCallback(async (email) => {
-    return authApi.forgot({ email });
+  const forgotPassword = useCallback(async (email, accountType = 'customer') => {
+    return authApi.forgot({ email }, accountType);
   }, []);
 
-  const resetPassword = useCallback(async (token, newPassword) => {
-    return authApi.reset({ token, newPassword });
+  const resetPassword = useCallback(async (token, newPassword, accountType = 'customer') => {
+    return authApi.reset({ token, newPassword }, accountType);
   }, []);
 
   const getApiBaseUrl = useCallback(() => {

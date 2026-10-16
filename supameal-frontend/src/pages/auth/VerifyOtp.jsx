@@ -19,6 +19,7 @@ const VerifyOtp = () => {
   const navigate = useNavigate();
   const { verifyOtp, resendOtp } = useAuth();
   const email = localStorage.getItem('pendingVerificationEmail') || '';
+  const accountType = localStorage.getItem('pendingVerificationRealm') || 'customer';
 
   // Start countdown helper
   const startCountdown = useCallback(() => {
@@ -90,12 +91,14 @@ const VerifyOtp = () => {
     setError('');
     setSuccess('');
     try {
-      await verifyOtp(email, code);
+      await verifyOtp(email, code, accountType);
       setSuccess('Email verified! Redirecting...');
       localStorage.removeItem('pendingVerificationEmail');
+      localStorage.removeItem('pendingVerificationRealm');
       const redirect = localStorage.getItem('pendingVerificationRedirect');
       localStorage.removeItem('pendingVerificationRedirect');
-      setTimeout(() => navigate(redirect || '/customer/dashboard', { replace: true }), 1200);
+      const destination = redirect || (accountType === 'owner' ? '/owner-login?status=pending' : '/customer/dashboard');
+      setTimeout(() => navigate(destination, { replace: true }), 1200);
     } catch (err) {
       setError(err.message || 'Verification failed. Please try again.');
     } finally {
@@ -109,7 +112,7 @@ const VerifyOtp = () => {
     setError('');
     setSuccess('');
     try {
-      await resendOtp(email);
+      await resendOtp(email, accountType);
       setSuccess('A new code has been sent! Check your email — or look in the server terminal if email delivery is unavailable.');
       setOtp(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();

@@ -35,6 +35,7 @@ const SignUp = () => {
         role: 'customer',
       });
       localStorage.setItem('pendingVerificationEmail', form.email);
+      localStorage.setItem('pendingVerificationRealm', 'customer');
       if (returnTo) localStorage.setItem('pendingVerificationRedirect', returnTo);
       navigate('/verify-otp');
     } catch (err) {

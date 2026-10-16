@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { ShieldCheck, UtensilsCrossed, Store, LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { FaGoogle } from 'react-icons/fa';
 import AuthLayout from '../../layouts/AuthLayout';
 import Button from '../../components/Button/Button';
@@ -10,20 +10,7 @@ import { authApi } from '../../services/api';
 import { homeForUser, userHasRole } from '../../utils/auth';
 import './AuthForm.css';
 
-const DASHBOARD_ROUTES = {
-  customer: '/customer/dashboard',
-  restaurant_owner: '/owner/dashboard',
-  admin: '/admin/dashboard',
-};
-
-const ROLE_LABELS = {
-  customer: { label: 'Customer', icon: UtensilsCrossed },
-  restaurant_owner: { label: 'Restaurant Owner', icon: Store },
-  admin: { label: 'Admin', icon: ShieldCheck },
-};
-
-const Login = () => {
-  const [role, setRole] = useState('customer');
+const Login = ({ accountType = 'customer' }) => {
   const [loading, setLoading] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [forgotMessage, setForgotMessage] = useState('');
@@ -54,7 +41,7 @@ const Login = () => {
     }
     setLoading(true);
     try {
-      const res = await authApi.forgot({ email: email.trim() });
+      const res = await authApi.forgot({ email: email.trim() }, accountType);
       setForgotMessage(res.message || 'Reset link sent to your email. Check your inbox.');
     } catch (err) {
       setError(err.message || 'Failed to send reset link');
@@ -72,17 +59,16 @@ const Login = () => {
     }
     setLoading(true);
     try {
-      const user = await loginWithCredentials(email.trim(), password);
-      const loggedInRole = userHasRole(user, 'owner') ? 'restaurant_owner' : user?.role || role;
-      if (returnTo === '/register-restaurant' && (userHasRole(user, 'customer') || userHasRole(user, 'owner'))) {
+      const user = await loginWithCredentials(email.trim(), password, accountType);
+      if (returnTo === '/register-restaurant' && accountType === 'customer' && userHasRole(user, 'customer')) {
         navigate('/register-restaurant', { replace: true });
         return;
       }
-      if (location.state?.from === '/book-table' && loggedInRole === 'customer') {
+      if (location.state?.from === '/book-table' && accountType === 'customer') {
         navigate('/book-table', { replace: true, state: location.state.fromState || null });
         return;
       }
-      navigate(homeForUser(user) || DASHBOARD_ROUTES[loggedInRole] || DASHBOARD_ROUTES[role], { replace: true });
+      navigate(homeForUser(user), { replace: true });
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
@@ -103,13 +89,13 @@ const Login = () => {
 
   return (
     <AuthLayout
-      title={isForgotPassword ? "Reset Your Password" : "Welcome back to SupaMeal"}
-      subtitle={isForgotPassword ? "We'll send you a secure reset link." : "Sign in to access your dashboard."}
+      title={isForgotPassword ? "Reset Your Password" : accountType === 'admin' ? 'Administrator Sign In' : 'Welcome back to SupaMeal'}
+      subtitle={isForgotPassword ? "We'll send you a secure reset link." : accountType === 'admin' ? 'Sign in to manage SupaMeal.' : 'Sign in to your customer account.'}
     >
       <div className="auth-form-header">
         <LogIn size={32} className="auth-form-icon" style={{ color: 'var(--primary)' }} />
         <h3>{isForgotPassword ? "Forgot Password" : "Sign In"}</h3>
-        <p>{isForgotPassword ? "Enter your email to receive a reset link" : "Select your account type to continue"}</p>
+        <p>{isForgotPassword ? "Enter your email to receive a reset link" : accountType === 'admin' ? 'Administrator access only' : 'Sign in to your customer account'}</p>
       </div>
 
       {error && <p role="alert" className="auth-form-error">{error}</p>}
@@ -186,52 +172,24 @@ const Login = () => {
             </div>
           </div>
 
-          <div className="auth-input-group">
-            <label>I am a...</label>
-            <div className="role-selector" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-              {Object.entries(ROLE_LABELS).map(([r, { label, icon: Icon }]) => (
-                <button
-                  type="button"
-                  key={r}
-                  className={`role-btn ${role === r ? 'active' : ''}`}
-                  onClick={() => setRole(r)}
-                  style={{
-                    padding: '0.75rem 0.5rem',
-                    fontSize: '0.78rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.4rem',
-                    height: '80px',
-                  }}
-                >
-                  <Icon size={20} />
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
           <Button variant="primary" className="auth-submit-btn" type="submit" disabled={loading}>
             <LogIn size={18} style={{ marginRight: '8px' }} />
-            Sign In as {ROLE_LABELS[role].label}
+            {accountType === 'admin' ? 'Sign In as Administrator' : 'Sign In as Customer'}
           </Button>
         </form>
       )}
 
-      <div className="auth-form-divider">
-        <span>OR</span>
-      </div>
+      {accountType === 'customer' && <>
+        <div className="auth-form-divider"><span>OR</span></div>
+        <button type="button" className="auth-social-btn" onClick={handleGoogleLogin}>
+          <FaGoogle /> Continue with Google
+        </button>
+      </>}
 
-      <button type="button" className="auth-social-btn" onClick={handleGoogleLogin}>
-        <FaGoogle /> Continue with Google
-      </button>
-
-      <div className="auth-footer" style={{ justifyContent: 'center', gap: '0.4rem', marginTop: '1rem' }}>
+      {accountType === 'customer' && <div className="auth-footer" style={{ justifyContent: 'center', gap: '0.4rem', marginTop: '1rem' }}>
         <span>Don’t have an account?</span>
         <Link to="/signup" className="auth-footer-link">Sign up</Link>
-      </div>
+      </div>}
 
 
     </AuthLayout>

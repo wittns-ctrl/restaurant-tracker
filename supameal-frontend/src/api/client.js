@@ -11,8 +11,10 @@ class ApiError extends Error {
 
 let onTokenRefreshed = null; // hook so AuthContext can persist rotated tokens
 let accessToken = null;
-export function setAccessToken(token) {
+let activeAccountType = 'customer';
+export function setAccessToken(token, accountType) {
   accessToken = token || null;
+  if (accountType) activeAccountType = accountType;
 }
 export function getAccessToken() {
   return accessToken;
@@ -27,7 +29,8 @@ let refreshPromise = null;
 async function tryRefreshToken() {
   if (!isRefreshing) {
     isRefreshing = true;
-    refreshPromise = fetch(`${API_URL}/auth/refresh`, {
+    const refreshPath = activeAccountType === 'customer' ? '/auth/refresh' : `/auth/${activeAccountType}/refresh`;
+    refreshPromise = fetch(`${API_URL}${refreshPath}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',

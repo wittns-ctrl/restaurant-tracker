@@ -10,6 +10,8 @@ const ResetPassword = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token');
+  const requestedAccountType = searchParams.get('accountType');
+  const accountType = ['customer', 'owner', 'admin'].includes(requestedAccountType) ? requestedAccountType : 'customer';
   const [email, setEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -25,7 +27,7 @@ const ResetPassword = () => {
     setError('');
     setMessage('');
     try {
-      const res = await authApi.forgot({ email: email.trim() });
+      const res = await authApi.forgot({ email: email.trim() }, accountType);
       setMessage(res.message || 'Reset link sent to your email. Check your inbox.');
     } catch (err) {
       setError(err.message || 'Failed to send reset link');
@@ -50,9 +52,10 @@ const ResetPassword = () => {
 
     setLoading(true);
     try {
-      const res = await authApi.reset({ token, newPassword });
+      const res = await authApi.reset({ token, newPassword }, accountType);
       setMessage(res.message || 'Password reset successfully. You can sign in now.');
-      setTimeout(() => navigate('/login', { replace: true }), 2000);
+      const loginPath = accountType === 'owner' ? '/owner-login' : accountType === 'admin' ? '/admin-login' : '/login';
+      setTimeout(() => navigate(loginPath, { replace: true }), 2000);
     } catch (err) {
       setError(err.message || 'Failed to reset password');
     } finally {
