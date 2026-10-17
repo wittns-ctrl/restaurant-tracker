@@ -74,7 +74,7 @@ const MyOrders = ({ setActiveTab }) => {
   const handleReorder = async (id) => {
     try {
       await ordersApi.reorder(id);
-      showToast("Order placed again — you can track it below.");
+      showToast("Order placed again — it is listed under current orders.");
       setActiveTab("orders");
     } catch (err) {
       console.error(err);
@@ -234,9 +234,7 @@ const MyOrders = ({ setActiveTab }) => {
                 ${Number(order.total).toFixed(2)}
               </span>
 
-              {["on-way", "preparing", "ready", "accepted", "pending"].includes(
-                order.status
-              ) && (
+              {tab === "current" && (
                 <button
                   className="dash-btn-primary"
                   style={{ padding: "0.45rem 1rem", fontSize: "0.82rem" }}

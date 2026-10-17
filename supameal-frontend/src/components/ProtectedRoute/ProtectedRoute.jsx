@@ -12,18 +12,23 @@ const ROLE_LANDING = {
 
 const ALLOWED_ROLES = ['customer', 'owner', 'admin'];
 
-export default function ProtectedRoute({ children, roles }) {
+export default function ProtectedRoute({ children, roles, allowPendingOwnerDashboard = false }) {
   const { isAuthenticated, loading, user } = useAuth();
   const { showToast } = useToast();
   const location = useLocation();
   const requiredRoles = roles && roles.length > 0 ? roles : ALLOWED_ROLES;
+  const hasRouteRole = requiredRoles.some((role) => userHasRole(user, role));
+  // Pending restaurant owners have no active membership role yet, but they
+  // still need access to the owner dashboard to see their application status.
+  const canViewOwnerApplication = allowPendingOwnerDashboard && user?.accountType === 'owner';
+  const hasRouteAccess = hasRouteRole || canViewOwnerApplication;
 
   useEffect(() => {
     if (loading) return;
-    if (isAuthenticated && !requiredRoles.some((role) => userHasRole(user, role))) {
+    if (isAuthenticated && !hasRouteAccess) {
       showToast(`You don't have permission to access that page`, 'error');
     }
-  }, [isAuthenticated, loading, user, requiredRoles, showToast]);
+  }, [isAuthenticated, loading, user, hasRouteAccess, showToast]);
 
   if (loading) {
     return (
@@ -46,8 +51,8 @@ export default function ProtectedRoute({ children, roles }) {
     return <Navigate to="/login" replace state={{ from: location.pathname, fromState: location.state }} />;
   }
 
-  if (!requiredRoles.some((role) => userHasRole(user, role))) {
-    const fallback = ROLE_LANDING[user?.role] || '/login';
+  if (!hasRouteAccess) {
+    const fallback = ROLE_LANDING[user?.role] || (user?.accountType === 'owner' ? '/owner/dashboard' : '/login');
     return <Navigate to={fallback} replace />;
   }
 

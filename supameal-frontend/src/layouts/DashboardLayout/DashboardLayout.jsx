@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Menu, X, Bell, ChevronRight, LogOut, Home, Search, Trash2,
@@ -113,11 +113,32 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
 
   // Notification State
   const [showNotifPopover, setShowNotifPopover] = useState(false);
+  const notificationPopoverRef = useRef(null);
   const [notificationToDelete, setNotificationToDelete] = useState(null);
   const [deletingNotification, setDeletingNotification] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const { showToast } = useToast();
   const activities = [];
+
+  useEffect(() => {
+    if (!showNotifPopover) return undefined;
+
+    const closeOnOutsidePointer = (event) => {
+      if (!notificationPopoverRef.current?.contains(event.target)) {
+        setShowNotifPopover(false);
+      }
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setShowNotifPopover(false);
+    };
+
+    document.addEventListener('pointerdown', closeOnOutsidePointer);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePointer);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [showNotifPopover]);
 
   useEffect(() => {
     try {
@@ -318,7 +339,7 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
             </div>
 
             {/* NOTIFICATION BELL BUTTON */}
-            <div style={{ position: 'relative' }}>
+            <div ref={notificationPopoverRef} style={{ position: 'relative' }}>
               <button 
                 className="topbar-icon-btn notif-btn" 
                 aria-label="Notifications"
@@ -356,10 +377,10 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
                           </div>
                           <button
                             type="button"
+                            className="notification-delete-btn"
                             aria-label={`Delete notification: ${n.title || 'Notification'}`}
                             title="Delete notification"
                             onClick={() => setNotificationToDelete(n)}
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'none', border: '1px solid var(--dash-border)', borderRadius: '0.5rem', color: 'var(--dash-muted)', cursor: 'pointer', padding: '0.4rem 0.55rem', flexShrink: 0 }}
                           >
                             <Trash2 size={15} />
                             <span style={{ fontSize: '0.75rem' }}>Delete</span>
@@ -422,10 +443,10 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
                 </div>
                 <button
                   type="button"
+                  className="notification-delete-btn"
                   aria-label={`Delete notification: ${n.title || 'Notification'}`}
                   title="Delete notification"
                   onClick={() => setNotificationToDelete(n)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'none', border: '1px solid var(--dash-border)', borderRadius: '0.5rem', color: 'var(--dash-muted)', cursor: 'pointer', padding: '0.4rem 0.55rem', flexShrink: 0 }}
                 >
                   <Trash2 size={15} />
                   <span style={{ fontSize: '0.75rem' }}>Delete</span>

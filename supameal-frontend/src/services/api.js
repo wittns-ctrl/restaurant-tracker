@@ -36,7 +36,12 @@ export const restaurantsApi = {
     const res = await apiRequest(`/restaurants${buildQuery(params)}`);
     return Array.isArray(res) ? res : res?.data || [];
   },
+  adminList: async (params = {}) => {
+    const res = await apiRequest(`/restaurants/admin/all${buildQuery(params)}`);
+    return Array.isArray(res) ? res : res?.data || [];
+  },
   get: (id) => apiRequest(`/restaurants/${id}`),
+  getForOwner: (id) => apiRequest(`/restaurants/${id}/owner-view`),
   register: (data) => apiRequest('/restaurants/register', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => apiRequest(`/restaurants/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   byOwner: (ownerId) => apiRequest(`/restaurants/owner/${ownerId}`),
@@ -52,6 +57,7 @@ export const restaurantsApi = {
 // Menus
 export const menusApi = {
   list: (restaurantId) => apiRequest(`/menus${restaurantId ? `?restaurantId=${restaurantId}` : ''}`),
+  listForOwner: (restaurantId) => apiRequest(`/menus/owner/${restaurantId}`),
   create: (data) => apiRequest('/menus', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => apiRequest(`/menus/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id) => apiRequest(`/menus/${id}`, { method: 'DELETE' }),

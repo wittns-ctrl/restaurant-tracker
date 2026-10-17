@@ -4,8 +4,8 @@ import { restaurantsApi, bookingsApi, ordersApi, menusApi, uploadsApi, usersApi,
 import DashboardLayout from '../../layouts/DashboardLayout/DashboardLayout';
 import ConfirmDialog from '../../components/ConfirmDialog';
 import {
-  BarChart2, ShoppingBag, BookOpen, Camera, Plus, Trash2,
-  Edit3, Check, X, Clock, Settings, TrendingUp,
+  BarChart2, ShoppingBag, BookOpen, Camera, Plus, Trash2, Users, FileText, ClipboardList,
+  Edit3, Check, X, Clock, MapPin, Phone, Settings, TrendingUp,
   CheckCircle, AlertCircle, Star, DollarSign
 } from 'lucide-react';
 import '../customer/dashboard.css';
@@ -39,30 +39,61 @@ const ownerSidebarConfig = [
 ];
 
 // ── SVG Charts (shared) ────────────────────────────────────────────────────
-const BarChartSVG = ({ data, color = 'var(--primary)' }) => {
-  const max = Math.max(...data.map(d => d.value), 1);
-  const w = 420, h = 150, padL = 40, padB = 28, barW = 34, gap = 8;
+const LineChartSVG = ({ data, color = 'var(--primary)', valueType = 'count', title }) => {
+  const width = 720;
+  const height = 260;
+  const pad = { top: 20, right: 18, bottom: 42, left: 62 };
+  const plotWidth = width - pad.left - pad.right;
+  const plotHeight = height - pad.top - pad.bottom;
+  const peak = Math.max(...data.map(point => Number(point.value) || 0), 0);
+  const max = peak > 0 ? peak * 1.12 : 1;
+  const points = data.map((point, index) => ({
+    ...point,
+    x: pad.left + (data.length > 1 ? (index / (data.length - 1)) * plotWidth : plotWidth / 2),
+    y: pad.top + plotHeight - ((Number(point.value) || 0) / max) * plotHeight,
+  }));
+  const path = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
+  const areaPath = points.length
+    ? `${path} L ${points[points.length - 1].x} ${pad.top + plotHeight} L ${points[0].x} ${pad.top + plotHeight} Z`
+    : '';
+  const ticks = Array.from({ length: 5 }, (_, index) => (max * index) / 4);
+  const labelEvery = data.length > 16 ? 4 : data.length > 8 ? 2 : 1;
+  const valueLabel = valueType === 'money'
+    ? value => `$${Number(value).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+    : value => Math.round(Number(value)).toLocaleString();
+
   return (
-    <svg viewBox={`0 0 ${w} ${h + padB}`} style={{ width: '100%', height: 'auto' }}>
-      {[0.33, 0.66, 1].map(pct => (
-        <line key={pct} x1={padL} y1={h - h * pct} x2={w} y2={h - h * pct}
-          stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
-      ))}
-      {data.map((d, i) => {
-        const bh = (d.value / max) * (h - 8);
-        const x = padL + i * (barW + gap);
+    <svg role="img" aria-label={title} viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 'auto', overflow: 'visible' }}>
+      <defs>
+        <linearGradient id={`chart-fill-${valueType}`} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.24" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.01" />
+        </linearGradient>
+      </defs>
+      {ticks.map((tick, index) => {
+        const y = pad.top + plotHeight - (index / 4) * plotHeight;
         return (
-          <g key={i}>
-            <rect x={x} y={h - bh} width={barW} height={bh}
-              fill={color} rx="4" opacity={i === data.length - 1 ? 1 : 0.55} />
-            <text x={x + barW / 2} y={h + 18} textAnchor="middle"
-              fill="rgba(255,255,255,0.4)" fontSize="10">{d.label}</text>
+          <g key={index}>
+            <line x1={pad.left} y1={y} x2={width - pad.right} y2={y} stroke="rgba(255,255,255,0.08)" strokeDasharray={index === 0 ? undefined : '3 5'} />
+            <text x={pad.left - 10} y={y + 4} textAnchor="end" fill="var(--text-muted)" fontSize="11">{valueLabel(tick)}</text>
           </g>
         );
       })}
+      {areaPath && <path d={areaPath} fill={`url(#chart-fill-${valueType})`} />}
+      {path && <path d={path} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />}
+      {points.map((point, index) => (
+        <g key={`${point.label}-${index}`}>
+          <circle cx={point.x} cy={point.y} r="4" fill="var(--dash-panel, #151715)" stroke={color} strokeWidth="2.5" vectorEffect="non-scaling-stroke">
+            <title>{`${point.label}: ${valueType === 'money' ? `$${Number(point.value).toFixed(2)}` : `${point.value} orders`}`}</title>
+          </circle>
+          {(index % labelEvery === 0 || index === points.length - 1) && (
+            <text x={point.x} y={height - 14} textAnchor="middle" fill="var(--text-muted)" fontSize="11">{point.label}</text>
+          )}
+        </g>
+      ))}
     </svg>
   );
-};// ── Toast ──────────────────────────────────────────────────────────────────
+};
 const Toast = ({ message, type = 'success', onClose }) => (
   <div style={{
     position: 'fixed', bottom: '1.5rem', right: '1.5rem', zIndex: 9999,
@@ -243,13 +274,11 @@ const DeleteDialog = ({ item, onConfirm, onClose }) => (
 );
 
 // ── Dashboard Overview ─────────────────────────────────────────────────────
-const DashboardOverview = ({ setActiveTab, orders, bookings, restaurant }) => {
+const DashboardOverview = ({ setActiveTab, orders, bookings, restaurant, todayRevenue, restaurantStatusLoading, restaurantStatusError }) => {
   const pendingBookings = bookings.filter(b => b.status === 'pending').length;
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
   const todaysOrders = orders.filter(o => o.createdAt && new Date(o.createdAt) >= startOfToday);
-  const deliveredToday = todaysOrders.filter(o => o.status === 'delivered');
-  const todaysRevenue = deliveredToday.reduce((s, o) => s + Number(o.total || 0), 0);
   const activeOrders = orders.filter(o => ['preparing', 'ready', 'on-way'].includes(o.status)).length;
 
   return (
@@ -259,24 +288,49 @@ const DashboardOverview = ({ setActiveTab, orders, bookings, restaurant }) => {
         <p>Your restaurant's performance at a glance.</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', marginBottom: '2rem' }}>
+      <div className="overview-stat-grid">
         {[
-          { label: "Today's Revenue", value: `$${todaysRevenue.toFixed(2)}`, sub: `${deliveredToday.length} delivered today`, color: 'var(--primary)', icon: DollarSign },
+          { label: "Today's Revenue", value: `$${Number(todayRevenue || 0).toFixed(2)}`, sub: 'Successful payments received today', color: 'var(--primary)', icon: DollarSign },
           { label: "Today's Orders", value: todaysOrders.length, sub: `${activeOrders} active now`, color: 'var(--fresh-accent)', icon: ShoppingBag },
           { label: 'Table Bookings', value: bookings.length, sub: `${pendingBookings} pending`, color: 'var(--success)', icon: BookOpen },
           { label: 'Avg. Rating', value: (restaurant?.rating || 0).toFixed(1), sub: `Based on ${restaurant?.reviews || 0} reviews`, color: 'var(--warning)', icon: Star },
         ].map((stat, i) => (
-          <div key={i} className="dash-panel" style={{ padding: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+          <div key={i} className="dash-panel overview-stat-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
               <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{stat.label}</div>
-              <div style={{ width: 34, height: 34, background: `${stat.color}20`, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: 30, height: 30, background: `${stat.color}20`, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <stat.icon size={16} color={stat.color} />
               </div>
             </div>
-            <div style={{ fontSize: '1.8rem', fontWeight: 700, color: stat.color }}>{stat.value}</div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>{stat.sub}</div>
+            <div style={{ fontSize: '1.55rem', lineHeight: 1.15, fontWeight: 700, color: stat.color }}>{stat.value}</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>{stat.sub}</div>
           </div>
         ))}
+      </div>
+
+      <div
+        className={`owner-approval-status ${restaurant?.isApproved ? 'is-approved' : ''}`}
+        role="status"
+        aria-live="polite"
+      >
+        <div className="owner-approval-status-icon">
+          {restaurant?.isApproved ? <CheckCircle size={19} /> : <AlertCircle size={19} />}
+        </div>
+        <div className="owner-approval-status-copy">
+          <strong>Restaurant approval</strong>
+          <span>
+            {restaurantStatusLoading
+              ? 'Checking with the administrator…'
+              : restaurantStatusError
+                ? 'Approval status could not be refreshed.'
+                : restaurant?.isApproved
+                  ? 'Your restaurant is approved and visible to customers.'
+                  : 'Your restaurant stays private until an administrator approves it.'}
+          </span>
+        </div>
+        <span className="owner-approval-status-label">
+          {restaurantStatusLoading ? 'Checking' : restaurantStatusError ? 'Unavailable' : restaurant?.isApproved ? 'Approved' : 'Not approved'}
+        </span>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '1.5rem' }}>
@@ -350,7 +404,7 @@ const RestaurantProfile = ({ showToast, restaurantId, setActiveTab }) => {
   useEffect(() => {
     if (!restaurantId) { setLoading(false); return; }
     setLoading(true);
-    restaurantsApi.get(restaurantId)
+    restaurantsApi.getForOwner(restaurantId)
       .then(r => {
         setForm({
           name: r.name || '',
@@ -467,7 +521,7 @@ const Gallery = ({ showToast, restaurantId }) => {
 
   useEffect(() => {
     if (!restaurantId) return;
-    restaurantsApi.get(restaurantId)
+    restaurantsApi.getForOwner(restaurantId)
       .then(r => setPhotos(r.images || []))
       .catch(console.error);
   }, [restaurantId]);
@@ -551,7 +605,7 @@ const MenuManagement = ({ showToast, restaurantId }) => {
 
   useEffect(() => {
     if (!restaurantId) return;
-    menusApi.list(restaurantId).then(data => {
+    menusApi.listForOwner(restaurantId).then(data => {
       setItems(data.map(m => ({
         id: m.id, name: m.name, category: m.category, price: m.price,
         available: m.available, spicy: m.spicy, veg: m.veg,
@@ -742,8 +796,8 @@ const BookingManagement = ({ bookings, onAccept, onReject }) => (
               <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
                 <span><BookOpen size={13} style={{ marginRight: 4, verticalAlign: 'middle' }} />{booking.date}</span>
                 <span><Clock size={13} style={{ marginRight: 4, verticalAlign: 'middle' }} />{booking.time}</span>
-                <span>👥 {booking.guests} guests</span>
-                {booking.note && <span>📝 "{booking.note}"</span>}
+                <span><Users size={14} style={{ marginRight: 5, verticalAlign: 'middle' }} />{booking.guests} guests</span>
+                {booking.note && <span><FileText size={14} style={{ marginRight: 5, verticalAlign: 'middle' }} />"{booking.note}"</span>}
               </div>
             </div>
             {booking.status === 'pending' && (
@@ -766,7 +820,7 @@ const BookingManagement = ({ bookings, onAccept, onReject }) => (
 );
 
 // ── Order Management ───────────────────────────────────────────────────────
-const OrderManagement = ({ orders, onMarkReady, onMarkDelivered }) => (
+const OrderManagement = ({ orders, onAccept, onReject, onStartPreparing, onMarkReady, onMarkOnWay, onMarkDelivered }) => (
   <>
     <div className="page-header">
       <h1>Order Management</h1>
@@ -792,7 +846,24 @@ const OrderManagement = ({ orders, onMarkReady, onMarkDelivered }) => (
         <div key={order.id} className="list-row" style={{ alignItems: 'center', padding: '1.25rem 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>Order #{order.id} — {order.customer}</div>
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{order.items}</div>
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+              <ClipboardList size={15} style={{ marginTop: 2, flexShrink: 0 }} />{order.items}
+            </div>
+            {order.deliveryAddress && (
+              <div style={{ display: 'grid', gap: '0.35rem', marginTop: '0.65rem', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem' }}>
+                  <MapPin size={14} style={{ marginTop: 2, flexShrink: 0 }} />
+                  <span>{[order.deliveryAddress.street, order.deliveryAddress.apartment, order.deliveryAddress.city, order.deliveryAddress.postalCode].filter(Boolean).join(', ')}</span>
+                </div>
+                {order.deliveryAddress.phone && (
+                  <a href={`tel:${order.deliveryAddress.phone}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: 'inherit', textDecoration: 'none' }}>
+                    <Phone size={14} />{order.deliveryAddress.phone}
+                  </a>
+                )}
+                {order.timeSlot && <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Clock size={14} />Delivery time: {order.timeSlot}</div>}
+                {order.deliveryAddress.instructions && <div>Instructions: {order.deliveryAddress.instructions}</div>}
+              </div>
+            )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <span style={{ color: 'var(--dash-accent)', fontWeight: 700 }}>${order.total}</span>
@@ -805,9 +876,29 @@ const OrderManagement = ({ orders, onMarkReady, onMarkDelivered }) => (
               <button className="dash-btn-primary" style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem' }}
                 onClick={() => onMarkReady(order.id)}>Mark Ready</button>
             )}
+            {order.status === 'accepted' && (
+              <>
+                <button className="dash-btn-primary" style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem' }}
+                  onClick={() => onStartPreparing(order.id)}>Start Preparing</button>
+                <button className="dash-btn-outline" style={{ padding: '0.4rem 0.8rem', color: 'var(--error)', borderColor: 'var(--error)', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                  onClick={() => onReject(order.id)}><X size={14} /> Reject</button>
+              </>
+            )}
             {order.status === 'ready' && (
               <button className="dash-btn-primary" style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem', background: 'var(--success)', borderColor: 'var(--success)' }}
+                onClick={() => onMarkOnWay(order.id)}>Send for Delivery</button>
+            )}
+            {order.status === 'on-way' && (
+              <button className="dash-btn-primary" style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem', background: 'var(--success)', borderColor: 'var(--success)' }}
                 onClick={() => onMarkDelivered(order.id)}>Mark Delivered</button>
+            )}
+            {order.status === 'pending' && (
+              <>
+                <button className="dash-btn-primary" style={{ padding: '0.4rem 0.8rem', background: 'var(--success)', borderColor: 'var(--success)', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                  onClick={() => onAccept(order.id)}><Check size={14} /> Accept</button>
+                <button className="dash-btn-outline" style={{ padding: '0.4rem 0.8rem', color: 'var(--error)', borderColor: 'var(--error)', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                  onClick={() => onReject(order.id)}><X size={14} /> Reject</button>
+              </>
             )}
           </div>
         </div>
@@ -846,11 +937,12 @@ const OwnerAnalytics = ({ restaurantId }) => {
   if (error) return <div style={{ color: 'var(--error)', padding: '2rem' }}>{error}</div>;
 
   const kpis = [
-    { label: 'Total Revenue', value: `$${Number(overview?.revenue || 0).toFixed(2)}`, sub: 'Delivered orders' },
+    { label: 'Total Revenue', value: `$${Number(overview?.revenue || 0).toFixed(2)}`, sub: 'Orders completed and delivered' },
     { label: 'Total Orders', value: overview?.totalOrders ?? 0, sub: 'All time' },
     { label: 'Table Bookings', value: overview?.totalBookings ?? 0, sub: 'All time' },
     { label: 'Customer Rating', value: `${Number(overview?.rating || 0).toFixed(1)} ⭐`, sub: `${overview?.pendingOrders ?? 0} pending orders` },
   ];
+  const busiestHour = peakData.reduce((best, point) => point.value > best.value ? point : best, { label: '', value: 0 });
 
   return (
     <>
@@ -859,9 +951,9 @@ const OwnerAnalytics = ({ restaurantId }) => {
         <p>Detailed insights and performance reports.</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+      <div className="overview-stat-grid" style={{ marginBottom: '1.5rem' }}>
         {kpis.map((kpi, i) => (
-          <div key={i} className="dash-panel" style={{ padding: '1.25rem' }}>
+          <div key={i} className="dash-panel overview-stat-card">
             <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: '0.4rem' }}>{kpi.label}</div>
             <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--dash-accent)' }}>{kpi.value}</div>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>{kpi.sub}</div>
@@ -870,8 +962,11 @@ const OwnerAnalytics = ({ restaurantId }) => {
       </div>
 
       <div className="dash-panel" style={{ marginBottom: '1.5rem' }}>
-        <h3 style={{ marginBottom: '1.25rem' }}>Daily Revenue This Week</h3>
-        <BarChartSVG data={revenueData} color="var(--primary)" />
+        <div style={{ marginBottom: '0.75rem' }}>
+          <h3 style={{ marginBottom: '0.3rem' }}>Revenue from Delivered Orders</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', margin: 0 }}>Daily totals for the last seven days, grouped by delivery completion date (Kigali time).</p>
+        </div>
+        <LineChartSVG data={revenueData} color="var(--primary)" valueType="money" title="Daily revenue from delivered orders" />
         {revenueData.every(d => d.value === 0) && (
           <div style={{ marginTop: '0.75rem', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
             No delivered revenue yet this week — revenue appears once orders are marked as delivered.
@@ -880,11 +975,14 @@ const OwnerAnalytics = ({ restaurantId }) => {
       </div>
 
       <div className="dash-panel">
-        <h3 style={{ marginBottom: '1.25rem' }}>Peak Hours (Last 30 Days)</h3>
-        <BarChartSVG data={peakData} color="var(--fresh-accent)" />
+        <div style={{ marginBottom: '0.75rem' }}>
+          <h3 style={{ marginBottom: '0.3rem' }}>Order Volume by Hour</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', margin: 0 }}>Orders received during each hour over the last 30 days (Kigali time).</p>
+        </div>
+        <LineChartSVG data={peakData} color="var(--fresh-accent)" valueType="count" title="Order volume by hour over the last 30 days" />
         {peakData.some(d => d.value > 0) ? (
           <div style={{ marginTop: '0.75rem', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
-            🔥 Busiest hour: {peakData[0].label} — consider adding more staff then.
+            Busiest hour: <strong style={{ color: 'var(--text-primary)' }}>{busiestHour.label}</strong> ({busiestHour.value} orders in the last 30 days).
           </div>
         ) : (
           <div style={{ marginTop: '0.75rem', color: 'var(--text-muted)', fontSize: '0.82rem' }}>
@@ -1008,18 +1106,32 @@ const OwnerDashboard = () => {
 
   const [restaurantId, setRestaurantId] = useState(null);
   const [restaurant, setRestaurant] = useState(null);
+  const [todayRevenue, setTodayRevenue] = useState(0);
+  const [restaurantStatusLoading, setRestaurantStatusLoading] = useState(true);
+  const [restaurantStatusError, setRestaurantStatusError] = useState(false);
   const [bookings, setBookings] = useState([]);
   const [orders, setOrders] = useState([]);
 
   const { user, isAuthenticated } = useAuth();
+  const pendingBookingCount = bookings.filter(booking => booking.status === 'pending').length;
+  const sidebarConfig = ownerSidebarConfig.map(section => section.subItems
+    ? {
+        ...section,
+        subItems: section.subItems.map(item => item.id === 'bookings'
+          ? { ...item, badge: pendingBookingCount || undefined }
+          : item),
+      }
+    : section);
 
   const loadOwnerData = async (ownerId, restId) => {
     if (!restId) return;
     try {
-      const [bookingData, orderData] = await Promise.all([
+      const [bookingData, orderData, analytics] = await Promise.all([
         bookingsApi.list({ restaurantId: restId, view: 'owner' }),
         ordersApi.list({ restaurantId: restId, view: 'owner' }),
+        restaurantsApi.analyticsOverview(restId),
       ]);
+      setTodayRevenue(Number(analytics?.todayRevenue) || 0);
       setBookings(bookingData.map(b => ({
         id: b.id, name: b.name, date: b.date, time: b.time, guests: b.guests,
         status: b.status, note: b.note || b.specialRequest || '',
@@ -1027,6 +1139,7 @@ const OwnerDashboard = () => {
       setOrders(orderData.map(o => ({
         id: o.orderId || o.id?.slice(-4), orderDbId: o.id,
         customer: o.customer, items: o.itemsSummary, total: Number(o.total).toFixed(2), status: o.status,
+        deliveryAddress: o.deliveryAddress || null, timeSlot: o.timeSlot,
         createdAt: o.createdAt,
       })));
     } catch (err) {
@@ -1035,21 +1148,33 @@ const OwnerDashboard = () => {
   };
 
   useEffect(() => {
-    const init = async () => {
-      const ownerId = user?.id;
-      if (!ownerId) return;
+    const ownerId = user?.id;
+    if (!ownerId || !isAuthenticated) return undefined;
+
+    let isMounted = true;
+    const refreshRestaurantStatus = async () => {
       try {
         const rests = await restaurantsApi.byOwner(ownerId);
-        if (rests?.length) {
-          setRestaurant(rests[0]);
-          setRestaurantId(rests[0].id);
-          loadOwnerData(ownerId, rests[0].id);
-        }
+        if (!isMounted) return;
+        setRestaurantStatusError(false);
+        const ownedRestaurant = rests?.[0] || null;
+        setRestaurant(ownedRestaurant);
+        setRestaurantId(ownedRestaurant?.id || null);
+        if (ownedRestaurant) loadOwnerData(ownerId, ownedRestaurant.id);
       } catch (err) {
+        if (isMounted) setRestaurantStatusError(true);
         console.error(err);
+      } finally {
+        if (isMounted) setRestaurantStatusLoading(false);
       }
     };
-    init();
+
+    refreshRestaurantStatus();
+    const statusRefresh = window.setInterval(refreshRestaurantStatus, 15_000);
+    return () => {
+      isMounted = false;
+      window.clearInterval(statusRefresh);
+    };
   }, [user?.id, isAuthenticated]);
 
   const showToast = (message, type = 'success') => {
@@ -1072,12 +1197,33 @@ const OwnerDashboard = () => {
     try {
       await bookingsApi.update(id, { status: 'rejected', rejectionReason: 'Not available' });
       if (restaurantId) loadOwnerData(user?.id, restaurantId);
-      showToast('Booking rejected.', 'error');
+      showToast('Booking rejected.');
     } catch (err) {
       console.error(err);
       showToast(err.message || 'Could not reject booking', 'error');
     }
   };
+
+  const updateOrderStatus = async (id, status, successMessage) => {
+    const order = orders.find(o => o.id === id);
+    if (!order?.orderDbId) {
+      showToast('Could not find that order — please refresh the page.', 'error');
+      return;
+    }
+    try {
+      await ordersApi.updateStatus(order.orderDbId, status);
+      if (restaurantId) await loadOwnerData(user?.id, restaurantId);
+      showToast(successMessage);
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || `Could not update order to ${status}`, 'error');
+    }
+  };
+
+  const handleAcceptOrder = (id) => updateOrderStatus(id, 'accepted', 'Order accepted.');
+  const handleRejectOrder = (id) => updateOrderStatus(id, 'rejected', 'Order rejected.');
+  const handleStartPreparing = (id) => updateOrderStatus(id, 'preparing', 'Order is now being prepared.');
+  const handleMarkOnWay = (id) => updateOrderStatus(id, 'on-way', 'Order sent for delivery.');
 
   const handleMarkReady = async (id) => {
     const order = orders.find(o => o.id === id);
@@ -1113,15 +1259,15 @@ const OwnerDashboard = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'overview': return <DashboardOverview setActiveTab={setActiveTab} orders={orders} bookings={bookings} restaurant={restaurant} />;
+      case 'overview': return <DashboardOverview setActiveTab={setActiveTab} orders={orders} bookings={bookings} restaurant={restaurant} todayRevenue={todayRevenue} restaurantStatusLoading={restaurantStatusLoading} restaurantStatusError={restaurantStatusError} />;
       case 'profile': return <RestaurantProfile showToast={showToast} restaurantId={restaurantId} setActiveTab={setActiveTab} />;
       case 'gallery': return <Gallery showToast={showToast} restaurantId={restaurantId} />;
       case 'menu': return <MenuManagement showToast={showToast} restaurantId={restaurantId} />;
       case 'bookings': return <BookingManagement bookings={bookings} onAccept={handleAcceptBooking} onReject={handleRejectBooking} />;
-      case 'orders': return <OrderManagement orders={orders} onMarkReady={handleMarkReady} onMarkDelivered={handleMarkDelivered} />;
+      case 'orders': return <OrderManagement orders={orders} onAccept={handleAcceptOrder} onReject={handleRejectOrder} onStartPreparing={handleStartPreparing} onMarkReady={handleMarkReady} onMarkOnWay={handleMarkOnWay} onMarkDelivered={handleMarkDelivered} />;
       case 'analytics': return <OwnerAnalytics restaurantId={restaurantId} />;
       case 'settings': return <OwnerSettings showToast={showToast} user={user} />;
-      default: return <DashboardOverview setActiveTab={setActiveTab} orders={orders} bookings={bookings} restaurant={restaurant} />;
+      default: return <DashboardOverview setActiveTab={setActiveTab} orders={orders} bookings={bookings} restaurant={restaurant} todayRevenue={todayRevenue} restaurantStatusLoading={restaurantStatusLoading} restaurantStatusError={restaurantStatusError} />;
     }
   };
 
@@ -1138,7 +1284,7 @@ const OwnerDashboard = () => {
         }
       `}</style>
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-      <DashboardLayout sidebarConfig={ownerSidebarConfig} activeTab={activeTab} setActiveTab={setActiveTab} roleName="Restaurant Owner">
+      <DashboardLayout sidebarConfig={sidebarConfig} activeTab={activeTab} setActiveTab={setActiveTab} roleName="Restaurant Owner">
         {renderContent()}
       </DashboardLayout>
     </>

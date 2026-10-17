@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, MapPin, Clock, Users, Phone, Navigation, Heart, ShoppingCart, Plus, Minus } from 'lucide-react';
+import { ArrowLeft, Star, MapPin, Clock, Users, Phone, Navigation, Heart, ShoppingCart, Plus, Minus, Check } from 'lucide-react';
 import Navbar from '../../sections/Navbar/Navbar';
 import Footer from '../../sections/Footer/Footer';
 import Button from '../../components/Button/Button';
@@ -165,6 +165,17 @@ const RestaurantDetails = () => {
                 <li><Navigation size={20} className="text-primary"/> <span><strong>Get Directions</strong></span></li>
               </ul>
             </section>
+
+            {restaurant.amenities?.length > 0 && (
+              <section className="info-section">
+                <h3>Amenities</h3>
+                <ul className="amenities-list">
+                  {restaurant.amenities.map(amenity => (
+                    <li key={amenity}><Check size={16} aria-hidden="true" /> <span>{amenity}</span></li>
+                  ))}
+                </ul>
+              </section>
+            )}
           </div>
 
           <div className="restaurant-action-col">

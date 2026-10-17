@@ -12,7 +12,7 @@ const FAQ = () => {
     },
     {
       question: "Can I order food for delivery?",
-      answer: "Yes! SupaMeal allows you to view menus, add items to your cart, and place orders for delivery with real-time tracking right to your doorstep."
+      answer: "Yes! SupaMeal allows you to view menus, add items to your cart, and place orders for delivery right to your doorstep."
     },
     {
       question: "Are there any hidden fees?",

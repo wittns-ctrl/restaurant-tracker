@@ -5,8 +5,8 @@ import AuthLayout from '../../layouts/AuthLayout';
 import Button from '../../components/Button/Button';
 import Loader from '../../components/Loader/Loader';
 import { useAuth } from '../../context/AuthContext';
-import { userHasRole } from '../../utils/auth';
 import { authApi } from '../../services/api';
+import AuthAccountSwitcher from '../auth/AuthAccountSwitcher';
 import '../auth/AuthForm.css';
 
 const OwnerLogin = () => {
@@ -21,7 +21,6 @@ const OwnerLogin = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const oauthError = searchParams.get('error');
-  const returnTo = searchParams.get('returnTo');
   const applicationStatus = searchParams.get('status');
 
   useEffect(() => {
@@ -67,16 +66,7 @@ const OwnerLogin = () => {
         setIsLoading(false);
         return;
       }
-      if (!userHasRole(user, 'owner')) {
-        const pending = user.accountType === 'owner'
-          && user.restaurantMemberships?.some((membership) => membership.status === 'pending');
-        setError(pending
-          ? 'Your restaurant application is still under review. Owner access will be available after approval.'
-          : 'This owner account has no approved restaurant membership yet.');
-        setIsLoading(false);
-        return;
-      }
-      navigate(returnTo === '/register-restaurant' ? returnTo : '/owner/dashboard', { replace: true });
+      navigate('/owner/dashboard', { replace: true });
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');
       setIsLoading(false);
@@ -173,9 +163,10 @@ const OwnerLogin = () => {
             </button>
           </div>
         </div>
+        <AuthAccountSwitcher accountType="owner" />
         <Button variant="primary" className="auth-submit-btn" type="submit">
           <LogIn size={18} style={{ marginRight: 8 }} />
-          Sign In
+          Sign In as Owner
         </Button>
       </form>
 

@@ -17,7 +17,7 @@ export const adminSidebarConfig = [
     label: 'Restaurant Management',
     icon: Store,
     subItems: [
-      { id: 'approvals', label: 'Pending Approvals', badge: 2 },
+      { id: 'approvals', label: 'Pending Approvals' },
       { id: 'restaurants', label: 'All Restaurants' },
     ],
   },
@@ -45,8 +45,10 @@ export const adminSidebarConfig = [
 
 // ── Reusable SVG Bar Chart ─────────────────────────────────────────────────
 const BarChartSVG = ({ data, color = 'var(--primary)', label }) => {
-  const max = Math.max(...data.map(d => d.value));
-  const w = 420, h = 160, padL = 40, padB = 30, barW = 32, gap = 10;
+  const max = Math.max(1, ...data.map(d => Number(d.value) || 0));
+  const w = 420, h = 160, padL = 40, padB = 30;
+  const slotW = (w - padL) / Math.max(data.length, 1);
+  const barW = Math.min(32, slotW * 0.68);
   return (
     <svg viewBox={`0 0 ${w} ${h + padB}`} style={{ width: '100%', height: 'auto' }}>
       {/* Grid lines */}
@@ -56,8 +58,8 @@ const BarChartSVG = ({ data, color = 'var(--primary)', label }) => {
           stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
       ))}
       {data.map((d, i) => {
-        const bh = (d.value / max) * (h - 10);
-        const x = padL + i * (barW + gap);
+        const bh = ((Number(d.value) || 0) / max) * (h - 10);
+        const x = padL + i * slotW + (slotW - barW) / 2;
         return (
           <g key={i}>
             <rect x={x} y={h - bh} width={barW} height={bh}
@@ -74,6 +76,9 @@ const BarChartSVG = ({ data, color = 'var(--primary)', label }) => {
 // ── SVG Donut Chart ────────────────────────────────────────────────────────
 const DonutChart = ({ segments }) => {
   const total = segments.reduce((s, seg) => s + seg.value, 0);
+  if (!total) {
+    return <div style={{ width: 180, height: 180, flexShrink: 0, display: 'grid', placeItems: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>No data yet</div>;
+  }
   let cumulative = 0;
   const r = 70, cx = 90, cy = 90, stroke = 22;
   const circumference = 2 * Math.PI * r;
@@ -104,26 +109,6 @@ const DonutChart = ({ segments }) => {
 };
 
 // ── Line Sparkline ─────────────────────────────────────────────────────────
-const SparkLine = ({ data, color = 'var(--success)' }) => {
-  const max = Math.max(...data);
-  const min = Math.min(...data);
-  const w = 200, h = 60;
-  const pts = data.map((v, i) => {
-    const x = (i / (data.length - 1)) * w;
-    const y = h - ((v - min) / (max - min || 1)) * (h - 8);
-    return `${x},${y}`;
-  }).join(' ');
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', height: 60 }}>
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="2.5"
-        strokeLinecap="round" strokeLinejoin="round" />
-      <polyline
-        points={`0,${h} ${pts} ${w},${h}`}
-        fill={`${color}18`} stroke="none" />
-    </svg>
-  );
-};
-
 // ── Toast Notification ─────────────────────────────────────────────────────
 const Toast = ({ message, type = 'success', onClose }) => (
   <div style={{
@@ -141,7 +126,7 @@ const Toast = ({ message, type = 'success', onClose }) => (
 );
 
 // ── Admin Overview ─────────────────────────────────────────────────────────
-const AdminOverview = ({ setActiveTab, restaurants, users }) => {
+const AdminOverview = ({ setActiveTab, restaurants, users, overview, revenueData }) => {
   const pendingCount = restaurants.filter(r => r.status === 'pending').length;
   const activeRestaurants = restaurants.filter(r => r.status === 'active').length;
   const blockedUsers = users.filter(u => u.status === 'blocked').length;
@@ -153,14 +138,14 @@ const AdminOverview = ({ setActiveTab, restaurants, users }) => {
         <p>Platform-wide overview and key metrics.</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem', marginBottom: '2rem' }}>
+      <div className="overview-stat-grid">
         {[
-          { label: 'Total Restaurants', value: restaurants.length, sub: `${activeRestaurants} active`, color: 'var(--primary)' },
-          { label: 'Total Users', value: users.length.toLocaleString(), sub: `${blockedUsers} blocked`, color: 'var(--success)' },
-          { label: 'Total Orders', value: '128K', sub: '+8% vs last month', color: 'var(--fresh-accent)' },
-          { label: 'Pending Approvals', value: pendingCount, sub: 'Needs review', color: 'var(--warning)' },
+          { label: 'Total Restaurants', value: (overview?.totalRestaurants ?? restaurants.length).toLocaleString(), sub: `${overview?.activeRestaurants ?? activeRestaurants} active`, color: 'var(--primary)' },
+          { label: 'Total Users', value: (overview?.totalUsers ?? users.length).toLocaleString(), sub: `${overview?.blockedUsers ?? blockedUsers} blocked`, color: 'var(--success)' },
+          { label: 'Total Orders', value: (overview?.totalOrders ?? 0).toLocaleString(), sub: `${(overview?.pendingOrders ?? 0).toLocaleString()} pending`, color: 'var(--fresh-accent)' },
+          { label: 'Pending Approvals', value: (overview?.pendingRestaurants ?? pendingCount).toLocaleString(), sub: 'Needs review', color: 'var(--warning)' },
         ].map((stat, i) => (
-          <div key={i} className="dash-panel" style={{ padding: '1.5rem' }}>
+          <div key={i} className="dash-panel overview-stat-card">
             <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{stat.label}</div>
             <div style={{ fontSize: '1.8rem', fontWeight: 700, color: stat.color }}>{stat.value}</div>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>{stat.sub}</div>
@@ -172,17 +157,9 @@ const AdminOverview = ({ setActiveTab, restaurants, users }) => {
         <div className="dash-panel">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
             <h3 style={{ margin: 0 }}>Revenue Growth (Monthly)</h3>
-            <span style={{ fontSize: '0.8rem', color: 'var(--success)', background: 'var(--success-soft)', padding: '0.25rem 0.6rem', borderRadius: '20px' }}>+14.2% YoY</span>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', padding: '0.25rem 0.6rem' }}>Delivered order revenue</span>
           </div>
-          <BarChartSVG
-            data={[
-              { label: 'Dec', value: 42000 }, { label: 'Jan', value: 55000 },
-              { label: 'Feb', value: 48000 }, { label: 'Mar', value: 70000 },
-              { label: 'Apr', value: 62000 }, { label: 'May', value: 85000 },
-              { label: 'Jun', value: 98000 },
-            ]}
-            color="var(--primary)"
-          />
+          <BarChartSVG data={revenueData} color="var(--primary)" />
         </div>
         <div className="dash-panel">
           <h3 style={{ marginBottom: '1.25rem' }}>Pending Approvals</h3>
@@ -207,22 +184,26 @@ const AdminOverview = ({ setActiveTab, restaurants, users }) => {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
         <div className="dash-panel">
-          <h3 style={{ marginBottom: '1.25rem' }}>Active Users (Weekly)</h3>
-          <SparkLine data={[820, 932, 901, 934, 1290, 1330, 1520]} color="var(--success)" />
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.75rem', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
-            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-          </div>
+          <h3 style={{ marginBottom: '1.25rem' }}>Account Summary</h3>
+          {[
+            ['Customers', overview?.totalCustomers],
+            ['Restaurant owners', overview?.totalOwners],
+            ['Blocked accounts', overview?.blockedUsers],
+          ].map(([label, value]) => (
+            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.7rem 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <span style={{ color: 'var(--text-muted)' }}>{label}</span><strong>{Number(value || 0).toLocaleString()}</strong>
+            </div>
+          ))}
         </div>
         <div className="dash-panel">
-          <h3 style={{ marginBottom: '1.25rem' }}>System Alerts</h3>
+          <h3 style={{ marginBottom: '1.25rem' }}>Platform Activity</h3>
           {[
-            { type: 'warning', color: 'var(--error)', bg: 'rgba(224,85,85,0.1)', icon: AlertCircle, text: 'High server traffic detected.' },
-            { type: 'ok', color: 'var(--success)', bg: 'var(--success-soft)', icon: CheckCircle, text: 'Daily backup completed successfully.' },
-            { type: 'info', color: 'var(--warning)', bg: 'var(--warning-soft)', icon: Bell, text: '2 new restaurant applications pending.' },
-          ].map((a, i) => (
-            <div key={i} style={{ padding: '0.75rem 1rem', background: a.bg, borderRadius: '10px', border: `1px solid ${a.color}30`, marginBottom: '0.75rem', display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
-              <a.icon size={16} color={a.color} style={{ flexShrink: 0, marginTop: 2 }} />
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-main)' }}>{a.text}</span>
+            ['Orders awaiting action', overview?.pendingOrders],
+            ['Cancelled or rejected orders', overview?.cancelledOrders],
+            ['Bookings', overview?.totalBookings],
+          ].map(([label, value]) => (
+            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.7rem 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <span style={{ color: 'var(--text-muted)' }}>{label}</span><strong>{Number(value || 0).toLocaleString()}</strong>
             </div>
           ))}
         </div>
@@ -394,25 +375,12 @@ const UserTable = ({ users, type, onToggleBlock }) => {
 };
 
 // ── Platform Analytics ─────────────────────────────────────────────────────
-const PlatformAnalytics = () => {
-  const monthlyData = [
-    { label: 'Nov', value: 38000 }, { label: 'Dec', value: 52000 },
-    { label: 'Jan', value: 46000 }, { label: 'Feb', value: 68000 },
-    { label: 'Mar', value: 74000 }, { label: 'Apr', value: 82000 },
-    { label: 'May', value: 91000 }, { label: 'Jun', value: 107000 },
-  ];
-  const orderData = [
-    { label: 'Mon', value: 2300 }, { label: 'Tue', value: 3100 },
-    { label: 'Wed', value: 2800 }, { label: 'Thu', value: 4200 },
-    { label: 'Fri', value: 5100 }, { label: 'Sat', value: 6300 },
-    { label: 'Sun', value: 4800 },
-  ];
+const PlatformAnalytics = ({ overview, revenueData, restaurants }) => {
   const donutSegments = [
-    { label: 'Delivery', value: 6820, color: 'var(--primary)' },
-    { label: 'Dine-In', value: 3240, color: 'var(--success)' },
-    { label: 'Takeaway', value: 2160, color: 'var(--warning)' },
+    { label: 'Active', value: restaurants.filter((r) => r.status === 'active').length, color: 'var(--success)' },
+    { label: 'Pending', value: restaurants.filter((r) => r.status === 'pending').length, color: 'var(--warning)' },
+    { label: 'Suspended / rejected', value: restaurants.filter((r) => ['suspended', 'rejected'].includes(r.status)).length, color: 'var(--error)' },
   ];
-
   return (
     <>
       <div className="page-header">
@@ -420,28 +388,28 @@ const PlatformAnalytics = () => {
         <p>Comprehensive reports and performance metrics.</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+      <div className="overview-stat-grid">
         {[
-          { label: 'Monthly Revenue', value: '$107K', change: '+17%', up: true },
-          { label: 'New Users', value: '2,340', change: '+23%', up: true },
-          { label: 'Orders Today', value: '1,284', change: '+8%', up: true },
-          { label: 'Avg Order Value', value: '$34.20', change: '-2%', up: false },
+          { label: 'Delivered Revenue', value: `$${Number(overview?.totalRevenue || 0).toLocaleString()}`, detail: 'All time' },
+          { label: 'Total Users', value: Number(overview?.totalUsers || 0).toLocaleString(), detail: `${Number(overview?.totalOwners || 0).toLocaleString()} restaurant owners` },
+          { label: 'Total Orders', value: Number(overview?.totalOrders || 0).toLocaleString(), detail: `${Number(overview?.pendingOrders || 0).toLocaleString()} pending` },
+          { label: 'Bookings', value: Number(overview?.totalBookings || 0).toLocaleString(), detail: `${Number(overview?.pendingRestaurants || 0).toLocaleString()} restaurant approvals pending` },
         ].map((kpi, i) => (
-          <div key={i} className="dash-panel" style={{ padding: '1.25rem' }}>
+          <div key={i} className="dash-panel overview-stat-card">
             <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: '0.4rem' }}>{kpi.label}</div>
             <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--dash-accent)' }}>{kpi.value}</div>
-            <div style={{ fontSize: '0.78rem', color: kpi.up ? 'var(--success)' : 'var(--error)', marginTop: '0.3rem' }}>{kpi.change} vs last month</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>{kpi.detail}</div>
           </div>
         ))}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
         <div className="dash-panel">
-          <h3 style={{ marginBottom: '1.25rem' }}>Monthly Revenue</h3>
-          <BarChartSVG data={monthlyData} color="var(--primary)" />
+          <h3 style={{ marginBottom: '1.25rem' }}>Delivered Revenue (12 months)</h3>
+          <BarChartSVG data={revenueData} color="var(--primary)" />
         </div>
         <div className="dash-panel">
-          <h3 style={{ marginBottom: '1.25rem' }}>Order Type Breakdown</h3>
+          <h3 style={{ marginBottom: '1.25rem' }}>Restaurant Status</h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
             <DonutChart segments={donutSegments} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -460,8 +428,10 @@ const PlatformAnalytics = () => {
       </div>
 
       <div className="dash-panel">
-        <h3 style={{ marginBottom: '1.25rem' }}>Daily Orders This Week</h3>
-        <BarChartSVG data={orderData} color="var(--success)" />
+        <h3 style={{ marginBottom: '1.25rem' }}>Order Summary</h3>
+        <p style={{ color: 'var(--text-muted)', margin: 0 }}>
+          {Number(overview?.totalOrders || 0).toLocaleString()} orders recorded, including {Number(overview?.cancelledOrders || 0).toLocaleString()} cancelled or rejected orders.
+        </p>
       </div>
     </>
   );
@@ -499,52 +469,102 @@ const NotificationsCenter = ({ notifications, onDismiss }) => (
 );
 
 // ── Settings ───────────────────────────────────────────────────────────────
-const AdminSettings = ({ showToast }) => (
-  <>
-    <div className="page-header">
-      <h1>Settings</h1>
-      <p>Configure platform-wide settings and preferences.</p>
-    </div>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-      <div className="dash-panel">
-        <h3 style={{ marginBottom: '1.5rem' }}>Platform Configuration</h3>
-        {[
-          { label: 'Platform Name', value: 'SupaMeal' },
-          { label: 'Support Email', value: 'mugishawitness15@gmail.com' },
-          { label: 'Commission Rate (%)', value: '12' },
-          { label: 'Max Restaurants Per Owner', value: '5' },
-        ].map((field, i) => (
-          <div key={i} className="dash-form-group">
-            <label>{field.label}</label>
-            <input className="dash-input" defaultValue={field.value} />
-          </div>
-        ))}
-        <button className="dash-btn-primary" onClick={() => showToast('Settings saved successfully!')}>Save Changes</button>
+const AdminSettings = ({ showToast }) => {
+  const [settings, setSettings] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [maintenanceRunning, setMaintenanceRunning] = useState(false);
+
+  useEffect(() => {
+    adminApi.settings()
+      .then(setSettings)
+      .catch((error) => showToast(error.message || 'Could not load platform settings.', 'error'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const change = (field) => (event) => {
+    const value = event.target.type === 'number' ? Number(event.target.value) : event.target.value;
+    setSettings((current) => ({ ...current, [field]: value }));
+  };
+
+  const saveSettings = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      const saved = await adminApi.updateSettings({
+        platformName: settings.platformName,
+        supportEmail: settings.supportEmail,
+        commissionRate: settings.commissionRate,
+        maxRestaurantsPerOwner: settings.maxRestaurantsPerOwner,
+      });
+      setSettings(saved);
+      showToast('Platform settings saved.');
+    } catch (error) {
+      showToast(error.message || 'Could not save platform settings.', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const recalculateRatings = async () => {
+    setMaintenanceRunning(true);
+    try {
+      const result = await adminApi.maintenance('recalculate-ratings');
+      showToast(result.message || 'Restaurant ratings recalculated.');
+    } catch (error) {
+      showToast(error.message || 'Could not recalculate restaurant ratings.', 'error');
+    } finally {
+      setMaintenanceRunning(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="page-header">
+        <h1>Settings</h1>
+        <p>Configure platform-wide settings and preferences.</p>
       </div>
-      <div className="dash-panel">
-        <h3 style={{ marginBottom: '1.5rem' }}>Maintenance</h3>
-        {[
-          { label: 'Clear Cache', desc: 'Remove all cached data from servers', color: 'var(--warning)', icon: RefreshCw },
-          { label: 'Backup Database', desc: 'Create a full database backup now', color: 'var(--success)', icon: CheckCircle },
-          { label: 'Maintenance Mode', desc: 'Take the platform offline temporarily', color: 'var(--error)', icon: AlertCircle },
-        ].map((action, i) => (
-          <div key={i} style={{ padding: '1rem', background: 'var(--dash-bg)', borderRadius: '12px', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <action.icon size={20} color={action.color} />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{action.label}</div>
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{action.desc}</div>
+      {loading ? <div className="dash-panel">Loading platform settings…</div> : settings && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          <form className="dash-panel" onSubmit={saveSettings}>
+            <h3 style={{ marginBottom: '1.5rem' }}>Platform Configuration</h3>
+            <div className="dash-form-group">
+              <label htmlFor="admin-platform-name">Platform Name</label>
+              <input id="admin-platform-name" className="dash-input" value={settings.platformName || ''} onChange={change('platformName')} required maxLength={100} />
             </div>
-            <button
-              className="dash-btn-outline"
-              style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem', color: action.color, borderColor: action.color }}
-              onClick={() => showToast(`${action.label} initiated.`)}
-            >Run</button>
+            <div className="dash-form-group">
+              <label htmlFor="admin-support-email">Support Email</label>
+              <input id="admin-support-email" type="email" className="dash-input" value={settings.supportEmail || ''} onChange={change('supportEmail')} required />
+            </div>
+            <div className="dash-form-group">
+              <label htmlFor="admin-commission-rate">Commission Rate (%)</label>
+              <input id="admin-commission-rate" type="number" min="0" max="100" step="0.1" className="dash-input" value={settings.commissionRate ?? 0} onChange={change('commissionRate')} required />
+            </div>
+            <div className="dash-form-group">
+              <label htmlFor="admin-max-restaurants">Max Restaurants Per Owner</label>
+              <input id="admin-max-restaurants" type="number" min="1" step="1" className="dash-input" value={settings.maxRestaurantsPerOwner ?? 3} onChange={change('maxRestaurantsPerOwner')} required />
+            </div>
+            <button className="dash-btn-primary" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save Changes'}</button>
+          </form>
+          <div className="dash-panel">
+            <h3 style={{ marginBottom: '0.5rem' }}>Maintenance</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '1.25rem' }}>Run a supported maintenance task against platform data.</p>
+            <div style={{ padding: '1rem', background: 'var(--dash-bg)', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <RefreshCw size={20} color="var(--warning)" />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Recalculate restaurant ratings</div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Rebuild rating averages and review counts from submitted reviews.</div>
+              </div>
+              <button type="button" className="dash-btn-outline" disabled={maintenanceRunning} onClick={recalculateRatings}>
+                {maintenanceRunning ? 'Running…' : 'Run'}
+              </button>
+            </div>
           </div>
-        ))}
-      </div>
-    </div>
-  </>
-);
+        </div>
+      )}
+    </>
+  );
+};
 
 const NewsletterComposer = ({ showToast }) => {
   const [subject, setSubject] = useState('');
@@ -556,7 +576,7 @@ const NewsletterComposer = ({ showToast }) => {
     setSending(true);
     try {
       const result = await newsletterApi.sendUpdate(subject.trim(), message.trim());
-      showToast(`Newsletter sent to ${result.sent} of ${result.total} subscribers${result.failed ? `; ${result.failed} could not be delivered` : ''}.`);
+      showToast(`Posted in the app for ${result.inAppSent} customers and restaurant owners; emailed ${result.sent} of ${result.total} newsletter subscribers${result.failed ? ` (${result.failed} email${result.failed === 1 ? '' : 's'} failed)` : ''}.`);
       setSubject('');
       setMessage('');
       setConfirming(false);
@@ -571,7 +591,7 @@ const NewsletterComposer = ({ showToast }) => {
     <>
       <div className="page-header">
         <h1>Newsletter</h1>
-        <p>Send platform news and new offers to customers who subscribed from the site footer.</p>
+        <p>Post a message to customer and restaurant-owner notifications, and email people who subscribed from the site footer.</p>
       </div>
       <form className="dash-panel" onSubmit={(event) => { event.preventDefault(); setConfirming(true); }} style={{ maxWidth: 760 }}>
         <div className="dash-form-group">
@@ -582,7 +602,7 @@ const NewsletterComposer = ({ showToast }) => {
           <label htmlFor="newsletter-message">Update</label>
           <textarea id="newsletter-message" className="dash-input" value={message} onChange={(event) => setMessage(event.target.value)} minLength={10} maxLength={5000} rows={7} required />
         </div>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.84rem', marginBottom: '1rem' }}>This message will be emailed to active newsletter subscribers. Each email includes an unsubscribe link.</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.84rem', marginBottom: '1rem' }}>This message will appear in the in-app notification center for every active customer and restaurant owner. Active newsletter subscribers also receive an email with an unsubscribe link.</p>
         <button type="submit" className="dash-btn-primary" disabled={sending} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
           <Send size={16} /> Review and send
         </button>
@@ -590,7 +610,7 @@ const NewsletterComposer = ({ showToast }) => {
       {confirming && (
         <ConfirmDialog
           title="Send this SupaMeal update?"
-          description={`“${subject.trim()}” will be sent to all active newsletter subscribers.`}
+          description={`“${subject.trim()}” will be posted to customer and restaurant-owner notifications and emailed to active newsletter subscribers.`}
           confirmLabel={sending ? 'Sending…' : 'Send update'}
           confirmDisabled={sending}
           tone="primary"
@@ -611,26 +631,38 @@ const AdminDashboard = () => {
   const [restaurants, setRestaurants] = useState([]);
   const [users, setUsers] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [overview, setOverview] = useState(null);
+  const [revenueData, setRevenueData] = useState([]);
+  const [dataError, setDataError] = useState('');
+  const [loadingData, setLoadingData] = useState(true);
 
   const loadAdminData = async () => {
+    setLoadingData(true);
     try {
-      const [restData, userData, notifData] = await Promise.all([
-        restaurantsApi.list({ approvedOnly: 'false' }),
+      const [restData, userData, notifData, overviewData, revenue] = await Promise.all([
+        restaurantsApi.adminList(),
         usersApi.list(),
         notificationsApi.list(),
+        adminApi.overview(),
+        adminApi.revenue('month'),
       ]);
       setRestaurants(restData.map(r => ({
-        id: r.id, name: r.name, type: r.cuisine || r.type, location: r.location?.address || r.address,
-        owner: r.owner, docs: r.docs, submitted: r.submitted, status: r.status,
+        id: r.id || r._id, name: r.name, type: r.cuisine || r.type, location: r.location?.address || r.address,
+        owner: r.owner, docs: r.docs, submitted: r.submitted ? new Date(r.submitted).toLocaleDateString() : '—', status: r.status,
       })));
       setUsers(userData.map(u => ({
-        id: u.id, name: u.name, email: u.email, joined: u.joined, status: u.status, type: u.type,
+        id: u.id || u._id, name: u.name || 'Unnamed user', email: u.email, joined: u.joined || '—', status: u.status || 'active', type: u.type || u.accountType,
       })));
       setNotifications(notifData.map(n => ({
-        id: n.id, type: 'System', text: n.message, time: n.time, color: 'var(--success)',
+        id: n.id || n._id, type: n.title || 'Notification', text: n.message, time: n.time, color: n.isRead ? 'var(--text-muted)' : 'var(--primary)',
       })));
+      setOverview(overviewData);
+      setRevenueData(Array.isArray(revenue) ? revenue : []);
+      setDataError('');
     } catch (err) {
-      console.error(err);
+      setDataError(err.message || 'Could not load admin portal data.');
+    } finally {
+      setLoadingData(false);
     }
   };
 
@@ -640,36 +672,47 @@ const AdminDashboard = () => {
   };
 
   const handleApprove = async (id) => {
-    await restaurantsApi.approve(id, true);
-    loadAdminData();
-    showToast('Restaurant approved and activated!');
+    try {
+      await restaurantsApi.approve(id, true);
+      await loadAdminData();
+      showToast('Restaurant approved and activated!');
+    } catch (error) { showToast(error.message || 'Could not approve restaurant.', 'error'); }
   };
 
   const handleReject = async (id) => {
-    await restaurantsApi.approve(id, false);
-    loadAdminData();
-    showToast('Restaurant application rejected.', 'error');
+    try {
+      await restaurantsApi.approve(id, false);
+      await loadAdminData();
+      showToast('Restaurant application rejected.');
+    } catch (error) { showToast(error.message || 'Could not reject restaurant.', 'error'); }
   };
 
   const handleToggleRestaurantStatus = async (id) => {
     const r = restaurants.find(x => x.id === id);
     const newStatus = r?.status === 'active' ? 'suspended' : 'active';
-    await restaurantsApi.setStatus(id, newStatus);
-    loadAdminData();
-    showToast('Restaurant status updated.');
+    try {
+      await restaurantsApi.setStatus(id, newStatus);
+      await loadAdminData();
+      showToast('Restaurant status updated.');
+    } catch (error) { showToast(error.message || 'Could not update restaurant status.', 'error'); }
   };
 
   const handleToggleBlock = async (id) => {
     const u = users.find(x => x.id === id);
     const newStatus = u?.status === 'active' ? 'blocked' : 'active';
-    await usersApi.setStatus(id, newStatus);
-    loadAdminData();
-    showToast('User status updated.');
+    try {
+      await usersApi.setStatus(id, newStatus);
+      await loadAdminData();
+      showToast('User status updated.');
+    } catch (error) { showToast(error.message || 'Could not update user status.', 'error'); }
   };
 
   const handleDismissNotification = async (id) => {
-    await notificationsApi.dismiss(id);
-    loadAdminData();
+    try {
+      await notificationsApi.dismiss(id);
+      await loadAdminData();
+      showToast('Notification dismissed.');
+    } catch (error) { showToast(error.message || 'Could not dismiss notification.', 'error'); }
   };
 
   const { isAuthenticated, user } = useAuth();
@@ -680,12 +723,12 @@ const AdminDashboard = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'overview': return <AdminOverview setActiveTab={setActiveTab} restaurants={restaurants} users={users} />;
+      case 'overview': return <AdminOverview setActiveTab={setActiveTab} restaurants={restaurants} users={users} overview={overview} revenueData={revenueData} />;
       case 'approvals': return <RestaurantApprovals restaurants={restaurants} onApprove={handleApprove} onReject={handleReject} />;
       case 'restaurants': return <AllRestaurants restaurants={restaurants} onToggleStatus={handleToggleRestaurantStatus} />;
       case 'customers': return <UserTable users={users} type="customer" onToggleBlock={handleToggleBlock} />;
       case 'owners': return <UserTable users={users} type="owner" onToggleBlock={handleToggleBlock} />;
-      case 'analytics': return <PlatformAnalytics />;
+      case 'analytics': return <PlatformAnalytics overview={overview} revenueData={revenueData} restaurants={restaurants} />;
       case 'notifications': return <NotificationsCenter notifications={notifications} onDismiss={handleDismissNotification} />;
       case 'newsletter': return <NewsletterComposer showToast={showToast} />;
       case 'settings': return <AdminSettings showToast={showToast} />;
@@ -703,7 +746,8 @@ const AdminDashboard = () => {
       `}</style>
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <DashboardLayout sidebarConfig={adminSidebarConfig} activeTab={activeTab} setActiveTab={setActiveTab} roleName="Admin">
-        {renderContent()}
+        {dataError && <div role="alert" className="auth-form-error" style={{ margin: '1rem' }}>{dataError}</div>}
+        {loadingData && !overview ? <div className="dash-panel">Loading admin data…</div> : renderContent()}
       </DashboardLayout>
     </>
   );

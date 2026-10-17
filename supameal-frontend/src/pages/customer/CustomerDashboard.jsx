@@ -54,8 +54,6 @@ const CustomerDashboard = () => {
   const [activeTab, setActiveTab] = useState(
     VALID_TABS.has(requestedTab) ? requestedTab : 'overview',
   );
-  // C4: no hardcoded mock order id — empty until a real order is selected
-  // from My Orders or Checkout. The tracking tab shows a picker until then.
   const [trackingOrderId, setTrackingOrderId] = useState('');
   const { isAuthenticated } = useAuth();
   const { cartCount } = useCart();
@@ -83,8 +81,6 @@ const CustomerDashboard = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      // handleSetActiveTab everywhere: pages that navigate to tracking pass
-      // the real order id as a second argument (plain setActiveTab drops it).
       case 'overview': return <DashboardHome setActiveTab={handleSetActiveTab} />;
       case 'menu': return <MenuPage setActiveTab={handleSetActiveTab} />;
       case 'cart': return <CartPage setActiveTab={handleSetActiveTab} />;

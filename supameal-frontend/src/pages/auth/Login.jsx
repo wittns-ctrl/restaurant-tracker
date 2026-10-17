@@ -8,6 +8,7 @@ import Loader from '../../components/Loader/Loader';
 import { useAuth } from '../../context/AuthContext';
 import { authApi } from '../../services/api';
 import { homeForUser, userHasRole } from '../../utils/auth';
+import AuthAccountSwitcher from './AuthAccountSwitcher';
 import './AuthForm.css';
 
 const Login = ({ accountType = 'customer' }) => {
@@ -172,6 +173,7 @@ const Login = ({ accountType = 'customer' }) => {
             </div>
           </div>
 
+          <AuthAccountSwitcher accountType={accountType} />
           <Button variant="primary" className="auth-submit-btn" type="submit" disabled={loading}>
             <LogIn size={18} style={{ marginRight: '8px' }} />
             {accountType === 'admin' ? 'Sign In as Administrator' : 'Sign In as Customer'}

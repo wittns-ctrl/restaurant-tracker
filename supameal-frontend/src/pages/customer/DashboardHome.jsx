@@ -56,26 +56,26 @@ const DashboardHome = ({ setActiveTab }) => {
       </div>
 
       {/* Stat Cards */}
-      <div className="stat-cards">
-        <div className="stat-card">
+      <div className="stat-cards overview-stat-grid">
+        <div className="stat-card overview-stat-card">
           <div className="stat-card-icon"><Package size={22} /></div>
           <div className="stat-card-label">Total Orders</div>
           <div className="stat-card-value">{loading ? '...' : stats.totalOrders}</div>
           <div className="stat-card-change up"><TrendingUp size={14} /> {stats.ordersThisMonth}</div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card overview-stat-card">
           <div className="stat-card-icon"><CalendarCheck size={22} /></div>
           <div className="stat-card-label">Upcoming Bookings</div>
           <div className="stat-card-value">{loading ? '...' : stats.upcomingBookingsCount}</div>
           <div className="stat-card-change neutral"><Clock size={14} /> {stats.nextBookingText}</div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card overview-stat-card">
           <div className="stat-card-icon"><Heart size={22} /></div>
           <div className="stat-card-label">Favorites</div>
           <div className="stat-card-value">{loading ? '...' : stats.favoritesCount}</div>
           <div className="stat-card-change neutral"><Star size={14} /> Saved restaurants</div>
         </div>
-        <div className="stat-card">
+        <div className="stat-card overview-stat-card">
           <div className="stat-card-icon"><Star size={22} /></div>
           <div className="stat-card-label">Avg. Rating Given</div>
           <div className="stat-card-value">{loading ? '...' : stats.avgRatingGiven}</div>

@@ -11,6 +11,34 @@ import './dashboard.css';
 
 const TIME_SLOTS = ['ASAP (25-35 min)', '12:00 PM', '12:30 PM', '1:00 PM', '7:00 PM', '7:30 PM', '8:00 PM'];
 
+const validateDeliveryAddress = (address) => {
+  const errors = {};
+  const street = address.street.trim();
+  const apartment = address.apartment.trim();
+  const city = address.city.trim();
+  const postalCode = address.postalCode.trim();
+  const phone = address.phone.trim();
+  const phoneDigits = phone.replace(/\D/g, '');
+
+  if (street.length < 2 || street.length > 200 || !/^[\p{L}\p{N}][\p{L}\p{N}\s,.'#+\/-]{1,199}$/u.test(street)) {
+    errors.street = 'Enter a valid street address.';
+  }
+  if (apartment.length > 50) errors.apartment = 'Apartment or suite must be 50 characters or fewer.';
+  if (city.length < 2 || city.length > 100 || !/^[\p{L}\p{N}][\p{L}\p{N}\s.'-]{1,99}$/u.test(city)) {
+    errors.city = 'Enter a valid city.';
+  }
+  if (postalCode.length < 2 || postalCode.length > 20 || !/^[A-Za-z0-9][A-Za-z0-9 -]{1,19}$/.test(postalCode)) {
+    errors.postalCode = 'Enter a valid postal code.';
+  }
+  if (!/^\+?[0-9][0-9\s().-]{6,18}$/.test(phone) || phoneDigits.length < 8 || phoneDigits.length > 15) {
+    errors.phone = 'Enter a valid phone number with 8 to 15 digits.';
+  }
+  if (address.instructions.trim().length > 300) {
+    errors.instructions = 'Instructions must be 300 characters or fewer.';
+  }
+  return errors;
+};
+
 const CheckoutPage = ({ setActiveTab }) => {
   const navigate = useNavigate();
   const [promo, setPromo] = useState('');
@@ -19,8 +47,9 @@ const CheckoutPage = ({ setActiveTab }) => {
   const [timeSlot, setTimeSlot] = useState(TIME_SLOTS[0]);
   const [placed, setPlaced] = useState(false);
   const [placedOrderId, setPlacedOrderId] = useState(''); // display code (last 4)
-  const [placedOrderDbId, setPlacedOrderDbId] = useState(''); // real _id for tracking
-  const [address, setAddress] = useState({ street: '', apartment: '', city: '', postalCode: '', instructions: '' });
+  const [placedOrderDbId, setPlacedOrderDbId] = useState('');
+  const [address, setAddress] = useState({ street: '', apartment: '', city: '', postalCode: '', phone: '', instructions: '' });
+  const [showAddressErrors, setShowAddressErrors] = useState(false);
   const [paymentState, setPaymentState] = useState('idle');
   const [paymentWarning, setPaymentWarning] = useState('');
   // Stripe intent awaiting user payment: { paymentIntentId, clientSecret, publishableKey }
@@ -30,10 +59,10 @@ const CheckoutPage = ({ setActiveTab }) => {
   const { showToast } = useToast();
 
   // navigate() fallback when rendered from the router without a tab setter.
-  // Extra args are forwarded so dashboard mode can pass the tracking order id.
   const go = (tab, path, ...rest) => (setActiveTab ? setActiveTab(tab, ...rest) : navigate(path));
 
   const delivery = cartItems.length > 0 ? 3.99 : 0;
+  const addressErrors = validateDeliveryAddress(address);
   // Discount comes from the backend's validation response — never invented locally
   const discount = promoApplied ? promoDiscount : 0;
   const total = Math.max(0, subtotal + delivery - discount);
@@ -59,8 +88,9 @@ const CheckoutPage = ({ setActiveTab }) => {
 
   const handlePlaceOrder = async () => {
     if (!user?.id || !selectedRestaurantId) return;
-    if (!address.street || !address.city || !address.postalCode) {
-      showToast('Please fill in your full delivery address', 'error');
+    setShowAddressErrors(true);
+    if (Object.keys(validateDeliveryAddress(address)).length > 0) {
+      showToast('Please correct the delivery details before placing your order.', 'error');
       return;
     }
 
@@ -71,7 +101,7 @@ const CheckoutPage = ({ setActiveTab }) => {
         customerId: user.id,
         restaurantId: selectedRestaurantId,
         items: cartItems.map(i => ({ menuItemId: i.id, qty: i.qty })),
-        deliveryAddress: address,
+        deliveryAddress: Object.fromEntries(Object.entries(address).map(([key, value]) => [key, value.trim()])),
         timeSlot,
         promoCode: promoApplied ? promo.trim() : undefined,
       });
@@ -178,6 +208,7 @@ const CheckoutPage = ({ setActiveTab }) => {
           )}
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
             <button className="dash-btn-primary" onClick={() => go('order-tracking', `/order-tracking/${placedOrderDbId}`, placedOrderDbId)}>Track Order</button>
+            <button className="dash-btn-outline" onClick={() => go('orders', '/customer/dashboard?tab=orders')}>View My Orders</button>
             <button className="dash-btn-outline" onClick={() => go('overview', '/customer/dashboard')}>Back to Dashboard</button>
           </div>
         </div>
@@ -246,27 +277,37 @@ const CheckoutPage = ({ setActiveTab }) => {
             </h3>
             <div className="form-row">
               <div className="dash-form-group">
-                <label>Street Address *</label>
-                <input className="dash-input" placeholder="123 Main Street" value={address.street} onChange={e => setAddress(p => ({ ...p, street: e.target.value }))} />
+                <label htmlFor="delivery-street">Street Address *</label>
+                <input id="delivery-street" className="dash-input" autoComplete="street-address" maxLength={200} required placeholder="123 Main Street" value={address.street} aria-invalid={showAddressErrors && Boolean(addressErrors.street)} onChange={e => setAddress(p => ({ ...p, street: e.target.value }))} />
+                {showAddressErrors && addressErrors.street && <small role="alert" className="form-error">{addressErrors.street}</small>}
               </div>
               <div className="dash-form-group">
-                <label>Apartment / Suite</label>
-                <input className="dash-input" placeholder="Apt 4B (optional)" value={address.apartment} onChange={e => setAddress(p => ({ ...p, apartment: e.target.value }))} />
+                <label htmlFor="delivery-apartment">Apartment / Suite</label>
+                <input id="delivery-apartment" className="dash-input" autoComplete="address-line2" maxLength={50} placeholder="Apt 4B (optional)" value={address.apartment} aria-invalid={showAddressErrors && Boolean(addressErrors.apartment)} onChange={e => setAddress(p => ({ ...p, apartment: e.target.value }))} />
+                {showAddressErrors && addressErrors.apartment && <small role="alert" className="form-error">{addressErrors.apartment}</small>}
               </div>
             </div>
             <div className="form-row">
               <div className="dash-form-group">
-                <label>City *</label>
-                <input className="dash-input" placeholder="Your City" value={address.city} onChange={e => setAddress(p => ({ ...p, city: e.target.value }))} />
+                <label htmlFor="delivery-city">City *</label>
+                <input id="delivery-city" className="dash-input" autoComplete="address-level2" maxLength={100} required placeholder="Your City" value={address.city} aria-invalid={showAddressErrors && Boolean(addressErrors.city)} onChange={e => setAddress(p => ({ ...p, city: e.target.value }))} />
+                {showAddressErrors && addressErrors.city && <small role="alert" className="form-error">{addressErrors.city}</small>}
               </div>
               <div className="dash-form-group">
-                <label>Postal Code *</label>
-                <input className="dash-input" placeholder="12345" value={address.postalCode} onChange={e => setAddress(p => ({ ...p, postalCode: e.target.value }))} />
+                <label htmlFor="delivery-postal-code">Postal Code *</label>
+                <input id="delivery-postal-code" className="dash-input" autoComplete="postal-code" maxLength={20} required placeholder="12345" value={address.postalCode} aria-invalid={showAddressErrors && Boolean(addressErrors.postalCode)} onChange={e => setAddress(p => ({ ...p, postalCode: e.target.value }))} />
+                {showAddressErrors && addressErrors.postalCode && <small role="alert" className="form-error">{addressErrors.postalCode}</small>}
               </div>
             </div>
+            <div className="dash-form-group">
+              <label htmlFor="delivery-phone">Phone Number *</label>
+              <input id="delivery-phone" className="dash-input" type="tel" autoComplete="tel" inputMode="tel" maxLength={24} required placeholder="+250 78 000 0000" value={address.phone} aria-invalid={showAddressErrors && Boolean(addressErrors.phone)} onChange={e => setAddress(p => ({ ...p, phone: e.target.value }))} />
+              {showAddressErrors && addressErrors.phone && <small role="alert" className="form-error">{addressErrors.phone}</small>}
+            </div>
             <div className="dash-form-group" style={{ marginBottom: 0 }}>
-              <label>Delivery Instructions (Optional)</label>
-              <input className="dash-input" placeholder="Leave at door, ring bell, etc." value={address.instructions} onChange={e => setAddress(p => ({ ...p, instructions: e.target.value }))} />
+              <label htmlFor="delivery-instructions">Delivery Instructions (Optional)</label>
+              <input id="delivery-instructions" className="dash-input" maxLength={300} placeholder="Leave at door, ring bell, etc." value={address.instructions} aria-invalid={showAddressErrors && Boolean(addressErrors.instructions)} onChange={e => setAddress(p => ({ ...p, instructions: e.target.value }))} />
+              {showAddressErrors && addressErrors.instructions && <small role="alert" className="form-error">{addressErrors.instructions}</small>}
             </div>
           </div>
 
@@ -276,7 +317,7 @@ const CheckoutPage = ({ setActiveTab }) => {
             </h3>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
               {TIME_SLOTS.map(slot => (
-                <button key={slot} onClick={() => setTimeSlot(slot)} className={`category-pill ${timeSlot === slot ? 'active' : ''}`}>
+                <button key={slot} type="button" onClick={() => setTimeSlot(slot)} className={`category-pill ${timeSlot === slot ? 'active' : ''}`}>
                   {slot}
                 </button>
               ))}

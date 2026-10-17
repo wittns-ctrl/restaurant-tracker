@@ -153,7 +153,7 @@ function AppRoutes() {
         <Route
           path="/order-tracking/:orderId"
           element={
-            <ProtectedRoute roles={['customer', 'owner', 'admin']}>
+            <ProtectedRoute roles={['customer']}>
               <OrderTrackingPage />
             </ProtectedRoute>
           }
@@ -178,7 +178,7 @@ function AppRoutes() {
         <Route
           path="/owner/dashboard"
           element={
-            <ProtectedRoute roles={['owner']}>
+            <ProtectedRoute roles={['owner']} allowPendingOwnerDashboard>
               <OwnerDashboard />
             </ProtectedRoute>
           }

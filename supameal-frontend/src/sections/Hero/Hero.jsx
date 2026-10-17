@@ -60,7 +60,7 @@ const Hero = () => {
           
           <p className="hero-subtitle">
             Explore the best restaurants, book your favorite tables, 
-            or order delicious meals with real-time tracking right to your door.
+            or order delicious meals delivered right to your door.
           </p>
           
           <div className="hero-actions">

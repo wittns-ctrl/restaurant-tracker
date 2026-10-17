@@ -50,7 +50,14 @@ const BookTableDash = ({ setActiveTab, initialRestaurantId, initialBookingDate =
       });
       setSubmitted(true);
     } catch (err) {
-      setSubmitError(err.message || 'Booking failed — please try again.');
+      const message = String(err.message || '');
+      if (/fully booked|no availability/i.test(message)) {
+        setSubmitError('No reservation was made. This restaurant is fully booked for the selected date. Please choose another date.');
+      } else if (/exceeds restaurant capacity|party size.*capacity/i.test(message)) {
+        setSubmitError('No reservation was made. Your party is larger than this restaurant’s seating capacity. Please choose a smaller group.');
+      } else {
+        setSubmitError(message || 'Booking failed — please try again.');
+      }
     } finally {
       setSubmitting(false);
     }

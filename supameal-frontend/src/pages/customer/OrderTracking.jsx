@@ -7,6 +7,17 @@ import { useEffect, useState } from 'react';
 import './dashboard.css';
 import './OrderTracking.css';
 
+const formatTimelineTime = (value) => {
+  if (!value) return '';
+  // New timeline entries are ISO timestamps. Keep legacy display strings
+  // readable while formatting those timestamps in the viewer's local zone.
+  if (!/^\d{4}-\d{2}-\d{2}T/.test(value)) return value;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? value
+    : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
 const OrderTracking = ({ orderId: orderIdProp, setActiveTab }) => {
   const params = useParams();
   const navigate = useNavigate();
@@ -149,7 +160,7 @@ const OrderTracking = ({ orderId: orderIdProp, setActiveTab }) => {
                       <div>
                         <div className="tracking-step-label">{step.label}</div>
                       </div>
-                      <span className="tracking-time">{step.time || ''}</span>
+                      <span className="tracking-time">{formatTimelineTime(step.time)}</span>
                     </div>
                   </div>
                 </div>
