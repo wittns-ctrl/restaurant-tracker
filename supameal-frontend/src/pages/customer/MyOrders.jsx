@@ -292,6 +292,8 @@ const MyOrders = ({ setActiveTab }) => {
           title="Delete this order from your history?"
           description={`Order #${deleteTarget.orderId || deleteTarget.id?.slice(-4)} will be removed from your order history. Payment and restaurant records are retained.`}
           confirmLabel={deleting ? 'Deleting…' : 'Delete order'}
+          Icon={Trash2}
+          tone="danger"
           confirmDisabled={deleting}
           onConfirm={handleDeleteHistory}
           onCancel={() => !deleting && setDeleteTarget(null)}

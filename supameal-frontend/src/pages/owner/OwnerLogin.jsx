@@ -7,6 +7,7 @@ import Loader from '../../components/Loader/Loader';
 import { useAuth } from '../../context/AuthContext';
 import { authApi } from '../../services/api';
 import AuthAccountSwitcher from '../auth/AuthAccountSwitcher';
+import { isBlockedAccountError } from '../auth/BlockedAccountPage';
 import '../auth/AuthForm.css';
 
 const OwnerLogin = () => {
@@ -21,11 +22,17 @@ const OwnerLogin = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const oauthError = searchParams.get('error');
+  const oauthAccountBlocked = isBlockedAccountError(oauthError);
   const applicationStatus = searchParams.get('status');
 
   useEffect(() => {
-    if (oauthError) sessionStorage.removeItem('ownerOAuthIntent');
-  }, [oauthError]);
+    if (!oauthError) return;
+    sessionStorage.removeItem('ownerOAuthIntent');
+    if (isBlockedAccountError(oauthError)) {
+      navigate('/account-blocked', { replace: true });
+      setError('');
+    }
+  }, [oauthError, navigate]);
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
@@ -68,7 +75,11 @@ const OwnerLogin = () => {
       }
       navigate('/owner/dashboard', { replace: true });
     } catch (err) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      if (isBlockedAccountError(err)) {
+        navigate('/account-blocked', { replace: true });
+      } else {
+        setError(err.message || 'Login failed. Please check your credentials.');
+      }
       setIsLoading(false);
     }
   };
@@ -87,7 +98,7 @@ const OwnerLogin = () => {
         <p>{isForgotPassword ? 'Enter your email to receive a reset link' : 'Access your restaurant dashboard'}</p>
       </div>
 
-      {(error || oauthError) && <p role="alert" className="auth-form-error">{error || oauthError}</p>}
+      {!oauthAccountBlocked && (error || oauthError) && <p role="alert" className="auth-form-error">{error || oauthError}</p>}
       {applicationStatus === 'pending' && <p role="status" className="auth-form-success">Your email is verified. The restaurant application is awaiting administrator approval.</p>}
       {forgotMessage && <p role="status" aria-live="polite" className="auth-form-success" style={{ fontSize: '0.9rem', marginBottom: '1rem', textAlign: 'center' }}>{forgotMessage}</p>}
 

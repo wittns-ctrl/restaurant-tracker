@@ -1,12 +1,18 @@
 import React from 'react';
-import { Star, MapPin } from 'lucide-react';
+import { Star, MapPin, Utensils } from 'lucide-react';
 import './RestaurantCard.css';
 
 const RestaurantCard = ({ image, name, location, rating, reviews, priceLevel }) => {
   return (
     <div className="restaurant-card">
       <div className="card-image-wrapper">
-        <img src={image} alt={name} className="card-image" />
+        {image ? (
+          <img src={image} alt={name} className="card-image" />
+        ) : (
+          <div className="card-image-placeholder" aria-label={`${name} has no restaurant photo`}>
+            <Utensils size={34} />
+          </div>
+        )}
         <div className="card-badge">
           <Star size={12} fill="currentColor" /> {rating}
         </div>
@@ -17,7 +23,7 @@ const RestaurantCard = ({ image, name, location, rating, reviews, priceLevel }) 
           <span className="card-location">
             <MapPin size={14} /> {location}
           </span>
-          <span className="card-price">{priceLevel}</span>
+          {priceLevel && <span className="card-price">{priceLevel}</span>}
         </div>
         <div className="card-reviews">
           <span className="star-rating">

@@ -180,6 +180,8 @@ const MyBookings = () => {
           title="Delete this booking from your history?"
           description={`Your booking at ${deleteTarget.restaurant} on ${deleteTarget.date} at ${deleteTarget.time} will be removed from your history.`}
           confirmLabel={deleting ? 'Deleting…' : 'Delete booking'}
+          Icon={Trash2}
+          tone="danger"
           confirmDisabled={deleting}
           onConfirm={handleDeleteHistory}
           onCancel={() => !deleting && setDeleteTarget(null)}

@@ -7,7 +7,6 @@ import Button from '../../components/Button/Button';
 import { restaurantsApi, reviewsApi, usersApi, resolveImageUrl } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
-import img1 from '../../assets/images/restaurant_interior.png';
 import './RestaurantDetails.css';
 
 const RestaurantDetails = () => {
@@ -30,7 +29,7 @@ const RestaurantDetails = () => {
         const data = await restaurantsApi.get(id);
         setRestaurant({
           ...data,
-          image: resolveImageUrl(data.image) || img1,
+          image: resolveImageUrl(data.image),
         });
         const rev = await reviewsApi.list(id);
         setReviews(rev);
@@ -121,7 +120,7 @@ const RestaurantDetails = () => {
     <>
       <Navbar />
       <main className="restaurant-details-page">
-        <div className="restaurant-hero" style={{ backgroundImage: `url(${restaurant.image})` }}>
+        <div className="restaurant-hero" style={restaurant.image ? { backgroundImage: `url(${restaurant.image})` } : undefined}>
           <div className="restaurant-hero-overlay"></div>
           <div className="container restaurant-hero-content">
             <Link to="/restaurants" className="back-btn-glass">

@@ -37,14 +37,16 @@ services:
       # ── Required: set these in .env before running ──
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (32+ chars)}
       JWT_REFRESH: ${JWT_REFRESH:?Set JWT_REFRESH in .env (32+ chars)}
+      DEMO_ADMIN_EMAIL: ${DEMO_ADMIN_EMAIL:-}
+      DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:-}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://localhost:5173}
       # ── Optional integrations ──
-      # Stripe is required in production: the API refuses to boot without it
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:?Set STRIPE_SECRET_KEY in .env (test or live key)}
-      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
-      STRIPE_CURRENCY: ${STRIPE_CURRENCY:-usd}
+      # PayPal credentials are required in production; keep the secret backend-only
+      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID:?Set PAYPAL_CLIENT_ID in .env}
+      PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET:?Set PAYPAL_CLIENT_SECRET in .env}
+      PAYPAL_ENV: ${PAYPAL_ENV:-sandbox}
+      PAYPAL_CURRENCY: ${PAYPAL_CURRENCY:-USD}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
@@ -59,6 +61,8 @@ services:
       THROTTLE_LIMIT: ${THROTTLE_LIMIT:-100}
       SEED_DEMO_DATA: ${SEED_DEMO_DATA:-false}
       TRUST_PROXY: ${TRUST_PROXY:-1}
+      MONGO_MAX_POOL_SIZE: ${MONGO_MAX_POOL_SIZE:-50}
+      MONGO_MIN_POOL_SIZE: ${MONGO_MIN_POOL_SIZE:-2}
       UPLOAD_DIR: /app/uploads
     volumes:
       # Uploaded restaurant/menu images must survive container rebuilds
@@ -86,7 +90,8 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
 
 volumes:
   mongo_data:

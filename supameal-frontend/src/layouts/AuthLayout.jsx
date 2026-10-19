@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import './AuthLayout.css';
 import bgImage from '../assets/images/hero_food.png';
 
-const AuthLayout = ({ children, title, subtitle, className = '' }) => {
+const AuthLayout = ({ children, title, subtitle, className = '', backTo = '/' }) => {
   return (
     <div className={`auth-layout ${className}`.trim()}>
       <div className="auth-card">
@@ -32,10 +32,10 @@ const AuthLayout = ({ children, title, subtitle, className = '' }) => {
         
         <div className="auth-right">
           <div className="auth-right-header">
-            <Link to="/" className="auth-logo-link">
+            <Link to={backTo} className="auth-logo-link">
               <Logo />
             </Link>
-            <Link to="/" className="auth-back-home">
+            <Link to={backTo} className="auth-back-home">
               <ArrowLeft size={16} />
               <span>Back</span>
             </Link>

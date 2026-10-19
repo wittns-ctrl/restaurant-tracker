@@ -180,6 +180,7 @@ const Navbar = () => {
           description="You’ll be signed out and returned to the SupaMeal home page."
           confirmLabel="Log out"
           tone="primary"
+          variant="logout"
           Icon={LogOut}
           onCancel={() => setShowLogoutConfirm(false)}
           onConfirm={confirmLogout}

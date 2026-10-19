@@ -438,6 +438,17 @@ const PlatformAnalytics = ({ overview, revenueData, restaurants }) => {
 };
 
 // ── Notifications Center ───────────────────────────────────────────────────
+const traceLabel = (key) => key
+  .replace(/([A-Z])/g, ' $1')
+  .replace(/^./, (letter) => letter.toUpperCase());
+
+const traceValue = (value) => {
+  if (value === null || value === undefined || value === '') return '—';
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+};
+
 const NotificationsCenter = ({ notifications, onDismiss }) => (
   <>
     <div className="page-header">
@@ -453,11 +464,28 @@ const NotificationsCenter = ({ notifications, onDismiss }) => (
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {notifications.map(n => (
-            <div key={n.id} style={{ padding: '1rem 1.25rem', background: 'var(--dash-bg)', borderRadius: '12px', borderLeft: `4px solid ${n.color}`, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
+            <div key={n.id} style={{ padding: '1rem 1.25rem', background: 'var(--dash-bg)', borderRadius: '12px', borderLeft: `4px solid ${n.color}`, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+              <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{ fontWeight: 600, color: n.color, marginBottom: '0.25rem', fontSize: '0.85rem' }}>{n.type}</div>
                 <div style={{ color: 'var(--text-main)', marginBottom: '0.3rem', fontSize: '0.9rem' }}>{n.text}</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{n.time}</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem 1rem', marginTop: '0.45rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                  <span>Notification ID: <code>{n.id}</code></span>
+                  {n.recipient && <span>Recipient: {n.recipient.name || 'Unknown'} ({n.recipient.accountType || 'account'}) · {n.recipient.email || n.recipient.id}</span>}
+                </div>
+                {n.details && Object.keys(n.details).length > 0 && (
+                  <div style={{ marginTop: '0.8rem', padding: '0.75rem', borderRadius: '8px', background: 'rgba(255,255,255,0.035)' }}>
+                    <div style={{ color: 'var(--text-main)', fontWeight: 600, fontSize: '0.8rem', marginBottom: '0.5rem' }}>Event trace</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '0.45rem 1rem' }}>
+                      {Object.entries(n.details).map(([key, value]) => (
+                        <div key={key} style={{ minWidth: 0, fontSize: '0.78rem', overflowWrap: 'anywhere' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>{traceLabel(key)}: </span>
+                          <span style={{ color: 'var(--text-main)' }}>{traceValue(value)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               <button onClick={() => onDismiss(n.id)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '0.25rem', flexShrink: 0 }}>✕</button>
             </div>
@@ -654,7 +682,8 @@ const AdminDashboard = () => {
         id: u.id || u._id, name: u.name || 'Unnamed user', email: u.email, joined: u.joined || '—', status: u.status || 'active', type: u.type || u.accountType,
       })));
       setNotifications(notifData.map(n => ({
-        id: n.id || n._id, type: n.title || 'Notification', text: n.message, time: n.time, color: n.isRead ? 'var(--text-muted)' : 'var(--primary)',
+        id: n.id || n._id, type: n.title || 'Notification', text: n.message, time: n.createdAt ? new Date(n.createdAt).toLocaleString() : n.time,
+        details: n.details, recipient: n.recipient, color: n.isRead ? 'var(--text-muted)' : 'var(--primary)',
       })));
       setOverview(overviewData);
       setRevenueData(Array.isArray(revenue) ? revenue : []);

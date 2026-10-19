@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, Star, ArrowRight } from 'lucide-react';
+import { Heart, Star, ArrowRight, Utensils } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { usersApi } from '../../services/api';
-import img1 from '../../assets/images/restaurant_interior.png';
+import { resolveImageUrl, usersApi } from '../../services/api';
 import './dashboard.css';
 
 const FavoritesPage = () => {
@@ -15,7 +14,7 @@ const FavoritesPage = () => {
     if (!user?.id) return;
     try {
       const data = await usersApi.favorites(user.id);
-      setFavorites(data.map(r => ({ ...r, image: r.image?.startsWith('http') ? r.image : img1, price: '$$' })));
+      setFavorites(data.map(r => ({ ...r, image: resolveImageUrl(r.image) })));
     } catch (err) {
       console.error(err);
     }
@@ -49,7 +48,13 @@ const FavoritesPage = () => {
               onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
             >
               <div style={{ position: 'relative' }}>
-                <img src={r.image} alt={r.name} style={{ width: '100%', height: 160, objectFit: 'cover' }} />
+                {r.image ? (
+                  <img src={r.image} alt={r.name} style={{ width: '100%', height: 160, objectFit: 'cover' }} />
+                ) : (
+                  <div aria-label={`${r.name} has no restaurant photo`} style={{ width: '100%', height: 160, display: 'grid', placeItems: 'center', background: 'var(--bg-card)', color: 'var(--text-muted)' }}>
+                    <Utensils size={32} />
+                  </div>
+                )}
                 <button
                   style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', width: 36, height: 36, borderRadius: '50%', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   onClick={e => { e.stopPropagation(); handleRemove(r.id); }}
@@ -60,11 +65,11 @@ const FavoritesPage = () => {
               <div style={{ padding: '1.25rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.35rem' }}>
                   <span style={{ fontWeight: 700, color: 'var(--text-main)', fontSize: '1.05rem' }}>{r.name}</span>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{r.price}</span>
+                  {r.priceRange && <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{r.priceRange}</span>}
                 </div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>{r.cuisine}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--warning)', fontSize: '0.85rem' }}>
-                  <Star size={14} fill="currentColor" /> {r.rating} ({r.reviews} reviews)
+                  <Star size={14} fill="currentColor" /> {r.rating ?? 0} ({r.reviews ?? 0} reviews)
                 </div>
                 <button className="dash-btn-outline" style={{ width: '100%', marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }} onClick={() => navigate(`/restaurants/${r.id}`)}>
                   Order Now <ArrowRight size={14} />

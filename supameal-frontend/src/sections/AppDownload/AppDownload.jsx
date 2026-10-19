@@ -43,6 +43,7 @@ const AppDownload = () => {
               </div>
             </a>
           </div>
+          <p className="app-coming-soon" role="status">Mobile app coming soon</p>
         </div>
         
         <div className="app-image-wrapper">

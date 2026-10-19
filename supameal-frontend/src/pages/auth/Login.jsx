@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import { authApi } from '../../services/api';
 import { homeForUser, userHasRole } from '../../utils/auth';
 import AuthAccountSwitcher from './AuthAccountSwitcher';
+import { isBlockedAccountError } from './BlockedAccountPage';
 import './AuthForm.css';
 
 const Login = ({ accountType = 'customer' }) => {
@@ -28,9 +29,15 @@ const Login = ({ accountType = 'customer' }) => {
   useEffect(() => {
     const oauthError = searchParams.get('error');
     if (oauthError) {
-      setError(decodeURIComponent(oauthError.replace(/\+/g, ' ')));
+      const message = decodeURIComponent(oauthError.replace(/\+/g, ' '));
+      if (isBlockedAccountError(message)) {
+        navigate('/account-blocked', { replace: true });
+        setError('');
+      } else {
+        setError(message);
+      }
     }
-  }, [searchParams]);
+  }, [searchParams, navigate]);
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
@@ -71,7 +78,11 @@ const Login = ({ accountType = 'customer' }) => {
       }
       navigate(homeForUser(user), { replace: true });
     } catch (err) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      if (isBlockedAccountError(err)) {
+        navigate('/account-blocked', { replace: true });
+      } else {
+        setError(err.message || 'Login failed. Please check your credentials.');
+      }
     } finally {
       setLoading(false);
     }

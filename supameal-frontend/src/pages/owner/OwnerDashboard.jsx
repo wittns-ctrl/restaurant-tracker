@@ -9,7 +9,6 @@ import {
   CheckCircle, AlertCircle, Star, DollarSign
 } from 'lucide-react';
 import '../customer/dashboard.css';
-import img1 from '../../assets/images/restaurant_interior.png';
 import promoPasta from '../../assets/images/promo_pasta.png';
 
 // ── Sidebar Config ─────────────────────────────────────────────────────────
@@ -267,6 +266,7 @@ const DeleteDialog = ({ item, onConfirm, onClose }) => (
     title={`Delete “${item.name}”?`}
     description="This menu item will be permanently removed from your restaurant menu."
     confirmLabel="Delete item"
+    tone="danger"
     Icon={Trash2}
     onConfirm={onConfirm}
     onCancel={onClose}
@@ -394,7 +394,7 @@ const CUISINE_OPTIONS = ['Continental', 'Italian', 'Japanese', 'Indian', 'Americ
 const RestaurantProfile = ({ showToast, restaurantId, setActiveTab }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [cover, setCover] = useState(img1);
+  const [cover, setCover] = useState('');
   const [form, setForm] = useState({
     name: '', cuisine: 'International', description: '',
     address: '', city: '', phone: '', opening: '', capacity: '',
@@ -417,7 +417,7 @@ const RestaurantProfile = ({ showToast, restaurantId, setActiveTab }) => {
           capacity: r.capacity ?? '',
           amenities: r.amenities || [],
         });
-        setCover(resolveImageUrl(r.images?.[0]) || img1);
+        setCover(resolveImageUrl(r.images?.[0]) || '');
       })
       .catch(err => showToast(err.message || 'Could not load restaurant profile', 'error'))
       .finally(() => setLoading(false));
@@ -491,7 +491,13 @@ const RestaurantProfile = ({ showToast, restaurantId, setActiveTab }) => {
           <div className="dash-panel" style={{ marginBottom: '1.25rem' }}>
             <h3 style={{ marginBottom: '1rem' }}>Cover Photo</h3>
             <div style={{ position: 'relative', width: '100%', height: 160, borderRadius: '12px', overflow: 'hidden', marginBottom: '0.75rem' }}>
-              <img src={cover} alt="Restaurant" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              {cover ? (
+                <img src={cover} alt="Restaurant" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <div style={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', background: 'var(--dash-border, #222)', color: 'var(--text-muted)' }}>
+                  <Camera size={28} />
+                </div>
+              )}
               <button onClick={() => setActiveTab('gallery')} title="Manage photos in Gallery" style={{ position: 'absolute', bottom: '0.75rem', right: '0.75rem', background: 'var(--dash-accent)', border: 'none', padding: '0.5rem', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Camera size={16} color="#000" />
               </button>

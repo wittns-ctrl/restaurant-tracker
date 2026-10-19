@@ -48,7 +48,7 @@
   background-image: url('../../assets/images/restaurant_interior.png');
   background-size: cover;
   background-position: center;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: none;
 }
 
 .about-img-secondary {
@@ -61,8 +61,8 @@
   background-image: url('../../assets/images/hero_food.png');
   background-size: cover;
   background-position: center;
-  border: 10px solid var(--bg-dark);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  border: 0;
+  box-shadow: none;
 }
 
 @media (max-width: 992px) {

@@ -13,6 +13,7 @@ import LandingPage from './pages/LandingPage';
 // Code-splitting: every route below is its own chunk, loaded on demand.
 // The landing page stays eager so first paint never waits on a lazy chunk.
 const Login = lazy(() => import('./pages/auth/Login'));
+const BlockedAccountPage = lazy(() => import('./pages/auth/BlockedAccountPage'));
 const SignUp = lazy(() => import('./pages/auth/SignUp'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
@@ -34,7 +35,6 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 const ProfilePage = lazy(() => import('./pages/customer/ProfilePage'));
 const ReservationsPage = lazy(() => import('./pages/customer/ReservationsPage'));
 const BookTablePage = lazy(() => import('./pages/customer/BookTableDash'));
-const OffersPage = lazy(() => import('./pages/OffersPage'));
 const FooterInfoPage = lazy(() => import('./pages/FooterInfoPage'));
 const NewsletterUnsubscribePage = lazy(() => import('./pages/NewsletterUnsubscribePage'));
 
@@ -93,9 +93,9 @@ function AppRoutes() {
         <Route path="/home" element={<LandingPage />} />
         <Route path="/restaurants" element={<RestaurantsPage />} />
         <Route path="/restaurants/:id" element={<RestaurantDetail />} />
-        <Route path="/offers" element={<OffersPage />} />
         <Route path="/company/:page" element={<FooterInfoPage />} />
         <Route path="/newsletter/unsubscribe/:token" element={<NewsletterUnsubscribePage />} />
+        <Route path="/account-blocked" element={<BlockedAccountPage />} />
         <Route path="/menu/:restaurantId" element={<MenuPage />} />
         <Route
           path="/login"

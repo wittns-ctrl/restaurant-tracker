@@ -5,7 +5,6 @@ import TrustedPartners from '../sections/TrustedPartners/TrustedPartners';
 import HowItWorks from '../sections/HowItWorks/HowItWorks';
 import TopPicks from '../sections/TopPicks/TopPicks';
 import AboutUs from '../sections/AboutUs/AboutUs';
-import Promo from '../sections/Promo/Promo';
 import WhyChooseUs from '../sections/WhyChooseUs/WhyChooseUs';
 import ForOwners from '../sections/ForOwners/ForOwners';
 import AppDownload from '../sections/AppDownload/AppDownload';
@@ -23,7 +22,6 @@ const LandingPage = () => {
         <HowItWorks />
         <TopPicks />
         <AboutUs />
-        <Promo />
         <WhyChooseUs />
         <ForOwners />
         <AppDownload />

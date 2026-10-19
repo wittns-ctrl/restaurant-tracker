@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Package, CalendarCheck, Heart, TrendingUp, Clock, Star } from 'lucide-react';
+import { Package, CalendarCheck, Heart, TrendingUp, Clock, Star, Utensils } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { usersApi } from '../../services/api';
+import { resolveImageUrl, usersApi } from '../../services/api';
 import './dashboard.css';
-import img1 from '../../assets/images/restaurant_interior.png';
 
 const DashboardHome = ({ setActiveTab }) => {
   const { user } = useAuth();
@@ -167,10 +166,16 @@ const DashboardHome = ({ setActiveTab }) => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
             {favoriteRestaurants.map((r, i) => (
               <div key={r.id || i} className="fav-card" onClick={() => setActiveTab('favorites')} style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border-color, rgba(255,255,255,0.06))', cursor:'pointer' }}>
-                <img src={r.image || img1} alt={r.name} style={{ width:'100%', height:'110px', objectFit:'cover' }} />
+                {resolveImageUrl(r.image) ? (
+                  <img src={resolveImageUrl(r.image)} alt={r.name} style={{ width:'100%', height:'110px', objectFit:'cover' }} />
+                ) : (
+                  <div aria-label={`${r.name} has no restaurant photo`} style={{ width:'100%', height:'110px', display:'grid', placeItems:'center', background:'var(--dash-border, #222)', color:'var(--text-muted)' }}>
+                    <Utensils size={24} />
+                  </div>
+                )}
                 <div style={{ padding: '0.75rem' }}>
                   <div style={{ fontWeight: 600, color: 'var(--text-main)', fontSize:'0.9rem' }}>{r.name}</div>
-                  <div style={{ color: 'var(--dash-accent)', fontSize:'0.8rem', marginTop:'0.25rem' }}>★ {r.rating || 4.5} · {r.cuisine || 'Fine Dining'}</div>
+                  <div style={{ color: 'var(--dash-accent)', fontSize:'0.8rem', marginTop:'0.25rem' }}>★ {r.rating ?? 0} · {r.cuisine || 'Cuisine not set'}</div>
                 </div>
               </div>
             ))}

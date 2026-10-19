@@ -131,17 +131,8 @@ async function testCustomerWorkflow() {
     }
   }
 
-  // 9. PROMO CODE VALIDATION
-  console.log('\n--- 9. Testing Promo Code Validation ---');
-  const promoRes = await fetch(`${BASE_URL}/promos/validate`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ code: 'WELCOME10', subtotal: 50 })
-  });
-  console.log('POST /promos/validate status:', promoRes.status, await promoRes.json());
-
-  // 10. ORDERS
-  console.log('\n--- 10. Testing Orders ---');
+  // 9. ORDERS
+  console.log('\n--- 9. Testing Orders ---');
   const myOrdersRes = await fetch(`${BASE_URL}/orders`, { headers });
   const myOrdersData = await myOrdersRes.json();
   console.log('GET /orders status:', myOrdersRes.status, 'Count:', Array.isArray(myOrdersData) ? myOrdersData.length : myOrdersData?.data?.length);

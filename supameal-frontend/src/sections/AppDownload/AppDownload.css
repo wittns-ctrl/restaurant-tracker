@@ -48,6 +48,14 @@
   gap: 1rem;
 }
 
+.app-coming-soon {
+  margin-top: 0.85rem;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
 .store-btn {
   display: flex;
   align-items: center;

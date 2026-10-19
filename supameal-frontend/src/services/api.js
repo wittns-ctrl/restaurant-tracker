@@ -56,8 +56,8 @@ export const restaurantsApi = {
 
 // Menus
 export const menusApi = {
-  list: (restaurantId) => apiRequest(`/menus${restaurantId ? `?restaurantId=${restaurantId}` : ''}`),
-  listForOwner: (restaurantId) => apiRequest(`/menus/owner/${restaurantId}`),
+  list: (restaurantId, params = {}) => apiRequest(`/menus${buildQuery({ restaurantId, ...params })}`),
+  listForOwner: (restaurantId, params = {}) => apiRequest(`/menus/owner/${restaurantId}${buildQuery(params)}`),
   create: (data) => apiRequest('/menus', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => apiRequest(`/menus/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   delete: (id) => apiRequest(`/menus/${id}`, { method: 'DELETE' }),
@@ -141,7 +141,7 @@ export const usersApi = {
 
 // Reviews
 export const reviewsApi = {
-  list: (restaurantId) => apiRequest(`/reviews${restaurantId ? `?restaurantId=${restaurantId}` : ''}`),
+  list: (restaurantId, params = {}) => apiRequest(`/reviews${buildQuery({ restaurantId, ...params })}`),
   create: (data) => apiRequest('/reviews', { method: 'POST', body: JSON.stringify(data) }),
 };
 
@@ -165,26 +165,18 @@ export const adminApi = {
   maintenance: (action) => apiRequest(`/admin/maintenance/${action}`, { method: 'POST' }),
 };
 
-// Promos & Mail
-export const promosApi = {
-  validate: (code, subtotal) =>
-    apiRequest('/promos/validate', {
-      method: 'POST',
-      body: JSON.stringify({ code, subtotal: Number(subtotal) || 0 }),
-    }),
-};
-
 // Payments
 export const paymentsApi = {
-  createIntent: (orderId, metadata) =>
-    apiRequest('/payments/create-intent', {
+  paypalConfig: () => apiRequest('/payments/paypal/config'),
+  createPaypalOrder: (orderId) =>
+    apiRequest('/payments/paypal/create-order', {
       method: 'POST',
-      body: JSON.stringify({ orderId, metadata }),
+      body: JSON.stringify({ orderId }),
     }),
-  confirm: (paymentIntentId) =>
-    apiRequest('/payments/confirm', {
+  capturePaypalOrder: (paypalOrderId) =>
+    apiRequest('/payments/paypal/capture-order', {
       method: 'POST',
-      body: JSON.stringify({ paymentIntentId }),
+      body: JSON.stringify({ paypalOrderId }),
     }),
 };
 

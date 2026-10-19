@@ -482,6 +482,7 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
           description="You’ll be signed out and returned to the SupaMeal home page."
           confirmLabel="Log out"
           tone="primary"
+          variant="logout"
           Icon={LogOut}
           onCancel={() => setShowLogoutConfirm(false)}
           onConfirm={handleLogout}
@@ -492,6 +493,8 @@ const DashboardLayout = ({ children, activeTab, setActiveTab, sidebarConfig, rol
           title="Delete this notification?"
           description={`${notificationToDelete.title || 'This notification'} will be permanently deleted from your notifications.`}
           confirmLabel={deletingNotification ? 'Deleting…' : 'Delete notification'}
+          Icon={Trash2}
+          tone="danger"
           confirmDisabled={deletingNotification}
           onCancel={() => !deletingNotification && setNotificationToDelete(null)}
           onConfirm={deleteNotification}

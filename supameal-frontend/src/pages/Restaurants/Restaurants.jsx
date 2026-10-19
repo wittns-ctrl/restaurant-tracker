@@ -11,7 +11,6 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import './Restaurants.css';
 
-import img1 from '../../assets/images/restaurant_interior.png';
 
 const Restaurants = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -39,7 +38,7 @@ const Restaurants = () => {
       });
       setRestaurants(data.map(r => ({
         ...r,
-        image: resolveImageUrl(r.image) || img1,
+        image: resolveImageUrl(r.image),
       })));
     } catch (err) {
       console.error('Failed to load restaurants:', err);
@@ -134,12 +133,12 @@ const Restaurants = () => {
               <div className="filter-dropdowns">
                 <Dropdown 
                   placeholder="Location" 
-                  options={['Downtown', 'Uptown']}
+                  options={[...new Set(restaurants.map(r => r.location?.city).filter(Boolean))]}
                   onChange={(val) => setLocation(val)}
                 />
                 <Dropdown 
                   placeholder="Cuisine" 
-                  options={['Italian', 'Japanese', 'American', 'Fine Dining']}
+                  options={[...new Set(restaurants.map(r => r.cuisine).filter(Boolean))]}
                   onChange={(val) => setCuisine(val)}
                 />
                 <Dropdown 
@@ -172,7 +171,7 @@ const Restaurants = () => {
                       location={typeof restaurant.location === 'string' ? restaurant.location : restaurant.location?.address || ''}
                       rating={restaurant.rating ?? 'New'}
                       reviews={restaurant.reviews ?? 0}
-                      priceLevel={restaurant.priceLevel ?? '$$'}
+                      priceLevel={restaurant.priceRange || restaurant.priceLevel}
                     />
                   </Link>
                   <button
