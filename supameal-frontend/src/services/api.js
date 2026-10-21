@@ -80,6 +80,7 @@ export const uploadsApi = {
     if (!res.ok) throw new ApiError(data.message || 'Upload failed', res.status);
     return data; // { url, size }
   },
+  remove: (publicId) => apiRequest(`/uploads?publicId=${encodeURIComponent(publicId)}`, { method: 'DELETE' }),
 };
 
 // Resolve a stored image reference to a browser-usable URL.
