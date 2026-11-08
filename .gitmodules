@@ -1,0 +1,3 @@
+[submodule "supameal_backend"]
+	path = supameal_backend
+	url = https://github.com/wittns-ctrl/supa-backend.git
