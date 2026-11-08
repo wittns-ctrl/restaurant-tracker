@@ -1,0 +1,4 @@
+[submodule "SPML_backend"]
+	path = SPML_backend
+	url = https://github.com/wittns-ctrl/restaurant-tracker.git
+	branch = good

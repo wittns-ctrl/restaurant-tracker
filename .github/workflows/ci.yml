@@ -14,7 +14,11 @@ jobs:
       run:
         working-directory: SPML_backend/supameal_backend
     steps:
+      # The backend lives in nested submodules:
+      # SPML_backend (restaurant-tracker@good) -> supameal_backend (supa-backend).
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup Node
         uses: actions/setup-node@v4
